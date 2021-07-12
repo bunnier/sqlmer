@@ -2,10 +2,11 @@ package sqlmer
 
 import (
 	"database/sql"
-	"errors"
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 // 获取一个SqlServer数据库的DbClient对象。

@@ -1,13 +1,13 @@
 package sqlmer
 
 import (
-	"errors"
 	"fmt"
 	"reflect"
 	"strings"
 	"testing"
 	"time"
 
+	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -69,7 +69,7 @@ func Test_bindMySqlArgs(t *testing.T) {
 			},
 			"",
 			nil,
-			new(DbSqlError),
+			ErrSql,
 		},
 		{
 			"index",
@@ -85,7 +85,7 @@ func Test_bindMySqlArgs(t *testing.T) {
 			[]interface{}{1},
 			"",
 			nil,
-			new(DbSqlError),
+			ErrSql,
 		},
 		{
 			"index_index_err2",
@@ -93,7 +93,7 @@ func Test_bindMySqlArgs(t *testing.T) {
 			[]interface{}{1},
 			"",
 			nil,
-			new(DbSqlError),
+			ErrSql,
 		},
 		{
 			"index_index_err3",
@@ -101,7 +101,7 @@ func Test_bindMySqlArgs(t *testing.T) {
 			[]interface{}{1},
 			"",
 			nil,
-			new(DbSqlError),
+			ErrSql,
 		},
 		{
 			"index_index_err4",
@@ -109,7 +109,7 @@ func Test_bindMySqlArgs(t *testing.T) {
 			[]interface{}{1},
 			"",
 			nil,
-			new(DbSqlError),
+			ErrSql,
 		},
 		{
 			"index_reuse_index",
@@ -125,7 +125,7 @@ func Test_bindMySqlArgs(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			fixedSql, args, err := bindMySqlArgs(tt.oriSql, tt.args...)
 			if tt.wantErr != nil {
-				if !errors.As(err, &tt.wantErr) {
+				if !errors.Is(err, tt.wantErr) {
 					t.Errorf("mysqlDbClient.bindMsSqlArgs() error = %v, wantErr %v", err, tt.wantErr)
 					return
 				}

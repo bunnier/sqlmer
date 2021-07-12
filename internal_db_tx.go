@@ -1,6 +1,10 @@
 package sqlmer
 
-import "database/sql"
+import (
+	"database/sql"
+
+	"github.com/pkg/errors"
+)
 
 var _ DbClient = (*sqlxDbTransactionKeeper)(nil)
 var _ TransactionKeeper = (*sqlxDbTransactionKeeper)(nil)
@@ -26,7 +30,7 @@ func (transKeeper *sqlxDbTransactionKeeper) Commit() error {
 	}
 
 	if transKeeper.transactionCompleted {
-		return NewDbTransError("trans has already completed")
+		return errors.WithMessage(ErrTran, "trans has already completed")
 	}
 
 	transKeeper.transactionCompleted = true
@@ -41,7 +45,7 @@ func (transKeeper *sqlxDbTransactionKeeper) Rollback() error {
 	}
 
 	if transKeeper.transactionCompleted {
-		return NewDbTransError("trans has already completed")
+		return errors.WithMessage(ErrTran, "trans has already completed")
 	}
 
 	transKeeper.transactionCompleted = true

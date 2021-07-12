@@ -3,9 +3,9 @@ package sqlmer
 import (
 	"context"
 	"database/sql"
-	"fmt"
 
 	"github.com/bunnier/sqlmer/internal/sqlen"
+	"github.com/pkg/errors"
 )
 
 var _ DbClient = (*internalDbClient)(nil)
@@ -126,7 +126,7 @@ func (client *internalDbClient) SizedExecuteContext(ctx context.Context, expecte
 		return err
 	}
 	if affectedRow != expectedSize {
-		return NewDbSqlError(fmt.Sprintf("affected rows expected: %d, acttually: %d. ", expectedSize, affectedRow), sqlText)
+		return errors.WithMessagef(ErrSql, "affected rows expected: %d, acttually: %d, sql=%s", expectedSize, affectedRow, sqlText)
 	}
 	return nil
 }

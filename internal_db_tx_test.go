@@ -1,8 +1,9 @@
 package sqlmer
 
 import (
-	"errors"
 	"testing"
+
+	"github.com/pkg/errors"
 )
 
 func Test_MysqlTransaction(t *testing.T) {
@@ -169,8 +170,7 @@ func TransactionCommitAfterRollback(t *testing.T, dbClient DbClient) {
 	if err = tx.Commit(); err == nil { // 回滚后提交。
 		t.Errorf("transactionKeeper.Commit() error is nil, wantErr NewDbTransError")
 
-		dbTransError := new(DbTransError)
-		if !errors.As(err, &dbTransError) {
+		if !errors.Is(err, ErrTran) {
 			t.Errorf("internalDbClient.Commit() error = %v, wantErr DbTransError", err)
 		}
 	}
@@ -207,8 +207,7 @@ func TransactionRollbackAfterCommit(t *testing.T, dbClient DbClient) {
 	if err = tx.Rollback(); err == nil { // 提交后回滚。
 		t.Errorf("transactionKeeper.Rollback() error is nil, wantErr NewDbTransError")
 
-		dbTransError := new(DbTransError)
-		if !errors.As(err, &dbTransError) {
+		if !errors.Is(err, ErrTran) {
 			t.Errorf("internalDbClient.Rollback() error = %v, wantErr DbTransError", err)
 		}
 	}

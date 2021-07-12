@@ -2,10 +2,11 @@ package sqlmer
 
 import (
 	"database/sql"
-	"errors"
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 func Test_internalDbClient_Scalar(t *testing.T) {
@@ -121,8 +122,7 @@ func Test_internalDbClient_Execute(t *testing.T) {
 			}
 
 			err = tt.client.SizedExecute(2, tt.args.sqlText, tt.args.args...)
-			dbSqlError := new(DbSqlError)
-			if !errors.As(err, &dbSqlError) {
+			if !errors.Is(err, ErrSql) {
 				t.Errorf("internalDbClient.SizedExecute() error = %v, wantErr DbSqlError", err)
 			}
 		})
