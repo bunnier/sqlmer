@@ -1,0 +1,4 @@
+# 测试用例使用的数据库连接串。
+# 只要配置有建表/删表权限的库连接即可测试。
+mysql: dev:qwer1234@tcp(127.0.0.1:3306)/test
+sqlserver: server=127.0.0.1:1433; database=test; user id=dev;password=qwer1234;
