@@ -6,7 +6,7 @@
 
 数据库访问库，目前支持MySql和Sql Server。
 
-- SQL语句支持统一的 `命名参数`、`索引参数` 语法，可直观的使用 map 作为SQL语句参数，并以 map 或 slice 方式返回；
+- SQL语句提供了统一的 `命名参数`、`索引参数` 语法，可直观的使用 map 作为SQL语句参数，并以 map 或 slice 方式返回；
 - 提供了面向map的 `参数`、`结果集` 交互接口，事务和非事务访问均可通过相同接口完成；
 - 扩展了原生 sql.Rows/sql.Row，使其支持 MapScan 以及 SliceScan；
 
@@ -14,7 +14,7 @@
 
 https://pkg.go.dev/github.com/bunnier/sqlmer
 
-> Tips: 主交互接口为DbClient。
+> Tips: 主交互接口为[DbClient](/db_client.go)。
 
 ## 简单样例
 
@@ -51,7 +51,7 @@ CREATE TABLE MainDemo(
 		fmt.Println("timeout: " + err.Error()) // 预期内的超时~
 	}
 
-	// 索引方式插入数据(驱动限制，mysql一次只能执行一行，sqlserver可以多行。)。
+	// 索引方式插入数据，@p1...@pn，分别对应第1-n个参数。
 	_, err = dbClient.Execute("INSERT INTO MainDemo(Name, Age) VALUES(@p1, @p2)", "rui", 1)
 	if err != nil {
 		log.Fatal(err)
@@ -63,7 +63,7 @@ CREATE TABLE MainDemo(
 		return
 	}
 
-	// 命名参数查询数据，命名参数采用map，需要用结构的需要自己转换。
+	// 命名参数查询数据，命名参数采用map，key为sql语句@之后的参数名，value为值。
 	data, err := dbClient.Get("SELECT * FROM MainDemo WHERE Name=@name", map[string]interface{}{"name": "rui"})
 	if err != nil {
 		log.Fatal(err)
@@ -77,16 +77,18 @@ CREATE TABLE MainDemo(
 		log.Fatal(err)
 		return
 	}
-	fmt.Println(name.(string)) // 返回interface{}，可以自己转换。
+	
+	// 返回interface{}，类型可以自己转换。已经统一了Sql Server和MySql返回的类型（注意：Decimal使用string返回）。
+	fmt.Println(name.(string)) 
 
-	// 用索引参数+保持连接的方式获取数据。
+	// 获取增强后的sql.Rows（支持SliceScan、MapScan）。
 	sliceRows, err := dbClient.Rows("SELECT Name, GETDATE() FROM MainDemo WHERE Name IN (@p1, @p2)", "rui", "bao")
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
 	for sliceRows.Next() {
-		sliceRow, err := sliceRows.SliceScan() // 用[]interface{}方式返回，可以自己转换。
+		sliceRow, err := sliceRows.SliceScan() // SliceScan用[]interface{}方式返回。
 		if err != nil {
 			log.Fatal(err)
 			return
