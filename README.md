@@ -10,6 +10,12 @@
 - 提供了面向map的 `参数`、`结果集` 交互接口，事务和非事务访问均可通过相同接口完成；
 - 扩展了原生 sql.Rows/sql.Row，使其支持 MapScan 以及 SliceScan；
 
+## API文档
+
+https://pkg.go.dev/github.com/bunnier/sqlmer
+
+> Tips: 主交互接口为DbClient。
+
 ## 简单样例
 
 ```go
