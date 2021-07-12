@@ -1,5 +1,7 @@
 # sqlmer
 
+[![Go](https://github.com/bunnier/sqlmer/actions/workflows/go.yml/badge.svg)](https://github.com/bunnier/sqlmer/actions/workflows/go.yml)
+
 ## 功能简介
 
 数据库访问库，目前支持MySql和Sql Server。
