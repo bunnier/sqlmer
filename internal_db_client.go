@@ -31,7 +31,7 @@ func newInternalDbClient(config *DbClientConfig) (internalDbClient, error) {
 	return internalDbClient{
 		config,
 		db,
-		sqlen.Newsqlen(db),
+		sqlen.NewDbEnhance(db),
 	}, nil
 }
 

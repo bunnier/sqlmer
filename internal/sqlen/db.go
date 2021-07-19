@@ -5,11 +5,11 @@ import (
 	"database/sql"
 )
 
-var _ EnhancedDbExer = (*sqlen)(nil)
+var _ EnhancedDbExer = (*DbEnhance)(nil)
 var _ EnhancedDbExer = (*TxEnhance)(nil)
 
-// sqlen是对原生sql.DB的包装，除了原本的方法外，另外实现了EnhancedDbExer接口定义的额外方法。
-type sqlen struct {
+// DbEnhance是对原生sql.DB的包装，除了原本的方法外，另外实现了EnhancedDbExer接口定义的额外方法。
+type DbEnhance struct {
 	*sql.DB
 }
 
@@ -18,8 +18,8 @@ type TxEnhance struct {
 	*sql.Tx
 }
 
-func Newsqlen(db *sql.DB) *sqlen {
-	return &sqlen{db}
+func NewDbEnhance(db *sql.DB) *DbEnhance {
+	return &DbEnhance{db}
 }
 
 func NewTxEnhance(tx *sql.Tx) *TxEnhance {
@@ -28,26 +28,26 @@ func NewTxEnhance(tx *sql.Tx) *TxEnhance {
 
 // EnhancedQueryRow executes a query that is expected to return at most one row.
 // 返回增强后的EnhanceRow对象，相比原生sql.Row提供了更强的数据读取能力。
-func (db *sqlen) EnhancedQueryRow(query string, args ...interface{}) *EnhanceRow {
+func (db *DbEnhance) EnhancedQueryRow(query string, args ...interface{}) *EnhanceRow {
 	return db.EnhancedQueryRowContext(context.Background(), query, args...)
 }
 
 // EnhancedQueryRowContext executes a query that is expected to return at most one row.
 // 返回增强后的EnhanceRow对象，相比原生sql.Row提供了更强的数据读取能力。
-func (db *sqlen) EnhancedQueryRowContext(ctx context.Context, query string, args ...interface{}) *EnhanceRow {
+func (db *DbEnhance) EnhancedQueryRowContext(ctx context.Context, query string, args ...interface{}) *EnhanceRow {
 	rows, err := db.EnhancedQueryContext(ctx, query, args...)
 	return &EnhanceRow{rows: rows, err: err}
 }
 
 // EnhancedQuery executes a query that returns rows.
 // 返回增强后的EnhanceRows对象，相比原生sql.Rows提供了更强的数据读取能力。
-func (db *sqlen) EnhancedQuery(query string, args ...interface{}) (*EnhanceRows, error) {
+func (db *DbEnhance) EnhancedQuery(query string, args ...interface{}) (*EnhanceRows, error) {
 	return db.EnhancedQueryContext(context.Background(), query, args...)
 }
 
 // EnhancedQueryContext executes a query that returns rows.
 // 返回增强后的EnhanceRows对象，相比原生sql.Rows提供了更强的数据读取能力。
-func (db *sqlen) EnhancedQueryContext(ctx context.Context, query string, args ...interface{}) (*EnhanceRows, error) {
+func (db *DbEnhance) EnhancedQueryContext(ctx context.Context, query string, args ...interface{}) (*EnhanceRows, error) {
 	rows, err := db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err

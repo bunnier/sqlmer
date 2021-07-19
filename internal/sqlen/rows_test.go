@@ -22,7 +22,7 @@ func mustGetMssqlDb(t *testing.T) *sql.DB {
 }
 
 func TestEnhanceRows_MapScan(t *testing.T) {
-	db := Newsqlen(mustGetMssqlDb(t))
+	db := NewDbEnhance(mustGetMssqlDb(t))
 
 	const testNum int64 = 3
 	enhancedRows, err := db.EnhancedQuery("SELECT Id, VarcharTest FROM go_TypeTest WHERE Id<=@p1", testNum)
@@ -58,7 +58,7 @@ func TestEnhanceRows_MapScan(t *testing.T) {
 }
 
 func TestEnhanceRows_SliceScan(t *testing.T) {
-	db := Newsqlen(mustGetMssqlDb(t))
+	db := NewDbEnhance(mustGetMssqlDb(t))
 
 	const testNum int64 = 3
 	enhancedRows, err := db.EnhancedQuery("SELECT Id, VarcharTest, DecimalTest FROM go_TypeTest WHERE Id<=@p1", testNum)
@@ -95,7 +95,7 @@ func TestEnhanceRows_SliceScan(t *testing.T) {
 }
 
 func TestEnhanceRow_MapScan(t *testing.T) {
-	db := Newsqlen(mustGetMssqlDb(t))
+	db := NewDbEnhance(mustGetMssqlDb(t))
 	enhancedRow := db.EnhancedQueryRow("SELECT Id, VarcharTest, DecimalTest FROM go_TypeTest WHERE Id=1")
 
 	rowMap := make(map[string]interface{})
@@ -112,7 +112,7 @@ func TestEnhanceRow_MapScan(t *testing.T) {
 }
 
 func TestEnhanceRow_SliceScan(t *testing.T) {
-	db := Newsqlen(mustGetMssqlDb(t))
+	db := NewDbEnhance(mustGetMssqlDb(t))
 	enhancedRow := db.EnhancedQueryRow("SELECT Id, VarcharTest FROM go_TypeTest WHERE Id=1")
 
 	sliceRow, err := enhancedRow.SliceScan()
@@ -130,7 +130,7 @@ func TestEnhanceRow_SliceScan(t *testing.T) {
 }
 
 func TestEnhanceRow_Scan(t *testing.T) {
-	db := Newsqlen(mustGetMssqlDb(t))
+	db := NewDbEnhance(mustGetMssqlDb(t))
 	enhancedRow := db.EnhancedQueryRow("SELECT Id, VarcharTest FROM go_TypeTest WHERE Id=1")
 
 	var id int64
@@ -150,7 +150,7 @@ func TestEnhanceRow_Scan(t *testing.T) {
 }
 
 func TestEnhanceRow_Err(t *testing.T) {
-	db := Newsqlen(mustGetMssqlDb(t))
+	db := NewDbEnhance(mustGetMssqlDb(t))
 	sqlText := "SELECT Id, VarcharTest FROM go_TypeTest WHERE Id=100"
 
 	t.Run("SliceScan", func(t *testing.T) {
