@@ -17,7 +17,7 @@ const (
 // dbCacheMap 连接池缓存结构。
 type dbCacheMap struct {
 	init sync.Once          // 用来保证 Map 只会初始化一次。
-	m    sync.Mutex         // 用于确保同一个连接的创建过程不并发（TODO: 后续要考虑锁的粒度，理论上对连接串加锁即可）。
+	m    sync.RWMutex       // 用于确保同一个连接的创建过程不并发（TODO: 后续要考虑锁的粒度，理论上对连接串加锁即可）。
 	dbs  map[string]*sql.DB // 存放已经初始化的数据库对象，key 为连接字符串，value 为 sql.DB 对象。
 }
 
@@ -29,7 +29,9 @@ func getDb(ctx context.Context, driverName string, connectionString string) (*sq
 		dbCache.dbs = make(map[string]*sql.DB) // 确保只延迟初始化一次 CacheMap。
 	})
 
+	dbCache.m.RLock()
 	db, exist := dbCache.dbs[connectionString]
+	dbCache.m.RUnlock()
 	if exist {
 		return db, nil
 	}
@@ -37,7 +39,6 @@ func getDb(ctx context.Context, driverName string, connectionString string) (*sq
 	// 初始化可能失败，由于sync.Once在失败后无法再次运行，所以这里不采用 sync.Once 直接用锁控制。
 	dbCache.m.Lock()
 	defer dbCache.m.Unlock()
-
 	db, exist = dbCache.dbs[connectionString] // 锁内双校验。
 	if exist {
 		return db, nil
