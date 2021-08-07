@@ -7,14 +7,14 @@ import (
 
 var _ DbClient = (*MsSqlDbClient)(nil)
 
-// MsSqlDbClient 是针对SqlServer的DbClient实现。
+// MsSqlDbClient 是针对 SqlServer 的 DbClient 实现。
 type MsSqlDbClient struct {
 	internalDbClient
 }
 
-// NewMsSqlDbClient 用于创建一个MsSqlDbClient。
+// NewMsSqlDbClient 用于创建一个 MsSqlDbClient。
 func NewMsSqlDbClient(connectionString string, options ...DbClientOption) (*MsSqlDbClient, error) {
-	options = append(options, WithBindArgsFunc(bindMsSqlArgs)) // SqlServer要支持命名参数，需要定制一个参数解析函数。
+	options = append(options, WithBindArgsFunc(bindMsSqlArgs)) // SqlServer 要支持命名参数，需要定制一个参数解析函数。
 	config := NewDbClientConfig(SqlServeDriver, connectionString, options...)
 	internalDbClient, err := newInternalDbClient(config)
 
@@ -27,8 +27,8 @@ func NewMsSqlDbClient(connectionString string, options ...DbClientOption) (*MsSq
 	}, nil
 }
 
-// bindMsSqlArgs 用于对sql语句和参数进行预处理。
-// 第一个参数如果是map，且仅且只有一个参数的情况下，做命名参数处理；其余情况做位置参数处理。
+// bindMsSqlArgs 用于对 sql 语句和参数进行预处理。
+// 第一个参数如果是 map，且仅且只有一个参数的情况下，做命名参数处理；其余情况做位置参数处理。
 func bindMsSqlArgs(sqlText string, args ...interface{}) (string, []interface{}, error) {
 	if len(args) != 1 || reflect.ValueOf(args[0]).Kind() != reflect.Map {
 		return sqlText, args, nil

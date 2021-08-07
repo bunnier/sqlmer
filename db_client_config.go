@@ -11,7 +11,7 @@ type DbClientConfig struct {
 	execTimeout      time.Duration   // 语句执行超时时间。
 	driver           string          // 数据库驱动名称。
 	connectionString string          // 连接字符串。
-	bindArgsFunc     BindSqlArgsFunc // 用于处理sql语句和所给的参数。
+	bindArgsFunc     BindSqlArgsFunc // 用于处理 sql 语句和所给的参数。
 }
 
 // NewDbClientConfig 创建一个数据库连接配置。
@@ -34,27 +34,27 @@ func NewDbClientConfig(driver string, connectionString string, options ...DbClie
 	return config
 }
 
-// DbClientConfig 的可选配置。
+// DbClientOption 是 DbClientConfig 的可选配置。
 type DbClientOption func(config *DbClientConfig)
 
-// WithExecTimeout 用于为DbClientConfig设置默认的执行超时时间。
+// WithExecTimeout 用于为 DbClientConfig 设置默认的执行超时时间。
 func WithExecTimeout(timeout time.Duration) DbClientOption {
 	return func(config *DbClientConfig) {
 		config.execTimeout = timeout
 	}
 }
 
-// WithConnTimeout 用于为DbClientConfig设置获取数据库连接的超时时间。
+// WithConnTimeout 用于为 DbClientConfig 设置获取数据库连接的超时时间。
 func WithConnTimeout(timeout time.Duration) DbClientOption {
 	return func(config *DbClientConfig) {
 		config.connTimeout = timeout
 	}
 }
 
-// BindSqlArgsFunc 定义用于预处理sql语句与参数的函数。
+// BindSqlArgsFunc 定义用于预处理 sql 语句与参数的函数。
 type BindSqlArgsFunc func(string, ...interface{}) (string, []interface{}, error)
 
-// WithBindArgsFunc 用于为DbClientConfig设置处理参数的函数。
+// WithBindArgsFunc 用于为 DbClientConfig 设置处理参数的函数。
 func WithBindArgsFunc(argsFunc BindSqlArgsFunc) DbClientOption {
 	return func(config *DbClientConfig) {
 		config.bindArgsFunc = argsFunc

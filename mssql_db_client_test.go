@@ -9,7 +9,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// 获取一个SqlServer数据库的DbClient对象。
+// getMsSqlDbClient 用于 获取一个 SqlServer 数据库的DbClient对象。
 func getMsSqlDbClient() (DbClient, error) {
 	return NewMsSqlDbClient(
 		testConf.SqlServer,

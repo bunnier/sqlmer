@@ -1,4 +1,4 @@
-// sqlen 主要是数据库无关的封装，测试用例只用sqlserver做。
+// DbEnhance 主要是数据库无关的封装，测试用例只用sqlserver做。
 package sqlen
 
 import (

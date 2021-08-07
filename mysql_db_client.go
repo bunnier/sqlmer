@@ -12,12 +12,12 @@ import (
 
 var _ DbClient = (*MySqlDbClient)(nil)
 
-// MySqlDbClient 是针对MySql的DbClient实现。
+// MySqlDbClient 是针对 MySql 的 DbClient 实现。
 type MySqlDbClient struct {
 	internalDbClient
 }
 
-// NewSqlDbClient 用于创建一个MySqlDbClient。
+// NewMySqlDbClient 用于创建一个 MySqlDbClient。
 func NewMySqlDbClient(connectionString string, options ...DbClientOption) (*MySqlDbClient, error) {
 	if !strings.Contains(connectionString, "parseTime") {
 		if !strings.Contains(connectionString, "?") {
@@ -41,8 +41,8 @@ func NewMySqlDbClient(connectionString string, options ...DbClientOption) (*MySq
 	}, nil
 }
 
-// pretreatMsSqlArgs 用于对sql语句和参数进行预处理。
-// 第一个参数如果是map，且仅且只有一个参数的情况下，做命名参数处理；其余情况做位置参数处理。
+// bindMySqlArgs 用于对 sql 语句和参数进行预处理。
+// 第一个参数如果是 map，且仅且只有一个参数的情况下，做命名参数处理，其余情况做位置参数处理。
 func bindMySqlArgs(sqlText string, args ...interface{}) (string, []interface{}, error) {
 	namedParsedResult := parseMySqlNamedSql(sqlText)
 	paramNameCount := len(namedParsedResult.Names)
@@ -91,7 +91,7 @@ func bindMySqlArgs(sqlText string, args ...interface{}) (string, []interface{}, 
 	return namedParsedResult.Sql, resultArgs, nil
 }
 
-// 用于缓存parseMySqlNamedSql解析的结果。
+// 用于缓存 parseMySqlNamedSql 解析的结果。
 var mysqlNamedSqlParsedResult sync.Map
 
 type mysqlNamedParsedResult struct {
@@ -99,24 +99,24 @@ type mysqlNamedParsedResult struct {
 	Names []string // 原语句中用到的命名参数。
 }
 
-// 定义mysql参数名允许的字符。
+// 定义 mysql 参数名允许的字符。
 var mysqlParamNameAllowRunes = []*unicode.RangeTable{unicode.Letter, unicode.Digit}
 
-// 分析Sql语句，提取用到的命名参数名称（按顺序），并将@语句转换为mysql驱动支持的?形式。
+// 分析Sql语句，提取用到的命名参数名称（按顺序），并将 @ 占位参数转换为 mysql 驱动支持的 ? 形式。
 func parseMySqlNamedSql(sqlText string) *mysqlNamedParsedResult {
 	// 如果缓存中有数据，直接返回。
 	if cacheResult, ok := mysqlNamedSqlParsedResult.Load(sqlText); ok {
 		return cacheResult.(*mysqlNamedParsedResult)
 	}
 
-	sqlTextBytes := []byte(sqlText)                     // 原sql的bytes
-	fixedSqlBytes := make([]byte, 0, len(sqlTextBytes)) // 处理后sql的bytes。
-	names := make([]string, 0, 10)                      // sql中所有的参数名称。
+	sqlTextBytes := []byte(sqlText)                     // 原 sql 的 bytes
+	fixedSqlBytes := make([]byte, 0, len(sqlTextBytes)) // 处理后 sql 的 bytes。
+	names := make([]string, 0, 10)                      // sql 中所有的参数名称。
 
 	var name []byte                    // 存放解析过程中的参数名称。
 	inName := false                    // 标示当前字符是否正处于参数名称之中。
 	inString := false                  // 标示当前字符是否正处于字符串之中。
-	lastIndex := len(sqlTextBytes) - 1 // sql语句bytes的最后一个索引位置。
+	lastIndex := len(sqlTextBytes) - 1 // sql 语句 bytes 的最后一个索引位置。
 
 	for i, b := range sqlTextBytes {
 		switch {
@@ -129,7 +129,7 @@ func parseMySqlNamedSql(sqlText string) *mysqlNamedParsedResult {
 		case inString:
 			fixedSqlBytes = append(fixedSqlBytes, b)
 
-		// @符号标示参数名称部分开始。
+		// @ 符号标示参数名称部分开始。
 		case b == '@':
 			// 连续2个@可以用来转义，需要跳出作用域。
 			if inName && i > 0 && sqlTextBytes[i-1] == '@' {

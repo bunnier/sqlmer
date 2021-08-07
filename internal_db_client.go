@@ -10,16 +10,16 @@ import (
 
 var _ DbClient = (*internalDbClient)(nil)
 
-// internalDbClient 是通过sqlx实现的DbClient结构。
+// internalDbClient 是一个 DbClient 的抽象实现。
 type internalDbClient struct {
 	config *DbClientConfig      // 存储数据库连接配置。
-	SqlDB  *sql.DB              // 通过sqlx包装的数据库连接池。
+	SqlDB  *sql.DB              // 内部依赖的连接池。
 	Exer   sqlen.EnhancedDbExer // 获取方法实际使用的执行对象。
 }
 
-// 获取一个sqlxDbClient对象。
+// newInternalDbClient 用于获取一个 internalDbClient 对象。
 func newInternalDbClient(config *DbClientConfig) (internalDbClient, error) {
-	// 控制连接超时的context。
+	// 控制连接超时的 context。
 	ctx, cancelFunc := context.WithTimeout(context.Background(), config.connTimeout)
 	defer cancelFunc()
 
@@ -58,19 +58,19 @@ func (client *internalDbClient) ConnectionString() string {
 	return client.config.connectionString
 }
 
-// getExecTimeoutContext 用于获取数据库语句默认超时context。
+// getExecTimeoutContext 用于获取数据库语句默认超时 context。
 func (client *internalDbClient) getExecTimeoutContext() (context.Context, context.CancelFunc) {
 	return context.WithTimeout(context.Background(), client.config.execTimeout)
 }
 
 // Scalar 用于获取查询的第一行第一列的值。
 func (client *internalDbClient) Scalar(sqlText string, args ...interface{}) (interface{}, error) {
-	context, cancelFunc := client.getExecTimeoutContext()
+	ctx, cancelFunc := client.getExecTimeoutContext()
 	defer cancelFunc()
-	return client.ScalarContext(context, sqlText, args...)
+	return client.ScalarContext(ctx, sqlText, args...)
 }
 
-// Scalar 用于获取查询的第一行第一列的值。
+// ScalarContext 用于获取查询的第一行第一列的值。
 func (client *internalDbClient) ScalarContext(ctx context.Context, sqlText string, args ...interface{}) (interface{}, error) {
 	sqlText, args, err := client.config.bindArgsFunc(sqlText, args...)
 	if err != nil {
@@ -94,12 +94,12 @@ func (client *internalDbClient) ScalarContext(ctx context.Context, sqlText strin
 
 // Execute 用于执行非查询SQL语句，并返回所影响的行数。
 func (client *internalDbClient) Execute(sqlText string, args ...interface{}) (int64, error) {
-	context, cancelFunc := client.getExecTimeoutContext()
+	ctx, cancelFunc := client.getExecTimeoutContext()
 	defer cancelFunc()
-	return client.ExecuteContext(context, sqlText, args...)
+	return client.ExecuteContext(ctx, sqlText, args...)
 }
 
-// Execute 用于执行非查询SQL语句，并返回所影响的行数。
+// ExecuteContext 用于执行非查询 sql 语句，并返回所影响的行数。
 func (client *internalDbClient) ExecuteContext(ctx context.Context, sqlText string, args ...interface{}) (int64, error) {
 	sqlText, args, err := client.config.bindArgsFunc(sqlText, args...)
 	if err != nil {
@@ -112,14 +112,14 @@ func (client *internalDbClient) ExecuteContext(ctx context.Context, sqlText stri
 	return sqlResult.RowsAffected()
 }
 
-// SizedExecute 用于执行非查询SQL语句，并断言所影响的行数。若影响的函数不正确，抛出异常。
+// SizedExecute 用于执行非查询 sql 语句，并断言所影响的行数。若影响的函数不正确，抛出异常。
 func (client *internalDbClient) SizedExecute(expectedSize int64, sqlText string, args ...interface{}) error {
-	context, cancelFunc := client.getExecTimeoutContext()
+	ctx, cancelFunc := client.getExecTimeoutContext()
 	defer cancelFunc()
-	return client.SizedExecuteContext(context, expectedSize, sqlText, args...)
+	return client.SizedExecuteContext(ctx, expectedSize, sqlText, args...)
 }
 
-// SizedExecute 用于执行非查询SQL语句，并断言所影响的行数。若影响的函数不正确，抛出异常。
+// SizedExecuteContext 用于执行非查询 sql 语句，并断言所影响的行数。若影响的函数不正确，抛出异常。
 func (client *internalDbClient) SizedExecuteContext(ctx context.Context, expectedSize int64, sqlText string, args ...interface{}) error {
 	affectedRow, err := client.ExecuteContext(ctx, sqlText, args...)
 	if err != nil {
@@ -133,12 +133,12 @@ func (client *internalDbClient) SizedExecuteContext(ctx context.Context, expecte
 
 // Exists 用于判断给定的查询的结果是否至少包含1行。
 func (client *internalDbClient) Exists(sqlText string, args ...interface{}) (bool, error) {
-	context, cancelFunc := client.getExecTimeoutContext()
+	ctx, cancelFunc := client.getExecTimeoutContext()
 	defer cancelFunc()
-	return client.ExistsContext(context, sqlText, args...)
+	return client.ExistsContext(ctx, sqlText, args...)
 }
 
-// Exists 用于判断给定的查询的结果是否至少包含1行。
+// ExistsContext 用于判断给定的查询的结果是否至少包含1行。
 func (client *internalDbClient) ExistsContext(ctx context.Context, sqlText string, args ...interface{}) (bool, error) {
 	sqlText, args, err := client.config.bindArgsFunc(sqlText, args...)
 	if err != nil {
@@ -155,9 +155,9 @@ func (client *internalDbClient) ExistsContext(ctx context.Context, sqlText strin
 
 // Get 用于获取查询结果的第一行记录。
 func (client *internalDbClient) Get(sqlText string, args ...interface{}) (map[string]interface{}, error) {
-	context, cancelFunc := client.getExecTimeoutContext()
+	ctx, cancelFunc := client.getExecTimeoutContext()
 	defer cancelFunc()
-	return client.GetContext(context, sqlText, args...)
+	return client.GetContext(ctx, sqlText, args...)
 }
 
 // GetContext 用于获取查询结果的第一行记录。
@@ -182,12 +182,12 @@ func (client *internalDbClient) GetContext(ctx context.Context, sqlText string, 
 
 // SliceGet 用于获取查询结果得行序列。
 func (client *internalDbClient) SliceGet(sqlText string, args ...interface{}) ([]map[string]interface{}, error) {
-	context, cancelFunc := client.getExecTimeoutContext()
+	ctx, cancelFunc := client.getExecTimeoutContext()
 	defer cancelFunc()
-	return client.SliceGetContext(context, sqlText, args...)
+	return client.SliceGetContext(ctx, sqlText, args...)
 }
 
-// SliceGet 用于获取查询结果得行序列。
+// SliceGetContext 用于获取查询结果得行序列。
 func (client *internalDbClient) SliceGetContext(ctx context.Context, sqlText string, args ...interface{}) ([]map[string]interface{}, error) {
 	sqlText, args, err := client.config.bindArgsFunc(sqlText, args...)
 	if err != nil {
@@ -212,13 +212,13 @@ func (client *internalDbClient) SliceGetContext(ctx context.Context, sqlText str
 	return results, rows.Err()
 }
 
-// Rows 用于获取读取数据的游标sql.Rows。
+// Rows 用于获取读取数据的游标 sql.Rows。
 func (client *internalDbClient) Rows(sqlText string, args ...interface{}) (*sqlen.EnhanceRows, error) {
-	context, _ := client.getExecTimeoutContext()
-	return client.RowsContext(context, sqlText, args...)
+	ctx, _ := client.getExecTimeoutContext()
+	return client.RowsContext(ctx, sqlText, args...)
 }
 
-// RowsContext 用于获取读取数据的游标sql.Rows。
+// RowsContext 用于获取读取数据的游标 sql.Rows。
 func (client *internalDbClient) RowsContext(ctx context.Context, sqlText string, args ...interface{}) (*sqlen.EnhanceRows, error) {
 	sqlText, args, err := client.config.bindArgsFunc(sqlText, args...)
 	if err != nil {

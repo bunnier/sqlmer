@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-// EnhanceRows 用于在Enhanced方法中替换元生的sql.Rows。
+// EnhanceRows 用于在 Enhanced 方法中替换元生的 sql.Rows。
 type EnhanceRows struct {
 	*sql.Rows
 	err      error
@@ -13,7 +13,7 @@ type EnhanceRows struct {
 	colTypes []*sql.ColumnType
 }
 
-// 用Scan来查询数据，原生scan方法要求和查询的列完全一致，本方法做个兼容。
+// 用 Scan 来查询数据，原生 scan 方法要求和查询的列完全一致，本方法做个兼容。
 func (rs *EnhanceRows) scan() ([]interface{}, error) {
 	// 如果列的元数据为空，需要初始化。
 	if rs.columns == nil {
@@ -32,13 +32,13 @@ func (rs *EnhanceRows) scan() ([]interface{}, error) {
 		rs.colTypes = colTypes
 	}
 
-	// 用来存放Scan后返回的数据，db库要求和查询的列完全一致，所以需要判断columns长度。
+	// 用来存放 Scan 后返回的数据，db 库要求和查询的列完全一致，所以需要判断 columns 长度。
 	values := make([]interface{}, len(rs.columns))
 	for i := range values {
 		values[i] = new(interface{})
 	}
 
-	// 用原生row的Scan方法获取数据。
+	// 用原生 row 的 Scan 方法获取数据。
 	err := rs.Scan(values...)
 	if err != nil {
 		return nil, err
@@ -47,7 +47,7 @@ func (rs *EnhanceRows) scan() ([]interface{}, error) {
 	return values, nil
 }
 
-// MapScan 用于把一行数据填充到map中。
+// MapScan 用于把一行数据填充到 map 中。
 func (rs *EnhanceRows) MapScan(dest map[string]interface{}) error {
 	values, err := rs.scan()
 	if err != nil {
@@ -65,7 +65,7 @@ func (rs *EnhanceRows) MapScan(dest map[string]interface{}) error {
 	return rs.Err()
 }
 
-// SliceScan 用Slice的方式返回一行数据。
+// SliceScan 用 Slice 的方式返回一行数据。
 func (rs *EnhanceRows) SliceScan() ([]interface{}, error) {
 	values, err := rs.scan()
 	if err != nil {
@@ -90,13 +90,13 @@ func (r *EnhanceRows) Err() error {
 	return r.Rows.Err()
 }
 
-// mapDataType 用于处理数据库类型到go类型的映射关系。
+// mapDataType 用于处理数据库类型到 Go 类型的映射关系。
 func mapDataType(colType *sql.ColumnType, value interface{}) (interface{}, error) {
 	switch colType.DatabaseTypeName() {
 	default:
 		return value, nil // 非需要特殊处理的类型，直接返回。
 
-	// DECIMAL 类型统一使用string方式返回。
+	// DECIMAL 类型统一使用 string 方式返回。
 	case "DECIMAL":
 		switch v := value.(type) {
 		case []byte:
@@ -115,7 +115,7 @@ func mapDataType(colType *sql.ColumnType, value interface{}) (interface{}, error
 			return nil, fmt.Errorf("data: cannot convert DECIMAL field, colname=%s, value=%v", colType.Name(), v)
 		}
 
-	// 字符串在MySql中默认是byte数组，这里也做个处理。
+	// 字符串在 MySql 中默认是 byte 数组，这里也做个处理。
 	case "NVARCHAR", "VARCHAR":
 		switch v := value.(type) {
 		case []byte:
@@ -136,14 +136,14 @@ func mapDataType(colType *sql.ColumnType, value interface{}) (interface{}, error
 	}
 }
 
-// EnhanceRow 用于在Enhanced方法中替换元生的sql.Row。
-// 注意这里原生的sql.Row方法没有开放内部sql.Rows结构出来，所以直接通过sql.Rows实现。
+// EnhanceRow 用于在 Enhanced 方法中替换元生的 sql.Row。
+// 注意这里原生的 sql.Row 方法没有开放内部 sql.Rows 结构出来，所以直接通过 sql.Rows 实现。
 type EnhanceRow struct {
 	rows *EnhanceRows
 	err  error
 }
 
-// MapScan 用于把一行数据填充到map中。
+// Scan 用于把一行数据填充到 map 中。
 func (r *EnhanceRow) Scan(dest ...interface{}) error {
 	if r.err != nil {
 		return r.err
@@ -166,7 +166,7 @@ func (r *EnhanceRow) Scan(dest ...interface{}) error {
 	return r.rows.Scan(dest...)
 }
 
-// MapScan 用于把一行数据填充到map中。
+// MapScan 用于把一行数据填充到 map 中。
 func (r *EnhanceRow) MapScan(dest map[string]interface{}) error {
 	if r.err != nil {
 		return r.err
@@ -189,7 +189,7 @@ func (r *EnhanceRow) MapScan(dest map[string]interface{}) error {
 	return r.rows.MapScan(dest)
 }
 
-// SliceScan 用Slice返回一行数据。
+// SliceScan 用 Slice 返回一行数据。
 func (r *EnhanceRow) SliceScan() ([]interface{}, error) {
 	if r.err != nil {
 		return nil, r.err
