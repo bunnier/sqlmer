@@ -25,6 +25,8 @@ type MySqlDbClient struct {
 
 // NewMySqlDbClient 用于创建一个 MySqlDbClient。
 func NewMySqlDbClient(connectionString string, options ...sqlmer.DbClientOption) (*MySqlDbClient, error) {
+	// 依赖的驱动中，只有连接字符串中设置了 parseTime=true 才会转换 Date / Datetime 类型到 time.Time，
+	// 本库为了不同库中的类型一致，这里强制开启该设置。
 	if !strings.Contains(connectionString, "parseTime") {
 		if !strings.Contains(connectionString, "?") {
 			connectionString += "?"
