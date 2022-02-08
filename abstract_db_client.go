@@ -23,22 +23,29 @@ func NewInternalDbClient(config *DbClientConfig) (AbstractDbClient, error) {
 	ctx, cancelFunc := context.WithTimeout(context.Background(), config.connTimeout)
 	defer cancelFunc()
 
-	db, err := getDb(ctx, config.driver, config.connectionString)
-	if err != nil {
-		return AbstractDbClient{}, err
+	// db 可能已经由 option 传入了。
+	if config.db == nil {
+		if config.driver == "" || config.connectionString == "" {
+			return AbstractDbClient{}, errors.Wrap(ErrConnect, "driver or connectionString is empty")
+		}
+
+		var err error
+		config.db, err = getDb(ctx, config.driver, config.connectionString)
+		if err != nil {
+			return AbstractDbClient{}, err
+		}
 	}
 
 	return AbstractDbClient{
 		config,
-		db,
-		sqlen.NewDbEnhance(db),
+		config.db,
+		sqlen.NewDbEnhance(config.db),
 	}, nil
 }
 
 // 用于获取数据库连接池对象。
 func getDb(ctx context.Context, driverName string, connectionString string) (*sql.DB, error) {
 	db, err := sql.Open(driverName, connectionString) // 获取连接池。
-
 	if err != nil {
 		return nil, err
 	}
@@ -46,7 +53,6 @@ func getDb(ctx context.Context, driverName string, connectionString string) (*sq
 	if err = db.PingContext(ctx); err != nil { // Open 操作并不会实际建立链接，需要 ping 一下，确保连接可用。
 		return nil, err
 	}
-
 	return db, nil
 }
 

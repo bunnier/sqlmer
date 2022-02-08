@@ -21,10 +21,15 @@ type MsSqlDbClient struct {
 
 // NewMsSqlDbClient 用于创建一个 MsSqlDbClient。
 func NewMsSqlDbClient(connectionString string, options ...sqlmer.DbClientOption) (*MsSqlDbClient, error) {
-	options = append(options, sqlmer.WithBindArgsFunc(bindMsSqlArgs)) // SqlServer 要支持命名参数，需要定制一个参数解析函数。
-	config := sqlmer.NewDbClientConfig(DriverName, connectionString, options...)
-	internalDbClient, err := sqlmer.NewInternalDbClient(config)
+	options = append(options,
+		sqlmer.WithConnectionStringFunc(DriverName, connectionString),
+		sqlmer.WithBindArgsFunc(bindMsSqlArgs)) // SqlServer 要支持命名参数，需要定制一个参数解析函数。
+	config, err := sqlmer.NewDbClientConfig(options...)
+	if err != nil {
+		return nil, err
+	}
 
+	internalDbClient, err := sqlmer.NewInternalDbClient(config)
 	if err != nil {
 		return nil, err
 	}

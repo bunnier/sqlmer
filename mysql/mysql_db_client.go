@@ -36,10 +36,15 @@ func NewMySqlDbClient(connectionString string, options ...sqlmer.DbClientOption)
 		connectionString += "parseTime=true"
 	}
 
-	options = append(options, sqlmer.WithBindArgsFunc(bindMySqlArgs)) // mysql的驱动不支持命名参数，这里需要进行处理。
-	config := sqlmer.NewDbClientConfig(DriverName, connectionString, options...)
-	internalDbClient, err := sqlmer.NewInternalDbClient(config)
+	options = append(options,
+		sqlmer.WithConnectionStringFunc(DriverName, connectionString),
+		sqlmer.WithBindArgsFunc(bindMySqlArgs)) // mysql 的驱动不支持命名参数，这里需要进行处理。
+	config, err := sqlmer.NewDbClientConfig(options...)
+	if err != nil {
+		return nil, err
+	}
 
+	internalDbClient, err := sqlmer.NewInternalDbClient(config)
 	if err != nil {
 		return nil, err
 	}
