@@ -159,12 +159,17 @@ func (client *AbstractDbClient) ExistsContext(ctx context.Context, sqlText strin
 	if err != nil {
 		return false, err
 	}
+
 	rows, err := client.Exer.EnhancedQueryContext(ctx, sqlText, args...)
 	if err != nil {
 		return false, err
 	}
 	defer rows.Close()
+
 	hasData := rows.Next()
+	if err = rows.Err(); err != nil {
+		return false, err
+	}
 	return hasData, nil
 }
 
