@@ -20,11 +20,11 @@ https://pkg.go.dev/github.com/bunnier/sqlmer
 
 ```go
 func main() {
-	// 获取DbClient，这里使用SqlServer做示范，MySql也提供了一致的API和相应的参数解析逻辑。
-	dbClient, err := data.NewMsSqlDbClient(
+	// 获取 DbClient，这里使用 SqlServer 做示范，MySql 也提供了一致的 API 和相应的参数解析逻辑。
+	dbClient, err := mssql.NewMsSqlDbClient(
 		"server=127.0.0.1:1433; database=test; user id=dev;password=qwer1234;",
-		data.WithConnTimeout(time.Second*15), // 连接超时。
-		data.WithExecTimeout(time.Second*15), // 读写超时(执行语句时候，如果没有指定超时时间，默认用这个)。
+		sqlmer.WithConnTimeout(time.Second*15), // 连接超时。
+		sqlmer.WithExecTimeout(time.Second*15), // 读写超时(执行语句时候，如果没有指定超时时间，默认用这个)。
 	)
 	if err != nil {
 		fmt.Println(err)
