@@ -1,8 +1,9 @@
-package sqlmer
+package sqlmer_test
 
 import (
 	"testing"
 
+	"github.com/bunnier/sqlmer"
 	"github.com/pkg/errors"
 )
 
@@ -43,7 +44,7 @@ func Test_MssqlTransaction(t *testing.T) {
 	}
 }
 
-func TransactionFuncTest(t *testing.T, dbClient DbClient) {
+func TransactionFuncTest(t *testing.T, dbClient sqlmer.DbClient) {
 	// 测试事务回滚。
 	t.Run("rollback", func(t *testing.T) {
 		TransactionRollback(t, dbClient)
@@ -87,7 +88,7 @@ func TransactionFuncTest(t *testing.T, dbClient DbClient) {
 	})
 }
 
-func TransactionRollback(t *testing.T, dbClient DbClient) {
+func TransactionRollback(t *testing.T, dbClient sqlmer.DbClient) {
 	tx, err := dbClient.CreateTransaction()
 	if err != nil {
 		t.Errorf("dbClient.CreateTransaction() error = %v, wantErr nil", err)
@@ -117,7 +118,7 @@ func TransactionRollback(t *testing.T, dbClient DbClient) {
 	}
 }
 
-func TransactionCommit(t *testing.T, dbClient DbClient) {
+func TransactionCommit(t *testing.T, dbClient sqlmer.DbClient) {
 	tx, err := dbClient.CreateTransaction()
 	if err != nil {
 		t.Errorf("dbClient.CreateTransaction() error = %v, wantErr nil", err)
@@ -147,7 +148,7 @@ func TransactionCommit(t *testing.T, dbClient DbClient) {
 	}
 }
 
-func TransactionCommitAfterRollback(t *testing.T, dbClient DbClient) {
+func TransactionCommitAfterRollback(t *testing.T, dbClient sqlmer.DbClient) {
 	tx, err := dbClient.CreateTransaction()
 	if err != nil {
 		t.Errorf("dbClient.CreateTransaction() error = %v, wantErr nil", err)
@@ -170,7 +171,7 @@ func TransactionCommitAfterRollback(t *testing.T, dbClient DbClient) {
 	if err = tx.Commit(); err == nil { // 回滚后提交。
 		t.Errorf("transactionKeeper.Commit() error is nil, wantErr NewDbTransError")
 
-		if !errors.Is(err, ErrTran) {
+		if !errors.Is(err, sqlmer.ErrTran) {
 			t.Errorf("internalDbClient.Commit() error = %v, wantErr DbTransError", err)
 		}
 	}
@@ -184,7 +185,7 @@ func TransactionCommitAfterRollback(t *testing.T, dbClient DbClient) {
 	}
 }
 
-func TransactionRollbackAfterCommit(t *testing.T, dbClient DbClient) {
+func TransactionRollbackAfterCommit(t *testing.T, dbClient sqlmer.DbClient) {
 	tx, err := dbClient.CreateTransaction()
 	if err != nil {
 		t.Errorf("dbClient.CreateTransaction() error = %v, wantErr nil", err)
@@ -207,7 +208,7 @@ func TransactionRollbackAfterCommit(t *testing.T, dbClient DbClient) {
 	if err = tx.Rollback(); err == nil { // 提交后回滚。
 		t.Errorf("transactionKeeper.Rollback() error is nil, wantErr NewDbTransError")
 
-		if !errors.Is(err, ErrTran) {
+		if !errors.Is(err, sqlmer.ErrTran) {
 			t.Errorf("internalDbClient.Rollback() error = %v, wantErr DbTransError", err)
 		}
 	}
@@ -221,7 +222,7 @@ func TransactionRollbackAfterCommit(t *testing.T, dbClient DbClient) {
 	}
 }
 
-func TransactionEmbeddedCommit(t *testing.T, maxDepth int, currentDepth int, tx TransactionKeeper) {
+func TransactionEmbeddedCommit(t *testing.T, maxDepth int, currentDepth int, tx sqlmer.TransactionKeeper) {
 	tx, err := tx.CreateTransaction()
 	if err != nil {
 		t.Errorf("dbClient.CreateTransaction() Embeddeddly error = %v, wantErr nil", err)
@@ -241,7 +242,7 @@ func TransactionEmbeddedCommit(t *testing.T, maxDepth int, currentDepth int, tx 
 	defer tx.Close()
 }
 
-func TransactionEmbeddedRollback(t *testing.T, maxDepth int, currentDepth int, tx TransactionKeeper) {
+func TransactionEmbeddedRollback(t *testing.T, maxDepth int, currentDepth int, tx sqlmer.TransactionKeeper) {
 	tx, err := tx.CreateTransaction()
 	if err != nil {
 		t.Errorf("dbClient.CreateTransaction() Embeddeddly error = %v, wantErr nil", err)

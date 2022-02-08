@@ -12,7 +12,7 @@ type TestConf struct {
 	SqlServer string `yaml:"sqlserver"` // 测试用例使用的SqlServer连接字符串。
 }
 
-// LoadTestConfig 用于读取yaml定义的配置文件，并转换为相应protobuf定义的结构。
+// LoadTestConfig 用于读取yaml定义的配置文件，并转换为相应的结构。
 func LoadTestConfig(confPath string) (TestConf, error) {
 	yamlBytes, err := ioutil.ReadFile(confPath)
 	if err != nil {
@@ -22,4 +22,13 @@ func LoadTestConfig(confPath string) (TestConf, error) {
 	var testConf TestConf
 	err = yaml.Unmarshal(yamlBytes, &testConf)
 	return testConf, err
+}
+
+// MustLoadTestConfig 用于读取yaml定义的配置文件，并转换为相应的结构。
+func MustLoadTestConfig(confPath string) TestConf {
+	if conf, err := LoadTestConfig(confPath); err != nil {
+		panic(err)
+	} else {
+		return conf
+	}
 }

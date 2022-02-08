@@ -1,22 +1,29 @@
-package sqlmer
+package mssql
 
 import (
 	"database/sql"
 	"reflect"
+
+	"github.com/bunnier/sqlmer"
+
+	_ "github.com/denisenkom/go-mssqldb"
 )
 
-var _ DbClient = (*MsSqlDbClient)(nil)
+// DriverName 是 SqlServer 驱动名称。
+const DriverName = "sqlserver"
+
+var _ sqlmer.DbClient = (*MsSqlDbClient)(nil)
 
 // MsSqlDbClient 是针对 SqlServer 的 DbClient 实现。
 type MsSqlDbClient struct {
-	internalDbClient
+	sqlmer.AbstractDbClient
 }
 
 // NewMsSqlDbClient 用于创建一个 MsSqlDbClient。
-func NewMsSqlDbClient(connectionString string, options ...DbClientOption) (*MsSqlDbClient, error) {
-	options = append(options, WithBindArgsFunc(bindMsSqlArgs)) // SqlServer 要支持命名参数，需要定制一个参数解析函数。
-	config := NewDbClientConfig(SqlServeDriver, connectionString, options...)
-	internalDbClient, err := newInternalDbClient(config)
+func NewMsSqlDbClient(connectionString string, options ...sqlmer.DbClientOption) (*MsSqlDbClient, error) {
+	options = append(options, sqlmer.WithBindArgsFunc(bindMsSqlArgs)) // SqlServer 要支持命名参数，需要定制一个参数解析函数。
+	config := sqlmer.NewDbClientConfig(DriverName, connectionString, options...)
+	internalDbClient, err := sqlmer.NewInternalDbClient(config)
 
 	if err != nil {
 		return nil, err

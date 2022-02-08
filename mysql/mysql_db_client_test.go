@@ -1,4 +1,4 @@
-package sqlmer
+package mysql
 
 import (
 	"fmt"
@@ -7,16 +7,21 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bunnier/sqlmer"
+	"github.com/bunnier/sqlmer/internal/testenv"
 	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
 )
 
-// 获取mysql测试库的DbClient对象。
-func getMySqlDbClient() (DbClient, error) {
+// 初始化测试配置。
+var testConf testenv.TestConf = testenv.MustLoadTestConfig("test_conf.yml")
+
+// 用于获取一个 MySql 测试库的 DbClient 对象。
+func getMySqlDbClient() (sqlmer.DbClient, error) {
 	return NewMySqlDbClient(
 		testConf.MySql,
-		WithConnTimeout(time.Second*15),
-		WithExecTimeout(time.Second*15),
+		sqlmer.WithConnTimeout(time.Second*15),
+		sqlmer.WithExecTimeout(time.Second*15),
 	)
 }
 
@@ -31,8 +36,8 @@ func Test_NewMySqlDbClient(t *testing.T) {
 	}
 
 	_, err = NewMySqlDbClient("test",
-		WithConnTimeout(time.Second*15),
-		WithExecTimeout(time.Second*15))
+		sqlmer.WithConnTimeout(time.Second*15),
+		sqlmer.WithExecTimeout(time.Second*15))
 	if err == nil {
 		t.Errorf("mysqlDbClient.NewMsSqlDbClient() err = nil, want has a err")
 	}
@@ -69,7 +74,7 @@ func Test_bindMySqlArgs(t *testing.T) {
 			},
 			"",
 			nil,
-			ErrSql,
+			sqlmer.ErrSql,
 		},
 		{
 			"index",
@@ -85,7 +90,7 @@ func Test_bindMySqlArgs(t *testing.T) {
 			[]interface{}{1},
 			"",
 			nil,
-			ErrSql,
+			sqlmer.ErrSql,
 		},
 		{
 			"index_index_err2",
@@ -93,7 +98,7 @@ func Test_bindMySqlArgs(t *testing.T) {
 			[]interface{}{1},
 			"",
 			nil,
-			ErrSql,
+			sqlmer.ErrSql,
 		},
 		{
 			"index_index_err3",
@@ -101,7 +106,7 @@ func Test_bindMySqlArgs(t *testing.T) {
 			[]interface{}{1},
 			"",
 			nil,
-			ErrSql,
+			sqlmer.ErrSql,
 		},
 		{
 			"index_index_err4",
@@ -109,7 +114,7 @@ func Test_bindMySqlArgs(t *testing.T) {
 			[]interface{}{1},
 			"",
 			nil,
-			ErrSql,
+			sqlmer.ErrSql,
 		},
 		{
 			"index_reuse_index",

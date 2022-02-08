@@ -1,4 +1,4 @@
-package sqlmer
+package mysql
 
 import (
 	"reflect"
@@ -7,18 +7,24 @@ import (
 	"sync"
 	"unicode"
 
+	"github.com/bunnier/sqlmer"
 	"github.com/pkg/errors"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
-var _ DbClient = (*MySqlDbClient)(nil)
+// DriverName 是 MySql 驱动名称。
+const DriverName = "mysql"
+
+var _ sqlmer.DbClient = (*MySqlDbClient)(nil)
 
 // MySqlDbClient 是针对 MySql 的 DbClient 实现。
 type MySqlDbClient struct {
-	internalDbClient
+	sqlmer.AbstractDbClient
 }
 
 // NewMySqlDbClient 用于创建一个 MySqlDbClient。
-func NewMySqlDbClient(connectionString string, options ...DbClientOption) (*MySqlDbClient, error) {
+func NewMySqlDbClient(connectionString string, options ...sqlmer.DbClientOption) (*MySqlDbClient, error) {
 	if !strings.Contains(connectionString, "parseTime") {
 		if !strings.Contains(connectionString, "?") {
 			connectionString += "?"
@@ -28,9 +34,9 @@ func NewMySqlDbClient(connectionString string, options ...DbClientOption) (*MySq
 		connectionString += "parseTime=true"
 	}
 
-	options = append(options, WithBindArgsFunc(bindMySqlArgs)) // mysql的驱动不支持命名参数，这里需要进行处理。
-	config := NewDbClientConfig(MySqlDriver, connectionString, options...)
-	internalDbClient, err := newInternalDbClient(config)
+	options = append(options, sqlmer.WithBindArgsFunc(bindMySqlArgs)) // mysql的驱动不支持命名参数，这里需要进行处理。
+	config := sqlmer.NewDbClientConfig(DriverName, connectionString, options...)
+	internalDbClient, err := sqlmer.NewInternalDbClient(config)
 
 	if err != nil {
 		return nil, err
@@ -56,7 +62,7 @@ func bindMySqlArgs(sqlText string, args ...interface{}) (string, []interface{}, 
 			if value, ok := mapArgs[paramName]; ok {
 				resultArgs = append(resultArgs, value)
 			} else {
-				return "", nil, errors.Wrap(ErrSql, "lack of parameter:"+namedParsedResult.Sql)
+				return "", nil, errors.Wrap(sqlmer.ErrSql, "lack of parameter:"+namedParsedResult.Sql)
 			}
 		}
 		return namedParsedResult.Sql, resultArgs, nil
@@ -66,26 +72,26 @@ func bindMySqlArgs(sqlText string, args ...interface{}) (string, []interface{}, 
 	for _, paramName := range namedParsedResult.Names {
 		// 从参数名称提取索引。
 		if paramName[0] != 'p' {
-			return "", nil, errors.Wrap(ErrSql, "parameter error:"+namedParsedResult.Sql)
+			return "", nil, errors.Wrap(sqlmer.ErrSql, "parameter error:"+namedParsedResult.Sql)
 		}
 		index, err := strconv.Atoi(paramName[1:])
 		if err != nil {
-			return "", nil, errors.Wrap(ErrSql, "parameter error:"+namedParsedResult.Sql)
+			return "", nil, errors.Wrap(sqlmer.ErrSql, "parameter error:"+namedParsedResult.Sql)
 		}
 		index-- // 占位符从0开始。
 		if index < 0 || index > paramNameCount-1 {
-			return "", nil, errors.Wrap(ErrSql, "lack of parameter:"+namedParsedResult.Sql) // 索引对不上参数。
+			return "", nil, errors.Wrap(sqlmer.ErrSql, "lack of parameter:"+namedParsedResult.Sql) // 索引对不上参数。
 		}
 
 		if index >= argsCount {
-			return "", nil, errors.Wrap(ErrSql, "parameter error:"+namedParsedResult.Sql)
+			return "", nil, errors.Wrap(sqlmer.ErrSql, "parameter error:"+namedParsedResult.Sql)
 		}
 
 		resultArgs = append(resultArgs, args[index])
 	}
 
 	if paramNameCount > len(resultArgs) {
-		return "", nil, errors.Wrap(ErrSql, "parameter error:"+namedParsedResult.Sql)
+		return "", nil, errors.Wrap(sqlmer.ErrSql, "parameter error:"+namedParsedResult.Sql)
 	}
 
 	return namedParsedResult.Sql, resultArgs, nil

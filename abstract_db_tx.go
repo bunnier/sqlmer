@@ -11,7 +11,7 @@ var _ TransactionKeeper = (*sqlxDbTransactionKeeper)(nil)
 
 // sqlxDbClient 是通过sqlx实现的TransactionKeeper结构。
 type sqlxDbTransactionKeeper struct {
-	*internalDbClient
+	*AbstractDbClient
 	Tx *sql.Tx
 
 	// 当前事务是否已经完结，若完结则不允许再执行数据库操作。

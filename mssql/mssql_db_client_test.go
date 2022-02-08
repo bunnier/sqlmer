@@ -1,4 +1,4 @@
-package sqlmer
+package mssql
 
 import (
 	"database/sql"
@@ -6,15 +6,20 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bunnier/sqlmer"
+	"github.com/bunnier/sqlmer/internal/testenv"
 	"github.com/pkg/errors"
 )
 
-// getMsSqlDbClient 用于 获取一个 SqlServer 数据库的DbClient对象。
-func getMsSqlDbClient() (DbClient, error) {
+// 初始化测试配置。
+var testConf testenv.TestConf = testenv.MustLoadTestConfig("test_conf.yml")
+
+// 用于获取一个 SqlServer 数据库的 DbClient 对象。
+func getMsSqlDbClient() (sqlmer.DbClient, error) {
 	return NewMsSqlDbClient(
 		testConf.SqlServer,
-		WithConnTimeout(time.Second*15),
-		WithExecTimeout(time.Second*15),
+		sqlmer.WithConnTimeout(time.Second*15),
+		sqlmer.WithExecTimeout(time.Second*15),
 	)
 }
 
@@ -29,8 +34,8 @@ func Test_NewMsSqlDbClient(t *testing.T) {
 	}
 
 	_, err = NewMsSqlDbClient("test",
-		WithConnTimeout(time.Second*15),
-		WithExecTimeout(time.Second*15))
+		sqlmer.WithConnTimeout(time.Second*15),
+		sqlmer.WithExecTimeout(time.Second*15))
 	if err == nil {
 		t.Errorf("mssqlDbClient.NewMsSqlDbClient() err = nil, want has a err")
 	}

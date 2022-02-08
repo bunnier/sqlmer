@@ -1,4 +1,4 @@
-package sqlmer
+package sqlmer_test
 
 import (
 	"database/sql"
@@ -6,8 +6,32 @@ import (
 	"testing"
 	"time"
 
+	"github.com/bunnier/sqlmer"
+	"github.com/bunnier/sqlmer/internal/testenv"
+	"github.com/bunnier/sqlmer/mssql"
+	"github.com/bunnier/sqlmer/mysql"
 	"github.com/pkg/errors"
 )
+
+var testConf testenv.TestConf = testenv.MustLoadTestConfig("test_conf.yml")
+
+// 用于获取一个 SqlServer 测试库的 DbClient 对象。
+func getMsSqlDbClient() (sqlmer.DbClient, error) {
+	return mssql.NewMsSqlDbClient(
+		testConf.SqlServer,
+		sqlmer.WithConnTimeout(time.Second*15),
+		sqlmer.WithExecTimeout(time.Second*15),
+	)
+}
+
+// 用于获取一个 MySql 测试库的 DbClient 对象。
+func getMySqlDbClient() (sqlmer.DbClient, error) {
+	return mysql.NewMySqlDbClient(
+		testConf.MySql,
+		sqlmer.WithConnTimeout(time.Second*15),
+		sqlmer.WithExecTimeout(time.Second*15),
+	)
+}
 
 func Test_internalDbClient_Scalar(t *testing.T) {
 	mssqlClient, err := getMsSqlDbClient()
@@ -24,7 +48,7 @@ func Test_internalDbClient_Scalar(t *testing.T) {
 	}
 	tests := []struct {
 		name    string
-		client  DbClient
+		client  sqlmer.DbClient
 		args    args
 		want    interface{}
 		wantErr bool
@@ -80,7 +104,7 @@ func Test_internalDbClient_Execute(t *testing.T) {
 	}
 	tests := []struct {
 		name    string
-		client  DbClient
+		client  sqlmer.DbClient
 		args    args
 		wantErr bool
 	}{
@@ -122,7 +146,7 @@ func Test_internalDbClient_Execute(t *testing.T) {
 			}
 
 			err = tt.client.SizedExecute(2, tt.args.sqlText, tt.args.args...)
-			if !errors.Is(err, ErrSql) {
+			if !errors.Is(err, sqlmer.ErrSql) {
 				t.Errorf("internalDbClient.SizedExecute() error = %v, wantErr DbSqlError", err)
 			}
 		})
@@ -144,7 +168,7 @@ func Test_internalDbClient_Exists(t *testing.T) {
 	}
 	tests := []struct {
 		name    string
-		client  DbClient
+		client  sqlmer.DbClient
 		args    args
 		want    bool
 		wantErr bool
@@ -219,7 +243,7 @@ func Test_internalDbClient_Get(t *testing.T) {
 	}
 	tests := []struct {
 		name    string
-		client  DbClient
+		client  sqlmer.DbClient
 		args    args
 		want    map[string]interface{}
 		wantErr bool
@@ -288,7 +312,7 @@ func Test_internalDbClient_SliceGet(t *testing.T) {
 	}
 	tests := []struct {
 		name    string
-		client  DbClient
+		client  sqlmer.DbClient
 		args    args
 		want    []map[string]interface{}
 		wantErr bool
@@ -377,7 +401,7 @@ func Test_internalDbClient_Rows(t *testing.T) {
 	}
 	tests := []struct {
 		name    string
-		client  DbClient
+		client  sqlmer.DbClient
 		args    args
 		want    []map[string]interface{}
 		wantErr bool

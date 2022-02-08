@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/bunnier/sqlmer"
 	"github.com/bunnier/sqlmer/internal/testenv"
+	"github.com/bunnier/sqlmer/mssql"
+	"github.com/bunnier/sqlmer/mysql"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -46,7 +47,7 @@ func Prepare(testConf testenv.TestConf) {
 
 	// 初始化SqlServer测试表。
 	errgroup.Go(func() error {
-		db, err := getDb(sqlmer.SqlServeDriver, testConf.SqlServer)
+		db, err := getDb(mssql.DriverName, testConf.SqlServer)
 		if err != nil {
 			return err
 		}
@@ -55,7 +56,7 @@ func Prepare(testConf testenv.TestConf) {
 
 	// 初始化MySql测试表。
 	errgroup.Go(func() error {
-		db, err := getDb(sqlmer.MySqlDriver, testConf.MySql)
+		db, err := getDb(mysql.DriverName, testConf.MySql)
 		if err != nil {
 			return err
 		}
@@ -73,7 +74,7 @@ func Clean(testConf testenv.TestConf) {
 
 	// 销毁SqlServer测试表。
 	errgroup.Go(func() error {
-		db, err := getDb(sqlmer.SqlServeDriver, testConf.SqlServer)
+		db, err := getDb(mssql.DriverName, testConf.SqlServer)
 		if err != nil {
 			return err
 		}
@@ -82,7 +83,7 @@ func Clean(testConf testenv.TestConf) {
 
 	// 销毁MySql测试表。
 	errgroup.Go(func() error {
-		db, err := getDb(sqlmer.MySqlDriver, testConf.MySql)
+		db, err := getDb(mysql.DriverName, testConf.MySql)
 		if err != nil {
 			return err
 		}
