@@ -6,7 +6,6 @@ import (
 	"strings"
 	"testing"
 	"time"
-
 	"github.com/bunnier/sqlmer"
 	"github.com/bunnier/sqlmer/internal/testenv"
 	"github.com/pkg/errors"

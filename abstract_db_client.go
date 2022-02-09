@@ -9,6 +9,8 @@ import (
 )
 
 var _ DbClient = (*AbstractDbClient)(nil)
+var _ errorDbClient = (*AbstractDbClient)(nil)
+var _ mustDbClient = (*AbstractDbClient)(nil)
 
 // AbstractDbClient 是一个 DbClient 的抽象实现。
 type AbstractDbClient struct {
@@ -56,6 +58,16 @@ func getDb(ctx context.Context, driverName string, connectionString string) (*sq
 	return db, nil
 }
 
+// getExecTimeoutContext 用于获取数据库语句默认超时 context。
+func (client *AbstractDbClient) getExecTimeoutContext() (context.Context, context.CancelFunc) {
+	return context.WithTimeout(context.Background(), client.config.execTimeout)
+}
+
+// ConnectionString 用于获取当前实例所使用的数据库连接字符串。
+func (client *AbstractDbClient) ConnectionString() string {
+	return client.config.connectionString
+}
+
 // CreateTransaction 用于开始一个事务。
 func (client *AbstractDbClient) CreateTransaction() (TransactionKeeper, error) {
 	tx, err := client.SqlDB.Begin()
@@ -69,19 +81,9 @@ func (client *AbstractDbClient) CreateTransaction() (TransactionKeeper, error) {
 		sqlen.NewTxEnhance(tx), // 新的client中的实际执行对象使用开启的事务。
 	}
 
-	return &sqlxDbTransactionKeeper{
+	return &abstractTransactionKeeper{
 		txDbClient, tx, false, 0,
 	}, nil
-}
-
-// ConnectionString 用于获取当前实例所使用的数据库连接字符串。
-func (client *AbstractDbClient) ConnectionString() string {
-	return client.config.connectionString
-}
-
-// getExecTimeoutContext 用于获取数据库语句默认超时 context。
-func (client *AbstractDbClient) getExecTimeoutContext() (context.Context, context.CancelFunc) {
-	return context.WithTimeout(context.Background(), client.config.execTimeout)
 }
 
 // Scalar 用于获取查询的第一行第一列的值。
@@ -255,4 +257,135 @@ func (client *AbstractDbClient) RowsContext(ctx context.Context, sqlText string,
 		return nil, err
 	}
 	return rows, nil
+}
+
+// MustCreateTransaction 用于开始一个事务。
+func (client *AbstractDbClient) MustCreateTransaction() TransactionKeeper {
+	if trans, err := client.CreateTransaction(); err != nil {
+		panic(err)
+	} else {
+		return trans
+	}
+}
+
+// MustScalar 用于获取查询的第一行第一列的值。
+func (client *AbstractDbClient) MustScalar(sqlText string, args ...interface{}) interface{} {
+	if res, err := client.Scalar(sqlText, args...); err != nil {
+		panic(err)
+	} else {
+		return res
+	}
+}
+
+// MustScalarContext 用于获取查询的第一行第一列的值。
+func (client *AbstractDbClient) MustScalarContext(ctx context.Context, sqlText string, args ...interface{}) interface{} {
+	if res, err := client.ScalarContext(ctx, sqlText, args...); err != nil {
+		panic(err)
+	} else {
+		return res
+	}
+}
+
+// MustExecute 用于执行非查询SQL语句，并返回所影响的行数。
+func (client *AbstractDbClient) MustExecute(sqlText string, args ...interface{}) int64 {
+	if res, err := client.Execute(sqlText, args...); err != nil {
+		panic(err)
+	} else {
+		return res
+	}
+}
+
+// MustExecuteContext 用于执行非查询 sql 语句，并返回所影响的行数。
+func (client *AbstractDbClient) MustExecuteContext(ctx context.Context, sqlText string, args ...interface{}) int64 {
+	if res, err := client.ExecuteContext(ctx, sqlText, args...); err != nil {
+		panic(err)
+	} else {
+		return res
+	}
+}
+
+// MustSizedExecute 用于执行非查询 sql 语句，并断言所影响的行数。若影响的函数不正确，抛出异常。
+func (client *AbstractDbClient) MustSizedExecute(expectedSize int64, sqlText string, args ...interface{}) {
+	if err := client.SizedExecute(expectedSize, sqlText, args...); err != nil {
+		panic(err)
+	}
+}
+
+// MustSizedExecuteContext 用于执行非查询 sql 语句，并断言所影响的行数。若影响的函数不正确，抛出异常。
+func (client *AbstractDbClient) MustSizedExecuteContext(ctx context.Context, expectedSize int64, sqlText string, args ...interface{}) {
+	if err := client.SizedExecuteContext(ctx, expectedSize, sqlText, args...); err != nil {
+		panic(err)
+	}
+}
+
+// MustExists 用于判断给定的查询的结果是否至少包含1行。
+func (client *AbstractDbClient) MustExists(sqlText string, args ...interface{}) bool {
+	if res, err := client.Exists(sqlText, args...); err != nil {
+		panic(err)
+	} else {
+		return res
+	}
+}
+
+// MustExistsContext 用于判断给定的查询的结果是否至少包含1行。
+func (client *AbstractDbClient) MustExistsContext(ctx context.Context, sqlText string, args ...interface{}) bool {
+	if res, err := client.ExistsContext(ctx, sqlText, args...); err != nil {
+		panic(err)
+	} else {
+		return res
+	}
+}
+
+// MustGet 用于获取查询结果的第一行记录。
+func (client *AbstractDbClient) MustGet(sqlText string, args ...interface{}) map[string]interface{} {
+	if res, err := client.Get(sqlText, args...); err != nil {
+		panic(err)
+	} else {
+		return res
+	}
+}
+
+// MustGetContext 用于获取查询结果的第一行记录。
+func (client *AbstractDbClient) MustGetContext(ctx context.Context, sqlText string, args ...interface{}) map[string]interface{} {
+	if res, err := client.GetContext(ctx, sqlText, args...); err != nil {
+		panic(err)
+	} else {
+		return res
+	}
+}
+
+// MustSliceGet 用于获取查询结果得行序列。
+func (client *AbstractDbClient) MustSliceGet(sqlText string, args ...interface{}) []map[string]interface{} {
+	if res, err := client.SliceGet(sqlText, args...); err != nil {
+		panic(err)
+	} else {
+		return res
+	}
+}
+
+// MustSliceGetContext 用于获取查询结果得行序列。
+func (client *AbstractDbClient) MustSliceGetContext(ctx context.Context, sqlText string, args ...interface{}) []map[string]interface{} {
+	if res, err := client.SliceGetContext(ctx, sqlText, args...); err != nil {
+		panic(err)
+	} else {
+		return res
+	}
+}
+
+// MustRows 用于获取读取数据的游标 sql.Rows。
+func (client *AbstractDbClient) MustRows(sqlText string, args ...interface{}) *sqlen.EnhanceRows {
+	if res, err := client.Rows(sqlText, args...); err != nil {
+		panic(err)
+	} else {
+		return res
+	}
+}
+
+// MustRowsContext 用于获取读取数据的游标 sql.Rows。
+func (client *AbstractDbClient) MustRowsContext(ctx context.Context, sqlText string, args ...interface{}) *sqlen.EnhanceRows {
+	if res, err := client.RowsContext(ctx, sqlText, args...); err != nil {
+		panic(err)
+	} else {
+		return res
+	}
 }

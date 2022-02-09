@@ -6,11 +6,13 @@ import (
 	"github.com/pkg/errors"
 )
 
-var _ DbClient = (*sqlxDbTransactionKeeper)(nil)
-var _ TransactionKeeper = (*sqlxDbTransactionKeeper)(nil)
+var _ DbClient = (*abstractTransactionKeeper)(nil)
+var _ TransactionKeeper = (*abstractTransactionKeeper)(nil)
+var _ errorTransactionKeeper = (*abstractTransactionKeeper)(nil)
+var _ mustTransactionKeeper = (*abstractTransactionKeeper)(nil)
 
-// sqlxDbClient 是通过sqlx实现的TransactionKeeper结构。
-type sqlxDbTransactionKeeper struct {
+// abstractTransactionKeeper 是通过 TransactionKeeper 结构。
+type abstractTransactionKeeper struct {
 	*AbstractDbClient
 	Tx *sql.Tx
 
@@ -23,7 +25,7 @@ type sqlxDbTransactionKeeper struct {
 }
 
 // Commit 用于提交事务。
-func (transKeeper *sqlxDbTransactionKeeper) Commit() error {
+func (transKeeper *abstractTransactionKeeper) Commit() error {
 	if transKeeper.embeddedLevel > 0 {
 		// 说明是嵌套事务，直接返回交给上层提交。
 		return nil
@@ -38,7 +40,7 @@ func (transKeeper *sqlxDbTransactionKeeper) Commit() error {
 }
 
 // Rollback 用于回滚事务。
-func (transKeeper *sqlxDbTransactionKeeper) Rollback() error {
+func (transKeeper *abstractTransactionKeeper) Rollback() error {
 	if transKeeper.embeddedLevel > 0 {
 		// 说明是嵌套事务，直接返回交给上层回滚。
 		return nil
@@ -53,7 +55,7 @@ func (transKeeper *sqlxDbTransactionKeeper) Rollback() error {
 }
 
 // Close 用于优雅关闭事务，创建事务后应defer执行本方法。
-func (transKeeper *sqlxDbTransactionKeeper) Close() error {
+func (transKeeper *abstractTransactionKeeper) Close() error {
 	transKeeper.embeddedLevel--
 	if transKeeper.embeddedLevel != 0 || transKeeper.transactionCompleted {
 		return nil
@@ -62,7 +64,37 @@ func (transKeeper *sqlxDbTransactionKeeper) Close() error {
 }
 
 // CreateTransaction 用于开始一个事务。
-func (transKeeper *sqlxDbTransactionKeeper) CreateTransaction() (TransactionKeeper, error) {
+func (transKeeper *abstractTransactionKeeper) CreateTransaction() (TransactionKeeper, error) {
 	transKeeper.embeddedLevel++
 	return transKeeper, nil
+}
+
+// MustCommit 用于提交事务。
+func (transKeeper *abstractTransactionKeeper) MustCommit() {
+	if err := transKeeper.Commit(); err != nil {
+		panic(err)
+	}
+}
+
+// MustRollback 用于回滚事务。
+func (transKeeper *abstractTransactionKeeper) MustRollback() {
+	if err := transKeeper.Rollback(); err != nil {
+		panic(err)
+	}
+}
+
+// MustClose 用于优雅关闭事务，创建事务后应defer执行本方法。
+func (transKeeper *abstractTransactionKeeper) MustClose() {
+	if err := transKeeper.Close(); err != nil {
+		panic(err)
+	}
+}
+
+// MustCreateTransaction 用于开始一个事务。
+func (transKeeper *abstractTransactionKeeper) MustCreateTransaction() TransactionKeeper {
+	if trans, err := transKeeper.CreateTransaction(); err != nil {
+		panic(err)
+	} else {
+		return trans
+	}
 }
