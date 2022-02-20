@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/bunnier/sqlmer/internal/sqlen"
+	"github.com/bunnier/sqlmer/sqlen"
 	"github.com/pkg/errors"
 )
 

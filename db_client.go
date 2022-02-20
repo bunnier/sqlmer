@@ -3,7 +3,7 @@ package sqlmer
 import (
 	"context"
 
-	"github.com/bunnier/sqlmer/internal/sqlen"
+	"github.com/bunnier/sqlmer/sqlen"
 )
 
 // DbClient 定义了数据库访问客户端。

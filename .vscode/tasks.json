@@ -14,7 +14,7 @@
         {
             "label": "Test", // 测试本库。
             "type": "shell",
-            "command": "go test -v -timeout 30s ./internal/sqlen .",
+            "command": "go test -v -timeout 30s ./sqlen .",
         },
         {
             "label": "TestFlow", // 运行整个测试流程
