@@ -18,12 +18,6 @@ type errorDbClient interface {
 	// CreateTransaction 用于开始一个事务。
 	CreateTransaction() (TransactionKeeper, error)
 
-	// Scalar 用于获取查询的第一行第一列的值。
-	Scalar(sqlText string, args ...interface{}) (interface{}, error)
-
-	// ScalarContext 用于获取查询的第一行第一列的值。
-	ScalarContext(context context.Context, sqlText string, args ...interface{}) (interface{}, error)
-
 	// Execute 用于执行非查询SQL语句，并返回所影响的行数。
 	Execute(sqlText string, args ...interface{}) (int64, error)
 
@@ -36,11 +30,17 @@ type errorDbClient interface {
 	// SizedExecuteContext 用于执行非查询SQL语句，并断言所影响的行数。若影响的函数不正确，抛出异常。
 	SizedExecuteContext(context context.Context, expectedSize int64, sqlText string, args ...interface{}) error
 
-	// Exists 用于判断给定的查询的结果是否至少包含1行。
+	// Exists 用于判断给定的查询的结果是否至少包含 1 行。
 	Exists(sqlText string, args ...interface{}) (bool, error)
 
-	// ExistsContext 用于判断给定的查询的结果是否至少包含1行。
+	// ExistsContext 用于判断给定的查询的结果是否至少包含 1 行。
 	ExistsContext(context context.Context, sqlText string, args ...interface{}) (bool, error)
+
+	// Scalar 用于获取查询的第一行第一列的值。
+	Scalar(sqlText string, args ...interface{}) (interface{}, error)
+
+	// ScalarContext 用于获取查询的第一行第一列的值。
+	ScalarContext(context context.Context, sqlText string, args ...interface{}) (interface{}, error)
 
 	// Get 用于获取查询结果的第一行记录。
 	Get(sqlText string, args ...interface{}) (map[string]interface{}, error)
@@ -54,10 +54,16 @@ type errorDbClient interface {
 	// SliceGetContext 用于获取查询结果得行序列。
 	SliceGetContext(context context.Context, sqlText string, args ...interface{}) ([]map[string]interface{}, error)
 
-	// Rows 用于获取查询结果得行序列。
+	// Row 用于获取单个查询结果行。
+	Row(sqlText string, args ...interface{}) (*sqlen.EnhanceRow, error)
+
+	// RowsContext 用于获取单个查询结果行。
+	RowContext(context context.Context, sqlText string, args ...interface{}) (*sqlen.EnhanceRow, error)
+
+	// Rows 用于获取查询结果行序列。
 	Rows(sqlText string, args ...interface{}) (*sqlen.EnhanceRows, error)
 
-	// RowsContext 用于获取查询结果得行序列。
+	// RowsContext 用于获取查询结果行序列。
 	RowsContext(context context.Context, sqlText string, args ...interface{}) (*sqlen.EnhanceRows, error)
 }
 
@@ -66,46 +72,60 @@ type mustDbClient interface {
 	// MustCreateTransaction 用于开始一个事务。
 	MustCreateTransaction() TransactionKeeper
 
-	// MustScalar 用于获取查询的第一行第一列的值。
-	MustScalar(sqlText string, args ...interface{}) interface{}
-
-	// MustScalarContext 用于获取查询的第一行第一列的值。
-	MustScalarContext(context context.Context, sqlText string, args ...interface{}) interface{}
-
-	// MustExecute 用于执行非查询SQL语句，并返回所影响的行数。
+	// MustExecute 用于执行非查询 sql 语句，并返回所影响的行数。
 	MustExecute(sqlText string, args ...interface{}) int64
 
 	// MustExecuteContext 用于执行非查询SQL语句，并返回所影响的行数。
 	MustExecuteContext(context context.Context, sqlText string, args ...interface{}) int64
 
-	// MustSizedExecute 用于执行非查询SQL语句，并断言所影响的行数。若影响的函数不正确，抛出异常。
+	// MustSizedExecute 用于执行非查询 sql 语句，并断言所影响的行数。
 	MustSizedExecute(expectedSize int64, sqlText string, args ...interface{})
 
-	// MustSizedExecuteContext 用于执行非查询SQL语句，并断言所影响的行数。若影响的函数不正确，抛出异常。
+	// MustSizedExecuteContext 用于执行非查询 sql 语句，并断言所影响的行数。
 	MustSizedExecuteContext(context context.Context, expectedSize int64, sqlText string, args ...interface{})
 
-	// MustExists 用于判断给定的查询的结果是否至少包含1行。
+	// MustExists 用于判断给定的查询的结果是否至少包含 1 行。
+	// 注意：当查询不到行时候，将返回 false，而不是 panic。
 	MustExists(sqlText string, args ...interface{}) bool
 
-	// MustExistsContext 用于判断给定的查询的结果是否至少包含1行。
+	// MustExistsContext 用于判断给定的查询的结果是否至少包含 1 行。
+	// 注意：当查询不到行时候，将返回 false，而不是 panic。
 	MustExistsContext(context context.Context, sqlText string, args ...interface{}) bool
 
+	// MustScalar 用于获取查询的第一行第一列的值。
+	// 注意：当查询不到数据的时候，将返回 nil，而不是 panic。
+	MustScalar(sqlText string, args ...interface{}) interface{}
+
+	// MustScalarContext 用于获取查询的第一行第一列的值。
+	// 注意：当查询不到数据的时候，将返回 nil，而不是 panic。
+	MustScalarContext(context context.Context, sqlText string, args ...interface{}) interface{}
+
 	// MustGet 用于获取查询结果的第一行记录。
+	// 注意：当查询不到行时候，将返回 nil，而不是 panic。
 	MustGet(sqlText string, args ...interface{}) map[string]interface{}
 
 	// MustGetContext 用于获取查询结果的第一行记录。
+	// 注意：当查询不到行时候，将返回 nil，而不是 panic。
 	MustGetContext(context context.Context, sqlText string, args ...interface{}) map[string]interface{}
 
 	// MustSliceGet 用于获取查询结果得行序列。
+	// 注意：当查询不到行时候，将返回 nil，而不是 panic。
 	MustSliceGet(sqlText string, args ...interface{}) []map[string]interface{}
 
 	// MustSliceGetContext 用于获取查询结果得行序列。
+	// 注意：当查询不到行时候，将返回 nil，而不是 panic。
 	MustSliceGetContext(context context.Context, sqlText string, args ...interface{}) []map[string]interface{}
 
-	// MustRows 用于获取查询结果得行序列。
+	// MustRow 用于获取单个查询结果行。
+	MustRow(sqlText string, args ...interface{}) *sqlen.EnhanceRow
+
+	// MustRowContext 用于获取单个查询结果行。
+	MustRowContext(context context.Context, sqlText string, args ...interface{}) *sqlen.EnhanceRow
+
+	// MustRows 用于获取读取数据的游标 sql.Rows。
 	MustRows(sqlText string, args ...interface{}) *sqlen.EnhanceRows
 
-	// MustRowsContext 用于获取查询结果得行序列。
+	// MustRowsContext 用于获取读取数据的游标 sql.Rows。
 	MustRowsContext(context context.Context, sqlText string, args ...interface{}) *sqlen.EnhanceRows
 }
 

@@ -153,8 +153,8 @@ func (r *EnhanceRow) Scan(dest ...interface{}) error {
 		r.err = sql.ErrNoRows
 		return r.err
 	}
-	defer r.rows.Close()
 
+	defer r.rows.Close()
 	if !r.rows.Next() {
 		if err := r.rows.Err(); err != nil {
 			return err
@@ -176,8 +176,8 @@ func (r *EnhanceRow) MapScan(dest map[string]interface{}) error {
 		r.err = sql.ErrNoRows
 		return r.err
 	}
-	defer r.rows.Close()
 
+	defer r.rows.Close()
 	if !r.rows.Next() {
 		if err := r.rows.Err(); err != nil {
 			return err
