@@ -51,7 +51,7 @@ CREATE TABLE MainDemo(
 		fmt.Println("timeout: " + err.Error()) // 预期内的超时~
 	}
 
-	// 索引方式插入数据，@p1...@pn，分别对应第1-n个参数。
+	// 索引方式插入数据，@p1...@pn，分别对应第 1-n 个参数。
 	_, err = dbClient.Execute("INSERT INTO MainDemo(Name, Age) VALUES(@p1, @p2)", "rui", 1)
 	if err != nil {
 		log.Fatal(err)
@@ -63,13 +63,13 @@ CREATE TABLE MainDemo(
 		return
 	}
 
-	// 命名参数查询数据，命名参数采用map，key为sql语句@之后的参数名，value为值。
+	// 命名参数查询数据，命名参数采用 map，key 为 sql 语句 @ 之后的参数名，value 为值。
 	data, err := dbClient.Get("SELECT * FROM MainDemo WHERE Name=@name", map[string]interface{}{"name": "rui"})
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
-	fmt.Println(data) // map方式返回，需要结构的，需要自己转换。
+	fmt.Println(data) // map 方式返回，需要结构的，需要自己转换。
 
 	// 获取第一行第一列。
 	name, err := dbClient.Scalar("SELECT Name FROM MainDemo WHERE Name=@p1", "rui")
@@ -78,7 +78,7 @@ CREATE TABLE MainDemo(
 		return
 	}
 	
-	// 返回interface{}，类型可以自己转换。已经统一了Sql Server和MySql返回的类型（注意：Decimal使用string返回）。
+	// 返回interface{}，类型可以自己转换。已经统一了 Sql Server 和 MySql 返回的类型（注意：Decimal 使用 string返回）。
 	fmt.Println(name.(string)) 
 
 	// 获取增强后的sql.Rows（支持SliceScan、MapScan）。
@@ -88,7 +88,7 @@ CREATE TABLE MainDemo(
 		return
 	}
 	for sliceRows.Next() {
-		sliceRow, err := sliceRows.SliceScan() // SliceScan用[]interface{}方式返回。
+		sliceRow, err := sliceRows.SliceScan() // SliceScan 用 []interface{} 方式返回。
 		if err != nil {
 			log.Fatal(err)
 			return

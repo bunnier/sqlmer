@@ -21,7 +21,7 @@ func init() {
 	flag.Parse()
 }
 
-// 这个cmd用于准备或销毁测试环境数据。
+// 这个 cmd 用于准备或销毁测试环境数据。
 func main() {
 	conf, err := testenv.LoadTestConfig(configFile)
 	if err != nil {
@@ -54,7 +54,7 @@ func Prepare(testConf testenv.TestConf) {
 		return testenv.CreateMssqlSchema(db)
 	})
 
-	// 初始化MySql测试表。
+	// 初始化 MySql 测试表。
 	errgroup.Go(func() error {
 		db, err := getDb(mysql.DriverName, testConf.MySql)
 		if err != nil {
@@ -72,7 +72,7 @@ func Prepare(testConf testenv.TestConf) {
 func Clean(testConf testenv.TestConf) {
 	var errgroup errgroup.Group
 
-	// 销毁SqlServer测试表。
+	// 销毁 SqlServer 测试表。
 	errgroup.Go(func() error {
 		db, err := getDb(mssql.DriverName, testConf.SqlServer)
 		if err != nil {
@@ -81,7 +81,7 @@ func Clean(testConf testenv.TestConf) {
 		return testenv.DropMssqlSchema(db)
 	})
 
-	// 销毁MySql测试表。
+	// 销毁 MySql 测试表。
 	errgroup.Go(func() error {
 		db, err := getDb(mysql.DriverName, testConf.MySql)
 		if err != nil {

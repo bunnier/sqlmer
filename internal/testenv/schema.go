@@ -67,7 +67,7 @@ VALUES (N'行4', '2021-07-04', '2021-07-04 15:38:50.425','2021-07-04 15:38:50.42
 `, Drop: ``},
 }
 
-// CreateMssqlSchema 用于初始化MsSql的测试用表结构。
+// CreateMssqlSchema 用于初始化 MsSql 的测试用表结构。
 func CreateMssqlSchema(db *sql.DB) error {
 	tx, err := db.Begin()
 	if err != nil {
@@ -83,7 +83,7 @@ func CreateMssqlSchema(db *sql.DB) error {
 	return tx.Commit()
 }
 
-// DropMssqlSchema 用于初始化MsSql的测试用表结构。
+// DropMssqlSchema 用于初始化 MsSql 的测试用表结构。
 func DropMssqlSchema(db *sql.DB) error {
 	tx, err := db.Begin()
 	if err != nil {
@@ -102,7 +102,7 @@ func DropMssqlSchema(db *sql.DB) error {
 	return tx.Commit()
 }
 
-// CreateMysqlSchema 用于初始化MySql的测试用表结构。
+// CreateMysqlSchema 用于初始化 MySql 的测试用表结构。
 func CreateMysqlSchema(db *sql.DB) error {
 	tx, err := db.Begin()
 	if err != nil {

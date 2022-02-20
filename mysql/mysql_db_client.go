@@ -167,7 +167,7 @@ func parseMySqlNamedSql(sqlText string) *mysqlNamedParsedResult {
 			fixedSqlBytes = append(fixedSqlBytes, '?', b)
 			names = append(names, string(name))
 
-		// 非上述情况即为普通sql字符部分，无须特殊处理。
+		// 非上述情况即为普通 sql 字符部分，无须特殊处理。
 		default:
 			fixedSqlBytes = append(fixedSqlBytes, b)
 		}
