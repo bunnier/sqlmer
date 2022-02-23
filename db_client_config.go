@@ -7,9 +7,10 @@ import (
 )
 
 type DbClientConfig struct {
-	context     context.Context // 上下文对象，用于默认的超时、优雅关闭等控制。
-	connTimeout time.Duration   // 数据库连接超时时间。
-	execTimeout time.Duration   // 语句执行超时时间。
+	context       context.Context // 上下文对象，用于默认的超时、优雅关闭等控制。
+	connTimeout   time.Duration   // 数据库连接超时时间。
+	execTimeout   time.Duration   // 语句执行超时时间。
+	withPingCheck bool            // 用于指定是否在 DbClient 初始化时候进行 ping 操作。
 
 	driver           string  // 数据库驱动名称。
 	connectionString string  // 连接字符串。
@@ -24,6 +25,7 @@ func NewDbClientConfig(options ...DbClientOption) (*DbClientConfig, error) {
 		context.Background(),
 		time.Second * 30,
 		time.Second * 30,
+		false, // 默认不 ping。
 		"",
 		"",
 		nil,
@@ -74,6 +76,14 @@ func WithConnectionStringFunc(driver string, connectionString string) DbClientOp
 	return func(config *DbClientConfig) error {
 		config.connectionString = connectionString
 		config.driver = driver
+		return nil
+	}
+}
+
+// WithPingCheck 用于选择是否在初始化 DbClient 时候进行 ping 操作（默认为 false）。
+func WithPingCheckFunc(withPingCheck bool) DbClientOption {
+	return func(config *DbClientConfig) error {
+		config.withPingCheck = withPingCheck
 		return nil
 	}
 }

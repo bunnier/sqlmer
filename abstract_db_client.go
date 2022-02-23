@@ -30,7 +30,7 @@ func NewInternalDbClient(config *DbClientConfig) (AbstractDbClient, error) {
 		}
 
 		var err error
-		config.db, err = getDb(ctx, config.driver, config.connectionString)
+		config.db, err = getDb(ctx, config.driver, config.connectionString, config.withPingCheck)
 		if err != nil {
 			return AbstractDbClient{}, err
 		}
@@ -44,15 +44,18 @@ func NewInternalDbClient(config *DbClientConfig) (AbstractDbClient, error) {
 }
 
 // 用于获取数据库连接池对象。
-func getDb(ctx context.Context, driverName string, connectionString string) (*sql.DB, error) {
+func getDb(ctx context.Context, driverName string, connectionString string, withPingCheck bool) (*sql.DB, error) {
 	db, err := sql.Open(driverName, connectionString) // 获取连接池。
 	if err != nil {
 		return nil, err
 	}
 
-	if err = db.PingContext(ctx); err != nil { // Open 操作并不会实际建立链接，需要 ping 一下，确保连接可用。
-		return nil, err
+	if withPingCheck {
+		if err = db.PingContext(ctx); err != nil { // Open 操作并不会实际建立链接，需要 ping 一下，确保连接可用。
+			return nil, err
+		}
 	}
+
 	return db, nil
 }
 
