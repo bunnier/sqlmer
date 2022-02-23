@@ -63,16 +63,16 @@ func WithConnTimeout(timeout time.Duration) DbClientOption {
 	}
 }
 
-// WithConnTimeout 用于用现有的 sql.DB 初始化 DbClientOption。
-func WithDbFunc(db *sql.DB) DbClientOption {
+// WithDb 用于用现有的 sql.DB 初始化 DbClientOption。
+func WithDb(db *sql.DB) DbClientOption {
 	return func(config *DbClientConfig) error {
 		config.db = db
 		return nil
 	}
 }
 
-// WithConnTimeout 用于用现有的 sql.DB 初始化 DbClientOption。
-func WithConnectionStringFunc(driver string, connectionString string) DbClientOption {
+// WithConnectionString 用于用现有的 sql.DB 初始化 DbClientOption。
+func WithConnectionString(driver string, connectionString string) DbClientOption {
 	return func(config *DbClientConfig) error {
 		config.connectionString = connectionString
 		config.driver = driver
@@ -81,7 +81,7 @@ func WithConnectionStringFunc(driver string, connectionString string) DbClientOp
 }
 
 // WithPingCheck 用于选择是否在初始化 DbClient 时候进行 ping 操作（默认为 false）。
-func WithPingCheckFunc(withPingCheck bool) DbClientOption {
+func WithPingCheck(withPingCheck bool) DbClientOption {
 	return func(config *DbClientConfig) error {
 		config.withPingCheck = withPingCheck
 		return nil

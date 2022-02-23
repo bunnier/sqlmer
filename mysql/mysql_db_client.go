@@ -37,7 +37,7 @@ func NewMySqlDbClient(connectionString string, options ...sqlmer.DbClientOption)
 	}
 
 	options = append(options,
-		sqlmer.WithConnectionStringFunc(DriverName, connectionString),
+		sqlmer.WithConnectionString(DriverName, connectionString),
 		sqlmer.WithBindArgsFunc(bindMySqlArgs)) // mysql 的驱动不支持命名参数，这里需要进行处理。
 	config, err := sqlmer.NewDbClientConfig(options...)
 	if err != nil {

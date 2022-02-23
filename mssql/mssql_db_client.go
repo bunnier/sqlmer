@@ -22,7 +22,7 @@ type MsSqlDbClient struct {
 // NewMsSqlDbClient 用于创建一个 MsSqlDbClient。
 func NewMsSqlDbClient(connectionString string, options ...sqlmer.DbClientOption) (*MsSqlDbClient, error) {
 	options = append(options,
-		sqlmer.WithConnectionStringFunc(DriverName, connectionString),
+		sqlmer.WithConnectionString(DriverName, connectionString),
 		sqlmer.WithBindArgsFunc(bindMsSqlArgs)) // SqlServer 要支持命名参数，需要定制一个参数解析函数。
 	config, err := sqlmer.NewDbClientConfig(options...)
 	if err != nil {
