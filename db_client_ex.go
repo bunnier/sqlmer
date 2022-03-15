@@ -30,7 +30,7 @@ func NewDbClientEx(raw DbClient) *DbClientEx {
 }
 
 // GetStruct 获取一行的查询结果，转化并填充到 ptr 。 ptr 必须是 struct 类型的指针。
-func (c *DbClientEx) GetStruct(ptr interface{}, query string, args ...interface{}) error {
+func (c *DbClientEx) GetStruct(ptr any, query string, args ...any) error {
 	m, err := c.Get(query, args...)
 	if err != nil {
 		return err
@@ -45,7 +45,7 @@ func (c *DbClientEx) GetStruct(ptr interface{}, query string, args ...interface{
 }
 
 // MustGetStruct 类似 GetStruct ，但出现错误时不返回 error ，而是 panic 。
-func (c *DbClientEx) MustGetStruct(ptr interface{}, query string, args ...interface{}) {
+func (c *DbClientEx) MustGetStruct(ptr any, query string, args ...any) {
 	err := c.GetStruct(ptr, query, args...)
 	if err != nil {
 		panic(err)
@@ -53,7 +53,7 @@ func (c *DbClientEx) MustGetStruct(ptr interface{}, query string, args ...interf
 }
 
 // ScalarString 查询第一行第一列，并返回目标类型的值。若值不是目标类型，则尝试转换类型。若查询没有命中行，返回 nil 。
-func (c *DbClientEx) ScalarString(query string, args ...interface{}) (*string, error) {
+func (c *DbClientEx) ScalarString(query string, args ...any) (*string, error) {
 	v, err := c.Scalar(query, args...)
 	if err != nil {
 		return nil, err
@@ -73,7 +73,7 @@ func (c *DbClientEx) ScalarString(query string, args ...interface{}) (*string, e
 }
 
 // MustScalarString 类似 ScalarString ，但出现错误时不返回 error ，而是 panic 。
-func (c *DbClientEx) MustScalarString(query string, args ...interface{}) *string {
+func (c *DbClientEx) MustScalarString(query string, args ...any) *string {
 	v, err := c.ScalarString(query, args...)
 	if err != nil {
 		panic(err)
@@ -82,7 +82,7 @@ func (c *DbClientEx) MustScalarString(query string, args ...interface{}) *string
 }
 
 // ScalarInt 查询第一行第一列，并返回目标类型的值。若值不是目标类型，则尝试转换类型。若查询没有命中行，返回 nil 。
-func (c *DbClientEx) ScalarInt(query string, args ...interface{}) (*int, error) {
+func (c *DbClientEx) ScalarInt(query string, args ...any) (*int, error) {
 	v, err := c.Scalar(query, args...)
 	if err != nil {
 		return nil, err
@@ -102,7 +102,7 @@ func (c *DbClientEx) ScalarInt(query string, args ...interface{}) (*int, error) 
 }
 
 // MustScalarInt 类似 ScalarInt ，但出现错误时不返回 error ，而是 panic 。
-func (c *DbClientEx) MustScalarInt(query string, args ...interface{}) *int {
+func (c *DbClientEx) MustScalarInt(query string, args ...any) *int {
 	v, err := c.ScalarInt(query, args...)
 	if err != nil {
 		panic(err)
@@ -111,7 +111,7 @@ func (c *DbClientEx) MustScalarInt(query string, args ...interface{}) *int {
 }
 
 // ScalarInt64 查询第一行第一列，并返回目标类型的值。若值不是目标类型，则尝试转换类型。若查询没有命中行，返回 nil 。
-func (c *DbClientEx) ScalarInt64(query string, args ...interface{}) (*int64, error) {
+func (c *DbClientEx) ScalarInt64(query string, args ...any) (*int64, error) {
 	v, err := c.Scalar(query, args...)
 	if err != nil {
 		return nil, err
@@ -131,7 +131,7 @@ func (c *DbClientEx) ScalarInt64(query string, args ...interface{}) (*int64, err
 }
 
 // MustScalarInt64 类似 ScalarInt64 ，但出现错误时不返回 error ，而是 panic 。
-func (c *DbClientEx) MustScalarInt64(query string, args ...interface{}) *int64 {
+func (c *DbClientEx) MustScalarInt64(query string, args ...any) *int64 {
 	v, err := c.ScalarInt64(query, args...)
 	if err != nil {
 		panic(err)
@@ -140,7 +140,7 @@ func (c *DbClientEx) MustScalarInt64(query string, args ...interface{}) *int64 {
 }
 
 // ScalarInt32 查询第一行第一列，并返回目标类型的值。若值不是目标类型，则尝试转换类型。若查询没有命中行，返回 nil 。
-func (c *DbClientEx) ScalarInt32(query string, args ...interface{}) (*int32, error) {
+func (c *DbClientEx) ScalarInt32(query string, args ...any) (*int32, error) {
 	v, err := c.Scalar(query, args...)
 	if err != nil {
 		return nil, err
@@ -160,7 +160,7 @@ func (c *DbClientEx) ScalarInt32(query string, args ...interface{}) (*int32, err
 }
 
 // MustScalarInt32 类似 ScalarInt32 ，但出现错误时不返回 error ，而是 panic 。
-func (c *DbClientEx) MustScalarInt32(query string, args ...interface{}) *int32 {
+func (c *DbClientEx) MustScalarInt32(query string, args ...any) *int32 {
 	v, err := c.ScalarInt32(query, args...)
 	if err != nil {
 		panic(err)
@@ -169,7 +169,7 @@ func (c *DbClientEx) MustScalarInt32(query string, args ...interface{}) *int32 {
 }
 
 // ScalarInt16 查询第一行第一列，并返回目标类型的值。若值不是目标类型，则尝试转换类型。若查询没有命中行，返回 nil 。
-func (c *DbClientEx) ScalarInt16(query string, args ...interface{}) (*int16, error) {
+func (c *DbClientEx) ScalarInt16(query string, args ...any) (*int16, error) {
 	v, err := c.Scalar(query, args...)
 	if err != nil {
 		return nil, err
@@ -189,7 +189,7 @@ func (c *DbClientEx) ScalarInt16(query string, args ...interface{}) (*int16, err
 }
 
 // MustScalarInt16 类似 ScalarInt16 ，但出现错误时不返回 error ，而是 panic 。
-func (c *DbClientEx) MustScalarInt16(query string, args ...interface{}) *int16 {
+func (c *DbClientEx) MustScalarInt16(query string, args ...any) *int16 {
 	v, err := c.ScalarInt16(query, args...)
 	if err != nil {
 		panic(err)
@@ -198,7 +198,7 @@ func (c *DbClientEx) MustScalarInt16(query string, args ...interface{}) *int16 {
 }
 
 // ScalarInt8 查询第一行第一列，并返回目标类型的值。若值不是目标类型，则尝试转换类型。若查询没有命中行，返回 nil 。
-func (c *DbClientEx) ScalarInt8(query string, args ...interface{}) (*int8, error) {
+func (c *DbClientEx) ScalarInt8(query string, args ...any) (*int8, error) {
 	v, err := c.Scalar(query, args...)
 	if err != nil {
 		return nil, err
@@ -218,7 +218,7 @@ func (c *DbClientEx) ScalarInt8(query string, args ...interface{}) (*int8, error
 }
 
 // MustScalarInt8 类似 ScalarInt8 ，但出现错误时不返回 error ，而是 panic 。
-func (c *DbClientEx) MustScalarInt8(query string, args ...interface{}) *int8 {
+func (c *DbClientEx) MustScalarInt8(query string, args ...any) *int8 {
 	v, err := c.ScalarInt8(query, args...)
 	if err != nil {
 		panic(err)
@@ -227,7 +227,7 @@ func (c *DbClientEx) MustScalarInt8(query string, args ...interface{}) *int8 {
 }
 
 // ScalarBool 查询第一行第一列，并返回目标类型的值。若值不是目标类型，则尝试转换类型。若查询没有命中行，返回 nil 。
-func (c *DbClientEx) ScalarBool(query string, args ...interface{}) (*bool, error) {
+func (c *DbClientEx) ScalarBool(query string, args ...any) (*bool, error) {
 	v, err := c.Scalar(query, args...)
 	if err != nil {
 		return nil, err
@@ -247,7 +247,7 @@ func (c *DbClientEx) ScalarBool(query string, args ...interface{}) (*bool, error
 }
 
 // MustScalarBool 类似 ScalarBool ，但出现错误时不返回 error ，而是 panic 。
-func (c *DbClientEx) MustScalarBool(query string, args ...interface{}) *bool {
+func (c *DbClientEx) MustScalarBool(query string, args ...any) *bool {
 	v, err := c.ScalarBool(query, args...)
 	if err != nil {
 		panic(err)
@@ -256,7 +256,7 @@ func (c *DbClientEx) MustScalarBool(query string, args ...interface{}) *bool {
 }
 
 // ScalarType 查询第一行第一列，并返回目标类型的值。若值不是目标类型，则尝试转换类型。若查询没有命中行，返回 nil 。
-func (c *DbClientEx) ScalarType(typ reflect.Type, query string, args ...interface{}) (interface{}, error) {
+func (c *DbClientEx) ScalarType(typ reflect.Type, query string, args ...any) (any, error) {
 	v, err := c.Scalar(query, args...)
 	if err != nil {
 		return nil, err
@@ -275,7 +275,7 @@ func (c *DbClientEx) ScalarType(typ reflect.Type, query string, args ...interfac
 }
 
 // MustScalarType 类似 ScalarType ，但出现错误时不返回 error ，而是 panic 。
-func (c *DbClientEx) MustScalarType(typ reflect.Type, query string, args ...interface{}) interface{} {
+func (c *DbClientEx) MustScalarType(typ reflect.Type, query string, args ...any) any {
 	v, err := c.ScalarType(typ, query, args...)
 	if err != nil {
 		panic(err)
@@ -292,7 +292,7 @@ func (c *DbClientEx) MustScalarType(typ reflect.Type, query string, args ...inte
 //   }
 //   infos := list.([]int)
 //
-func (c *DbClientEx) ListType(elemTyp reflect.Type, query string, args ...interface{}) (interface{}, error) {
+func (c *DbClientEx) ListType(elemTyp reflect.Type, query string, args ...any) (any, error) {
 	rows, err := c.Rows(query, args...)
 	if err != nil {
 		return nil, err
@@ -307,13 +307,13 @@ func (c *DbClientEx) ListType(elemTyp reflect.Type, query string, args ...interf
 	vList := reflect.MakeSlice(reflect.SliceOf(elemTyp), 0, 0)
 
 	for rows.Next() {
-		var row interface{}
+		var row any
 
 		// 目标类型是复杂类型的，统一（目前也只能）将行转到 map ，再从 map 转换。
 		// 非复杂类型（就是数字、字符串这些），则从每一行的第一列的值转换。
 		// 未来， conv 库应该支持类似字段迭代器的功能，就可以不走 map 了，节省一层转换开销。
 		if complex {
-			m := make(map[string]interface{})
+			m := make(map[string]any)
 			err = rows.MapScan(m)
 			if err != nil {
 				return nil, err
@@ -350,7 +350,7 @@ func (c *DbClientEx) ListType(elemTyp reflect.Type, query string, args ...interf
 // 注意，给定的 elemTyp 是元素的类型，返回的则是该元素的 slice ：
 //   list := MustListType(reflect.TypeOf(0), query).([]int)
 //
-func (c *DbClientEx) MustListType(elemTyp reflect.Type, query string, args ...interface{}) interface{} {
+func (c *DbClientEx) MustListType(elemTyp reflect.Type, query string, args ...any) any {
 	v, err := c.ListType(elemTyp, query, args...)
 	if err != nil {
 		panic(err)
@@ -368,7 +368,7 @@ func (c *DbClientEx) MustListType(elemTyp reflect.Type, query string, args ...in
 //   }
 //   infos := list.([]*Info)
 //
-func (c *DbClientEx) ListOf(elemExample interface{}, query string, args ...interface{}) (interface{}, error) {
+func (c *DbClientEx) ListOf(elemExample any, query string, args ...any) (any, error) {
 	elemTyp := reflect.TypeOf(elemExample)
 	return c.ListType(elemTyp, query, args...)
 }
@@ -377,7 +377,7 @@ func (c *DbClientEx) ListOf(elemExample interface{}, query string, args ...inter
 //   type Info struct { /* fields */ }
 //   list := MustListOf(new(Info), query).([]*Info)
 //
-func (c *DbClientEx) MustListOf(elemExample interface{}, query string, args ...interface{}) interface{} {
+func (c *DbClientEx) MustListOf(elemExample any, query string, args ...any) any {
 	elemTyp := reflect.TypeOf(elemExample)
 	v, err := c.ListType(elemTyp, query, args...)
 	if err != nil {
