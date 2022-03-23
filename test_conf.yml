@@ -1,4 +1,4 @@
 # 测试用例使用的数据库连接串。
 # 只要配置有建表/删表权限的库连接即可测试。
-mysql: servergroup:tongbuserver@tcp(192.168.40.6:3306)/shokey_db
-sqlserver: server=192.168.40.141; database=tbShokeyDb; user id=sa;password=987654321sa;
+mysql: bunnier:test@tcp(127.0.0.1:3306)/test_db
+sqlserver: server=127.0.0.1; database=test; user id=sa;password=qwer1234;
