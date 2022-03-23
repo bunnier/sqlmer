@@ -119,3 +119,7 @@ CREATE TABLE MainDemo(
 3. 测试结束后可以通过`go run ./internal/testcmd/main.go -a CLEAN -c test_conf.yml`销毁测试表；
 
 如果你和我一样使用VSCode作为开发工具，可在配置好`test_conf.yml`之后，直接使用.vscode中编写好的Task来准备环境。
+
+## 其他语言的版本
+
+.net 版： [cmstar/Data](https://github.com/cmstar/Data)
