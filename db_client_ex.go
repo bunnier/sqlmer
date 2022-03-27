@@ -13,9 +13,9 @@ type DbClientEx struct {
 	conv.Conv // 为当前实例提供类型转换的 conv.Conv 实例。
 }
 
-// NewDbClientEx 创建 EnhancedDbClient 的新实例。
+// Extend 创建 EnhancedDbClient 的新实例。
 // 其加强 sqlmer.DbClient ，提供强类型的转化方法。
-func NewDbClientEx(raw DbClient) *DbClientEx {
+func Extend(raw DbClient) *DbClientEx {
 	// 提供 mysql 的 snake_case 名称的字段到 Go 的 CamelCase 字段的匹配。
 	dbConv := conv.Conv{
 		Conf: conv.Config{
