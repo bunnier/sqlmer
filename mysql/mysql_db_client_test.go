@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 	"time"
+
 	"github.com/bunnier/sqlmer"
 	"github.com/bunnier/sqlmer/internal/testenv"
 	"github.com/pkg/errors"
@@ -13,7 +14,7 @@ import (
 )
 
 // 初始化测试配置。
-var testConf testenv.TestConf = testenv.MustLoadTestConfig("test_conf.yml")
+var testConf testenv.TestConf = testenv.MustLoadTestConfig("../test_conf.yml")
 
 // 用于获取一个 MySql 测试库的 DbClient 对象。
 func getMySqlDbClient() (sqlmer.DbClient, error) {

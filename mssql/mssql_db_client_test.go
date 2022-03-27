@@ -12,7 +12,7 @@ import (
 )
 
 // 初始化测试配置。
-var testConf testenv.TestConf = testenv.MustLoadTestConfig("test_conf.yml")
+var testConf testenv.TestConf = testenv.MustLoadTestConfig("../test_conf.yml")
 
 // 用于获取一个 SqlServer 数据库的 DbClient 对象。
 func getMsSqlDbClient() (sqlmer.DbClient, error) {
