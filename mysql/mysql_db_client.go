@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"unicode"
+	"unicode/utf8"
 
 	"github.com/bunnier/sqlmer"
 	"github.com/pkg/errors"
@@ -112,8 +112,25 @@ type mysqlNamedParsedResult struct {
 	Names []string // 原语句中用到的命名参数。
 }
 
+// 用于初始化合法字符集合 map，用于快速筛选合法字符。
+var onceInitParamNameMap = sync.Once{}
+
 // 定义 mysql 参数名允许的字符。
-var mysqlParamNameAllowRunes = []*unicode.RangeTable{unicode.Letter, unicode.Digit}
+var legalParamNameCharactersMap map[rune]struct{}
+
+// 用于快速判断某个字符是否是占位符参数合法字符。
+func isLegalParamNameCharter(r rune) bool {
+	onceInitParamNameMap.Do(func() {
+		const legalParamNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_"
+		legalParamNameCharactersMap = make(map[rune]struct{}, len(legalParamNameCharacters))
+		for _, r := range legalParamNameCharacters {
+			legalParamNameCharactersMap[r] = struct{}{}
+		}
+	})
+
+	_, ok := legalParamNameCharactersMap[r]
+	return ok
+}
 
 // 分析Sql语句，提取用到的命名参数名称（按顺序），并将 @ 占位参数转换为 mysql 驱动支持的 ? 形式。
 func parseMySqlNamedSql(sqlText string) *mysqlNamedParsedResult {
@@ -122,58 +139,60 @@ func parseMySqlNamedSql(sqlText string) *mysqlNamedParsedResult {
 		return cacheResult.(*mysqlNamedParsedResult)
 	}
 
-	sqlTextBytes := []byte(sqlText)                     // 原 sql 的 bytes
-	fixedSqlBytes := make([]byte, 0, len(sqlTextBytes)) // 处理后 sql 的 bytes。
-	names := make([]string, 0, 10)                      // sql 中所有的参数名称。
+	names := make([]string, 0, 10) // 存放 sql 中所有的参数名称。
 
-	var name []byte                    // 存放解析过程中的参数名称。
-	inName := false                    // 标示当前字符是否正处于参数名称之中。
-	inString := false                  // 标示当前字符是否正处于字符串之中。
-	lastIndex := len(sqlTextBytes) - 1 // sql 语句 bytes 的最后一个索引位置。
+	fixedSqlTextBuilder := strings.Builder{}
+	paramNameBuilder := strings.Builder{}
 
-	for i, b := range sqlTextBytes {
+	inName := false   // 标示当前字符是否正处于参数名称之中。
+	inString := false // 标示当前字符是否正处于字符串之中。
+
+	lastIndex := utf8.RuneCountInString(sqlText) - 1 // sql 语句 bytes 的最后一个索引位置。
+
+	for i, currentRune := range sqlText {
 		switch {
 		// 遇到字符串开始结束符号'需要设置当前字符串状态。
-		case b == '\'':
+		case currentRune == '\'':
 			inString = !inString
-			fixedSqlBytes = append(fixedSqlBytes, b)
+			fixedSqlTextBuilder.WriteRune(currentRune)
 
 		// 如果当前状态正处于字符串中，字符无须特殊处理。
 		case inString:
-			fixedSqlBytes = append(fixedSqlBytes, b)
+			fixedSqlTextBuilder.WriteRune(currentRune)
 
 		// @ 符号标示参数名称部分开始。
-		case b == '@':
+		case currentRune == '@':
 			// 连续2个@可以用来转义，需要跳出作用域。
-			if inName && i > 0 && sqlTextBytes[i-1] == '@' {
-				fixedSqlBytes = append(fixedSqlBytes, b)
+			if inName && i > 0 && sqlText[i-1] == '@' {
+				fixedSqlTextBuilder.WriteRune(currentRune)
 				inName = false
 				continue
 			}
 			inName = true
-			name = make([]byte, 0, 10)
+			paramNameBuilder.Reset()
 
 		// 当前状态正处于参数名中，且当前字符合法，应作为参数名的一部分。
-		case inName && unicode.IsOneOf(mysqlParamNameAllowRunes, rune(b)):
-			name = append(name, b)
-			if lastIndex == i {
-				fixedSqlBytes = append(fixedSqlBytes, '?') // 确保最后一个字符的占位也能被加上。
-				names = append(names, string(name))
+		case inName && isLegalParamNameCharter(currentRune):
+			paramNameBuilder.WriteRune(currentRune)
+			if lastIndex == i { // 如果是最后一个字符，直接写入，并结束。
+				fixedSqlTextBuilder.WriteString("?")
+				names = append(names, paramNameBuilder.String())
 			}
 
-		// 当前状态正处于参数名中，且当前字符不合法，标示着参数名范围结束。
-		case inName && !unicode.IsOneOf(mysqlParamNameAllowRunes, rune(b)):
+		// 当前状态正处于参数名中，且当前字符不是合法的参数字符，标示着参数名范围结束。
+		case inName && !isLegalParamNameCharter(currentRune):
 			inName = false
-			fixedSqlBytes = append(fixedSqlBytes, '?', b)
-			names = append(names, string(name))
+			fixedSqlTextBuilder.WriteString("?")
+			fixedSqlTextBuilder.WriteRune(currentRune)
+			names = append(names, paramNameBuilder.String())
 
 		// 非上述情况即为普通 sql 字符部分，无须特殊处理。
 		default:
-			fixedSqlBytes = append(fixedSqlBytes, b)
+			fixedSqlTextBuilder.WriteRune(currentRune)
 		}
 	}
 
-	parsedResult := &mysqlNamedParsedResult{string(fixedSqlBytes), names}
+	parsedResult := &mysqlNamedParsedResult{fixedSqlTextBuilder.String(), names}
 	mysqlNamedSqlParsedResult.Store(sqlText, parsedResult) // 缓存结果。
 	return parsedResult
 }
