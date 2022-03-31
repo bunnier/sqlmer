@@ -1,26 +1,28 @@
 package sqlmer
 
 import (
+	"database/sql"
 	"io"
 	"reflect"
 
 	"github.com/cmstar/go-conv"
 )
 
-// DbClientEx 加强 sqlmer.DbClient ，提供强类型的转化方法。
+// DbClientEx 加强 DbClient ，提供强类型的转化方法。
 type DbClientEx struct {
 	DbClient  // 原始的 DbClient 实例。
 	conv.Conv // 为当前实例提供类型转换的 conv.Conv 实例。
 }
 
-// Extend 创建 EnhancedDbClient 的新实例。
-// 其加强 sqlmer.DbClient ，提供强类型的转化方法。
-func Extend(raw DbClient) *DbClientEx {
+// NewDbClientEx 创建 EnhancedDbClient 的新实例。
+// 其加强 DbClient ，提供强类型的转化方法。
+func NewDbClientEx(raw DbClient) *DbClientEx {
 	// 提供 mysql 的 snake_case 名称的字段到 Go 的 CamelCase 字段的匹配。
 	dbConv := conv.Conv{
 		Conf: conv.Config{
 			FieldMatcherCreator: &conv.SimpleMatcherCreator{
 				Conf: conv.SimpleMatcherConfig{
+					Tag:            "conv",
 					CamelSnakeCase: true,
 				},
 			},
@@ -81,178 +83,204 @@ func (c *DbClientEx) MustScalarString(query string, args ...any) *string {
 	return v
 }
 
-// ScalarInt 查询第一行第一列，并返回目标类型的值。若值不是目标类型，则尝试转换类型。若查询没有命中行，返回 nil 。
-func (c *DbClientEx) ScalarInt(query string, args ...any) (*int, error) {
-	v, err := c.Scalar(query, args...)
-	if err != nil {
-		return nil, err
-	}
-
-	if v == nil {
-		return nil, nil
+// ScalarInt 查询第一行第一列，并返回目标类型的值。
+// 若查询没有命中行，返回 hit=false 和空指针；若有结果但值是 null ，则返回 hit=true 和空指针。
+// 若值不是目标类型，则尝试转换类型。
+func (c *DbClientEx) ScalarInt(query string, args ...any) (hit bool, value *int, err error) {
+	hit, v, err := c.doScalar(query, args...)
+	if !hit || err != nil {
+		return false, nil, err
 	}
 
 	var res int
 	err = c.Conv.Convert(v, &res)
 	if err != nil {
-		return nil, err
+		return
 	}
 
-	return &res, nil
+	value = &res
+	return
 }
 
 // MustScalarInt 类似 ScalarInt ，但出现错误时不返回 error ，而是 panic 。
-func (c *DbClientEx) MustScalarInt(query string, args ...any) *int {
-	v, err := c.ScalarInt(query, args...)
+func (c *DbClientEx) MustScalarInt(query string, args ...any) (hit bool, value *int) {
+	hit, value, err := c.ScalarInt(query, args...)
 	if err != nil {
 		panic(err)
 	}
-	return v
+	return
 }
 
-// ScalarInt64 查询第一行第一列，并返回目标类型的值。若值不是目标类型，则尝试转换类型。若查询没有命中行，返回 nil 。
-func (c *DbClientEx) ScalarInt64(query string, args ...any) (*int64, error) {
-	v, err := c.Scalar(query, args...)
-	if err != nil {
-		return nil, err
-	}
-
-	if v == nil {
-		return nil, nil
+// ScalarInt64 查询第一行第一列，并返回目标类型的值。
+// 若查询没有命中行，返回 hit=false 和空指针；若有结果但值是 null ，则返回 hit=true 和空指针。
+// 若值不是目标类型，则尝试转换类型。
+func (c *DbClientEx) ScalarInt64(query string, args ...any) (hit bool, value *int64, err error) {
+	hit, v, err := c.doScalar(query, args...)
+	if !hit || err != nil {
+		return
 	}
 
 	var res int64
 	err = c.Conv.Convert(v, &res)
 	if err != nil {
-		return nil, err
+		return
 	}
 
-	return &res, nil
+	value = &res
+	return
 }
 
 // MustScalarInt64 类似 ScalarInt64 ，但出现错误时不返回 error ，而是 panic 。
-func (c *DbClientEx) MustScalarInt64(query string, args ...any) *int64 {
-	v, err := c.ScalarInt64(query, args...)
+func (c *DbClientEx) MustScalarInt64(query string, args ...any) (hit bool, value *int64) {
+	hit, value, err := c.ScalarInt64(query, args...)
 	if err != nil {
 		panic(err)
 	}
-	return v
+	return
 }
 
-// ScalarInt32 查询第一行第一列，并返回目标类型的值。若值不是目标类型，则尝试转换类型。若查询没有命中行，返回 nil 。
-func (c *DbClientEx) ScalarInt32(query string, args ...any) (*int32, error) {
-	v, err := c.Scalar(query, args...)
-	if err != nil {
-		return nil, err
-	}
-
-	if v == nil {
-		return nil, nil
+// ScalarInt32 查询第一行第一列，并返回目标类型的值。
+// 若查询没有命中行，返回 hit=false 和空指针；若有结果但值是 null ，则返回 hit=true 和空指针。
+// 若值不是目标类型，则尝试转换类型。
+func (c *DbClientEx) ScalarInt32(query string, args ...any) (hit bool, value *int32, err error) {
+	hit, v, err := c.doScalar(query, args...)
+	if !hit || err != nil {
+		return false, nil, err
 	}
 
 	var res int32
 	err = c.Conv.Convert(v, &res)
 	if err != nil {
-		return nil, err
+		return
 	}
 
-	return &res, nil
+	value = &res
+	return
 }
 
 // MustScalarInt32 类似 ScalarInt32 ，但出现错误时不返回 error ，而是 panic 。
-func (c *DbClientEx) MustScalarInt32(query string, args ...any) *int32 {
-	v, err := c.ScalarInt32(query, args...)
+func (c *DbClientEx) MustScalarInt32(query string, args ...any) (hit bool, value *int32) {
+	hit, value, err := c.ScalarInt32(query, args...)
 	if err != nil {
 		panic(err)
 	}
-	return v
+	return
 }
 
-// ScalarInt16 查询第一行第一列，并返回目标类型的值。若值不是目标类型，则尝试转换类型。若查询没有命中行，返回 nil 。
-func (c *DbClientEx) ScalarInt16(query string, args ...any) (*int16, error) {
-	v, err := c.Scalar(query, args...)
-	if err != nil {
-		return nil, err
-	}
-
-	if v == nil {
-		return nil, nil
+// ScalarInt16 查询第一行第一列，并返回目标类型的值。
+// 若查询没有命中行，返回 hit=false 和空指针；若有结果但值是 null ，则返回 hit=true 和空指针。
+// 若值不是目标类型，则尝试转换类型。
+func (c *DbClientEx) ScalarInt16(query string, args ...any) (hit bool, value *int16, err error) {
+	hit, v, err := c.doScalar(query, args...)
+	if !hit || err != nil {
+		return false, nil, err
 	}
 
 	var res int16
 	err = c.Conv.Convert(v, &res)
 	if err != nil {
-		return nil, err
+		return
 	}
 
-	return &res, nil
+	value = &res
+	return
 }
 
 // MustScalarInt16 类似 ScalarInt16 ，但出现错误时不返回 error ，而是 panic 。
-func (c *DbClientEx) MustScalarInt16(query string, args ...any) *int16 {
-	v, err := c.ScalarInt16(query, args...)
+func (c *DbClientEx) MustScalarInt16(query string, args ...any) (hit bool, value *int16) {
+	hit, value, err := c.ScalarInt16(query, args...)
 	if err != nil {
 		panic(err)
 	}
-	return v
+	return
 }
 
-// ScalarInt8 查询第一行第一列，并返回目标类型的值。若值不是目标类型，则尝试转换类型。若查询没有命中行，返回 nil 。
-func (c *DbClientEx) ScalarInt8(query string, args ...any) (*int8, error) {
-	v, err := c.Scalar(query, args...)
-	if err != nil {
-		return nil, err
-	}
-
-	if v == nil {
-		return nil, nil
+// ScalarInt8 查询第一行第一列，并返回目标类型的值。
+// 若查询没有命中行，返回 hit=false 和空指针；若有结果但值是 null ，则返回 hit=true 和空指针。
+// 若值不是目标类型，则尝试转换类型。
+func (c *DbClientEx) ScalarInt8(query string, args ...any) (hit bool, value *int8, err error) {
+	hit, v, err := c.doScalar(query, args...)
+	if !hit || err != nil {
+		return false, nil, err
 	}
 
 	var res int8
 	err = c.Conv.Convert(v, &res)
 	if err != nil {
-		return nil, err
+		return
 	}
 
-	return &res, nil
+	value = &res
+	return
 }
 
 // MustScalarInt8 类似 ScalarInt8 ，但出现错误时不返回 error ，而是 panic 。
-func (c *DbClientEx) MustScalarInt8(query string, args ...any) *int8 {
-	v, err := c.ScalarInt8(query, args...)
+func (c *DbClientEx) MustScalarInt8(query string, args ...any) (hit bool, value *int8) {
+	hit, value, err := c.ScalarInt8(query, args...)
 	if err != nil {
 		panic(err)
 	}
-	return v
+	return
 }
 
-// ScalarBool 查询第一行第一列，并返回目标类型的值。若值不是目标类型，则尝试转换类型。若查询没有命中行，返回 nil 。
-func (c *DbClientEx) ScalarBool(query string, args ...any) (*bool, error) {
-	v, err := c.Scalar(query, args...)
-	if err != nil {
-		return nil, err
-	}
-
-	if v == nil {
-		return nil, nil
+// ScalarBool 查询第一行第一列，并返回目标类型的值。
+// 若查询没有命中行，返回 hit=false 和空指针；若有结果但值是 null ，则返回 hit=true 和空指针。
+// 若值不是目标类型，则尝试转换类型。
+func (c *DbClientEx) ScalarBool(query string, args ...any) (hit bool, value *bool, err error) {
+	hit, v, err := c.doScalar(query, args...)
+	if !hit || err != nil {
+		return false, nil, err
 	}
 
 	var res bool
 	err = c.Conv.Convert(v, &res)
 	if err != nil {
-		return nil, err
+		return
 	}
 
-	return &res, nil
+	value = &res
+	return
 }
 
 // MustScalarBool 类似 ScalarBool ，但出现错误时不返回 error ，而是 panic 。
-func (c *DbClientEx) MustScalarBool(query string, args ...any) *bool {
-	v, err := c.ScalarBool(query, args...)
+func (c *DbClientEx) MustScalarBool(query string, args ...any) (hit bool, value *bool) {
+	hit, value, err := c.ScalarBool(query, args...)
 	if err != nil {
 		panic(err)
 	}
-	return v
+	return
+}
+
+// 若查询没有命中行，返回 hit=false, value=nil ；若有结果但值是 DbNull ，则返回 hit=true, value=nil。
+// err 表示纯粹的错误，不会有 sql.ErrNoRows 的情况。
+func (c *DbClientEx) doScalar(query string, args ...any) (hit bool, value any, err error) {
+	v, err := c.Scalar(query, args...)
+
+	if err == sql.ErrNoRows {
+		return false, nil, nil
+	}
+
+	if err != nil {
+		return false, nil, err
+	}
+
+	switch v.(type) {
+	case sql.NullBool:
+	case sql.NullByte:
+	case sql.NullFloat64:
+	case sql.NullInt16:
+	case sql.NullInt32:
+	case sql.NullInt64:
+	case sql.NullString:
+	case sql.NullTime:
+	default:
+		// 其实还有别的 DbNull 类型，和驱动相关的，标准库没定义。
+		// 这里不好处理，只解决一下基础类型。等库完善。
+		value = v
+	}
+
+	hit = true
+	return
 }
 
 // ScalarType 查询第一行第一列，并返回目标类型的值。若值不是目标类型，则尝试转换类型。若查询没有命中行，返回 nil 。
