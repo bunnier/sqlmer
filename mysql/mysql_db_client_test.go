@@ -53,7 +53,7 @@ func Test_bindMySqlArgs(t *testing.T) {
 		wantErr   error
 	}{
 		{
-			"map",
+			"map1",
 			"SELECT * FROM go_TypeTest WHERE id=@id",
 			[]interface{}{
 				map[string]interface{}{
@@ -62,6 +62,31 @@ func Test_bindMySqlArgs(t *testing.T) {
 			},
 			"SELECT * FROM go_TypeTest WHERE id=?",
 			[]interface{}{1},
+			nil,
+		},
+		{
+			"map2",
+			"SELECT * FROM go_TypeTest WHERE idv2=@id_id",
+			[]interface{}{
+				map[string]interface{}{
+					"id_id": 1,
+				},
+			},
+			"SELECT * FROM go_TypeTest WHERE idv2=?",
+			[]interface{}{1},
+			nil,
+		},
+		{
+			"map3",
+			"SELECT * FROM go_TypeTest WHERE idv2=@id_id AND id=@id",
+			[]interface{}{
+				map[string]interface{}{
+					"id_id": 1,
+					"id":    2,
+				},
+			},
+			"SELECT * FROM go_TypeTest WHERE idv2=? AND id=?",
+			[]interface{}{1, 2},
 			nil,
 		},
 		{
