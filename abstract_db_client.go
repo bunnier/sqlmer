@@ -3,6 +3,7 @@ package sqlmer
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"github.com/bunnier/sqlmer/sqlen"
 	"github.com/pkg/errors"
@@ -67,4 +68,13 @@ func (client *AbstractDbClient) getExecTimeoutContext() (context.Context, contex
 // ConnectionString 用于获取当前实例所使用的数据库连接字符串。
 func (client *AbstractDbClient) ConnectionString() string {
 	return client.config.connectionString
+}
+
+// wrapperSqlError 用于包装一个易于定位问题的 sql 错误。
+func (client *AbstractDbClient) wrapperSqlError(err error, rawSql string, executedSql string, args ...interface{}) error {
+	return fmt.Errorf(`sqlmer: executing sql error
+raw sql: %s
+executed sql: %s
+sql params: %v
+raw error: %w`, rawSql, executedSql, args, err) // TODO: args 需要在细化。
 }
