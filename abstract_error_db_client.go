@@ -2,6 +2,7 @@ package sqlmer
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/bunnier/sqlmer/sqlen"
 	"github.com/pkg/errors"
@@ -94,23 +95,28 @@ func (client *AbstractDbClient) ExistsContext(ctx context.Context, sqlText strin
 }
 
 // Scalar 用于获取查询的第一行第一列的值。
-func (client *AbstractDbClient) Scalar(sqlText string, args ...interface{}) (interface{}, error) {
+// 注意，sql.ErrNoRows 不放 error 中返回，而通过第二个返回值区分，当查询不到数据的时候第二个返回值将为 false，否则为 true。
+func (client *AbstractDbClient) Scalar(sqlText string, args ...interface{}) (interface{}, bool, error) {
 	ctx, cancelFunc := client.getExecTimeoutContext()
 	defer cancelFunc()
 	return client.ScalarContext(ctx, sqlText, args...)
 }
 
 // ScalarContext 用于获取查询的第一行第一列的值。
-func (client *AbstractDbClient) ScalarContext(ctx context.Context, sqlText string, args ...interface{}) (interface{}, error) {
+// 注意，sql.ErrNoRows 不放 error 中返回，而通过第二个返回值区分，当查询不到数据的时候第二个返回值将为 false，否则为 true。
+func (client *AbstractDbClient) ScalarContext(ctx context.Context, sqlText string, args ...interface{}) (interface{}, bool, error) {
 	sqlText, args, err := client.config.bindArgsFunc(sqlText, args...)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	if result, err := client.Exer.EnhancedQueryRowContext(ctx, sqlText, args...).SliceScan(); err != nil {
-		return nil, err
+		if err == sql.ErrNoRows {
+			return nil, false, nil // 没有命中行时候，不用 error 返回，而是通过第二个参数标识。
+		}
+		return nil, false, err
 	} else {
-		return result[0], nil // 只要没有 error，至少有 1 列的。
+		return result[0], true, nil // 只要没有 error，至少有 1 列的。
 	}
 }
 
