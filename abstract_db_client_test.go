@@ -76,7 +76,7 @@ func Test_internalDbClient_Scalar(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := tt.client.Scalar(tt.args.sqlText, tt.args.args...)
+			got, _, err := tt.client.Scalar(tt.args.sqlText, tt.args.args...)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("internalDbClient.Scalar() error = %v, wantErr %v", err, tt.wantErr)
 				return

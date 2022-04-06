@@ -68,23 +68,19 @@ func (client *AbstractDbClient) MustExistsContext(ctx context.Context, sqlText s
 }
 
 // MustScalar 用于获取查询的第一行第一列的值。
-// 注意：当查询不到数据的时候，将返回 nil，而不是 panic。
-func (client *AbstractDbClient) MustScalar(sqlText string, args ...interface{}) interface{} {
+// 注意，sql.ErrNoRows 不会引发 panic，而通过第二个返回值区分，当查询不到数据的时候第二个返回值将为 false，否则为 true。
+func (client *AbstractDbClient) MustScalar(sqlText string, args ...interface{}) (interface{}, bool) {
 	ctx, _ := client.getExecTimeoutContext()
 	return client.MustScalarContext(ctx, sqlText, args...)
 }
 
 // MustScalarContext 用于获取查询的第一行第一列的值。
-// 注意：当查询不到数据的时候，将返回 nil，而不是 panic。
-func (client *AbstractDbClient) MustScalarContext(ctx context.Context, sqlText string, args ...interface{}) interface{} {
-	if res, err := client.ScalarContext(ctx, sqlText, args...); err != nil {
-		if err == sql.ErrNoRows { // 找不到行时候，仅返回 nil，不做 panic。
-			return nil
-		} else {
-			panic(err)
-		}
+// 注意，sql.ErrNoRows 不会引发 panic，而通过第二个返回值区分，当查询不到数据的时候第二个返回值将为 false，否则为 true。
+func (client *AbstractDbClient) MustScalarContext(ctx context.Context, sqlText string, args ...interface{}) (interface{}, bool) {
+	if res, hit, err := client.ScalarContext(ctx, sqlText, args...); err != nil {
+		panic(err)
 	} else {
-		return res
+		return res, hit
 	}
 }
 

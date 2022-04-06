@@ -109,18 +109,12 @@ func mapDataType(colType *sql.ColumnType, dest *interface{}) error {
 	case "DECIMAL":
 		switch v := (*dest).(type) {
 		case []byte:
-			if nullable, ok := colType.Nullable(); ok && nullable {
-				if v == nil {
-					*dest = sql.NullString{String: "", Valid: false}
-				} else {
-					*dest = sql.NullString{String: string(v), Valid: true}
-				}
-			} else {
-				*dest = string(v)
-			}
+			*dest = string(v)
 			return nil
 		case string:
-			return nil
+			*dest = v
+		case nil:
+			return nil // DBNull.
 		default:
 			return fmt.Errorf("sqlmer: cannot convert DECIMAL field, colname=%s, value=%v", colType.Name(), v)
 		}
@@ -128,18 +122,12 @@ func mapDataType(colType *sql.ColumnType, dest *interface{}) error {
 	case "NVARCHAR", "VARCHAR":
 		switch v := (*dest).(type) {
 		case []byte:
-			if nullable, ok := colType.Nullable(); ok && nullable {
-				if v == nil {
-					*dest = sql.NullString{String: "", Valid: false}
-				} else {
-					*dest = sql.NullString{String: string(v), Valid: true}
-				}
-			} else {
-				*dest = string(v)
-			}
+			*dest = string(v)
 			return nil
 		case string:
-			return nil
+			*dest = v
+		case nil:
+			return nil // DBNull.
 		default:
 			return fmt.Errorf("sqlmer: cannot convert VARCHAR/NVARCHAR field, colname=%s, value=%v", colType.Name(), v)
 		}

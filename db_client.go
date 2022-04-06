@@ -39,10 +39,12 @@ type errorDbClient interface {
 	ExistsContext(context context.Context, sqlText string, args ...interface{}) (bool, error)
 
 	// Scalar 用于获取查询的第一行第一列的值。
-	Scalar(sqlText string, args ...interface{}) (interface{}, error)
+	// 注意，sql.ErrNoRows 不放 error 中返回，而通过第二个返回值区分，当查询不到数据的时候第二个返回值将为 false，否则为 true。
+	Scalar(sqlText string, args ...interface{}) (interface{}, bool, error)
 
 	// ScalarContext 用于获取查询的第一行第一列的值。
-	ScalarContext(context context.Context, sqlText string, args ...interface{}) (interface{}, error)
+	// 注意，sql.ErrNoRows 不放 error 中返回，而通过第二个返回值区分，当查询不到数据的时候第二个返回值将为 false，否则为 true。
+	ScalarContext(context context.Context, sqlText string, args ...interface{}) (interface{}, bool, error)
 
 	// Get 用于获取查询结果的第一行记录。
 	Get(sqlText string, args ...interface{}) (map[string]interface{}, error)
@@ -95,12 +97,12 @@ type mustDbClient interface {
 	MustExistsContext(context context.Context, sqlText string, args ...interface{}) bool
 
 	// MustScalar 用于获取查询的第一行第一列的值。
-	// 注意：当查询不到数据的时候，将返回 nil，而不是 panic。
-	MustScalar(sqlText string, args ...interface{}) interface{}
+	// 注意，sql.ErrNoRows 不会引发 panic，而通过第二个返回值区分，当查询不到数据的时候第二个返回值将为 false，否则为 true。
+	MustScalar(sqlText string, args ...interface{}) (interface{}, bool)
 
 	// MustScalarContext 用于获取查询的第一行第一列的值。
-	// 注意：当查询不到数据的时候，将返回 nil，而不是 panic。
-	MustScalarContext(context context.Context, sqlText string, args ...interface{}) interface{}
+	// 注意，sql.ErrNoRows 不会引发 panic，而通过第二个返回值区分，当查询不到数据的时候第二个返回值将为 false，否则为 true。
+	MustScalarContext(context context.Context, sqlText string, args ...interface{}) (interface{}, bool)
 
 	// MustGet 用于获取查询结果的第一行记录。
 	// 注意：当查询不到行时候，将返回 nil，而不是 panic。
