@@ -16,6 +16,21 @@ https://pkg.go.dev/github.com/bunnier/sqlmer
 
 > Tips: 主交互接口为[DbClient](/db_client.go)。
 
+## 类型映射
+
+> nullable 的字段，如果值为 null，默认均以 nil 返回。
+
+### MySql
+
+| db datatype                                        | Go datatype |
+| -------------------------------------------------- | ----------- |
+| varchar/char/text                                  | string      |
+| date/datetime/timestamp                            | time.Time   |
+| decimal                                            | string      |
+| float/double                                       | float64     |
+| small int / tiny int / int / unsigned int / bigint | int64       |
+| bit                                                | []byte      |
+
 ## 简单样例
 
 ```go
@@ -71,14 +86,14 @@ CREATE TABLE MainDemo(
 	}
 	fmt.Println(data) // map 方式返回，需要结构的，需要自己转换。
 
-	// 获取第一行第一列。
-	name, err := dbClient.Scalar("SELECT Name FROM MainDemo WHERE Name=@p1", "rui")
+	// 获取第一行第一列，返回的第二个值标示是否为 null，主要用于 nullable 列。
+	name, _, err := dbClient.Scalar("SELECT Name FROM MainDemo WHERE Name=@p1", "rui")
 	if err != nil {
 		log.Fatal(err)
 		return
 	}
 	
-	// 返回interface{}，类型可以自己转换。已经统一了 Sql Server 和 MySql 返回的类型（注意：Decimal 使用 string返回）。
+	// 返回interface{}，类型可以自己转换。已经统一了 Sql Server 和 MySql 返回的类型。
 	fmt.Println(name.(string)) 
 
 	// 获取增强后的sql.Rows（支持SliceScan、MapScan）。
