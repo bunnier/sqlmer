@@ -21,7 +21,6 @@ func mustGetMssqlDb(t *testing.T) *sql.DB {
 	return db
 }
 
-// TODO 避免循环饮用，暂且定义一个 unifyDataTypeFn 在这，后续分离测试用例时候需要去掉该逻辑。
 func unifyDataTypeFn(colDbTypeName string, dest *interface{}) {
 	switch colDbTypeName {
 	case "VARCHAR", "DECIMAL":

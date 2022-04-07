@@ -1,4 +1,4 @@
-package sqlmer_test
+package mssql
 
 import (
 	"testing"
@@ -6,25 +6,6 @@ import (
 	"github.com/bunnier/sqlmer"
 	"github.com/pkg/errors"
 )
-
-func Test_MysqlTransaction(t *testing.T) {
-	mysqlClient, err := getMySqlDbClient()
-	if err != nil {
-		t.Fatal(err)
-	}
-	// 准备数据。
-	if _, err = mysqlClient.Execute("INSERT INTO go_TypeTest(VarcharTest, dateTest, dateTimeTest, timestampTest, decimalTest) VALUES (N'Row100', '2021-07-03', '2021-07-03 15:38:50.425','2021-07-03 15:38:50.425', 3.45678999)"); err != nil {
-		t.Fatalf("prepare error: %v", err)
-	}
-	if _, err = mysqlClient.Execute("INSERT INTO go_TypeTest(VarcharTest, dateTest, dateTimeTest, timestampTest, decimalTest) VALUES (N'Row101', '2021-07-03', '2021-07-03 15:38:50.425','2021-07-03 15:38:50.425', 3.45678999)"); err != nil {
-		t.Fatalf("prepare error: %v", err)
-	}
-	TransactionFuncTest(t, mysqlClient)
-	// 清理数据
-	if _, err = mysqlClient.Execute("DELETE FROM go_TypeTest WHERE VarcharTest IN(N'Row101', N'Row100')"); err != nil {
-		t.Errorf("clean error: %v", err)
-	}
-}
 
 func Test_MssqlTransaction(t *testing.T) {
 	mssqlClient, err := getMsSqlDbClient()
