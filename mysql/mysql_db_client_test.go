@@ -429,7 +429,7 @@ func Test_internalDbClient_Get(t *testing.T) {
 				"nullDateTest":      time.Date(2021, 7, 3, 0, 0, 0, 0, time.UTC),
 				"nullDateTimeTest":  time.Date(2021, 7, 3, 15, 38, 50, 0, time.UTC),
 				"nullTimestampTest": time.Date(2021, 7, 3, 15, 38, 50, 0, time.UTC),
-				"nullFloatTest":     float64(3.456), // 注意，这里有点特殊，因为 nullable 类型只有 float64，所以转换后 nullable 的 float 不会是 float32
+				"nullFloatTest":     float64(3.456),
 				"nullDoubleTest":    float64(3.15678),
 				"nullDecimalTest":   "3.4567899900",
 				"nullBitTest":       []byte{1},
