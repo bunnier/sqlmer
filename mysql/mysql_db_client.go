@@ -57,8 +57,8 @@ func NewMySqlDbClient(connectionString string, options ...sqlmer.DbClientOption)
 }
 
 // unifyDataType 用于统一数据类型。
-func unifyDataType(colDbTypeName string, dest *interface{}) {
-	switch colDbTypeName {
+func unifyDataType(columnType *sql.ColumnType, dest *interface{}) {
+	switch columnType.DatabaseTypeName() {
 	case "VARCHAR", "CHAR", "TEXT", "DECIMAL":
 		switch v := (*dest).(type) {
 		case sql.RawBytes:

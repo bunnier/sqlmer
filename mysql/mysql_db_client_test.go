@@ -437,6 +437,7 @@ func Test_internalDbClient_Get(t *testing.T) {
 			false,
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := tt.client.Get(tt.args.sqlText, tt.args.args...)
@@ -448,64 +449,13 @@ func Test_internalDbClient_Get(t *testing.T) {
 			for k, v := range got {
 				wantV := tt.want[k]
 				if !reflect.DeepEqual(v, wantV) {
+					if wantFloat, ok := wantV.(float64); ok {
+						if wantFloat-v.(float64) < 0.00001 {
+							continue
+						}
+					}
 					t.Errorf("fieldname = %s, internalDbClient.Get() = %v, want %v", k, v, wantV)
 				}
-			}
-		})
-	}
-}
-
-func Test_internalDbClient_SliceGet(t *testing.T) {
-	mysqlClient, err := getMySqlDbClient()
-	if err != nil {
-		t.Fatal(err)
-	}
-	type args struct {
-		sqlText string
-		args    []interface{}
-	}
-	tests := []struct {
-		name    string
-		client  sqlmer.DbClient
-		args    args
-		want    []map[string]interface{}
-		wantErr bool
-	}{
-		{
-			"mysql",
-			mysqlClient,
-			args{
-				"SELECT varcharTest,dateTest,dateTimeTest,timestampTest,decimalTest FROM go_TypeTest WHERE id IN (1,2)",
-				[]interface{}{},
-			},
-			[]map[string]interface{}{
-				{
-					"varcharTest":   "行1",
-					"dateTest":      time.Date(2021, 7, 1, 0, 0, 0, 0, time.UTC),
-					"dateTimeTest":  time.Date(2021, 7, 1, 15, 38, 50, 0, time.UTC),
-					"timestampTest": time.Date(2021, 7, 1, 15, 38, 50, 0, time.UTC),
-					"decimalTest":   "1.4567899900",
-				},
-				{
-					"varcharTest":   "行2",
-					"dateTest":      time.Date(2021, 7, 2, 0, 0, 0, 0, time.UTC),
-					"dateTimeTest":  time.Date(2021, 7, 2, 15, 38, 50, 0, time.UTC),
-					"timestampTest": time.Date(2021, 7, 2, 15, 38, 50, 0, time.UTC),
-					"decimalTest":   "2.4567899900",
-				},
-			},
-			false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := tt.client.SliceGet(tt.args.sqlText, tt.args.args...)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("internalDbClient.Get() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("internalDbClient.Get() = %v, want %v", got, tt.want)
 			}
 		})
 	}

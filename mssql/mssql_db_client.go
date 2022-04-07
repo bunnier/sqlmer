@@ -41,8 +41,8 @@ func NewMsSqlDbClient(connectionString string, options ...sqlmer.DbClientOption)
 }
 
 // unifyDataType 用于统一数据类型。
-func unifyDataType(colDbTypeName string, dest *interface{}) {
-	switch colDbTypeName {
+func unifyDataType(columnType *sql.ColumnType, dest *interface{}) {
+	switch columnType.DatabaseTypeName() {
 	case "DECIMAL", "SMALLMONEY", "MONEY":
 		switch v := (*dest).(type) {
 		case []byte:

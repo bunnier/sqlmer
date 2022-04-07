@@ -140,7 +140,6 @@ func Test_internalDbClient_Scalar(t *testing.T) {
 }
 
 func Test_internalDbClient_Execute(t *testing.T) {
-	now := time.Now()
 	mssqlClient, err := getMsSqlDbClient()
 	if err != nil {
 		t.Fatal(err)
@@ -159,8 +158,9 @@ func Test_internalDbClient_Execute(t *testing.T) {
 			"mssql",
 			mssqlClient,
 			args{
-				"INSERT INTO go_TypeTest (NvarcharTest, VarcharTest, DateTimeTest, DateTime2Test, DateTest, TimeTest, DecimalTest) VALUES (N'行5', 'Row5', @p1, @p1, @p1, @p1, 1.45678999);",
-				[]interface{}{now},
+				`INSERT INTO go_TypeTest (TinyIntTest, SmallIntTest, IntTest, BitTest, NvarcharTest, VarcharTest, NcharTest, CharTest, DateTimeTest, DateTime2Test, DateTest, TimeTest, MoneyTest, FloatTest, DecimalTest)
+				VALUES (5, 5, 5, 5, N'行5', 'Row5', N'行5', 'Row5', '2021-07-05 15:38:39.583', '2021-07-05 15:38:50.4257813', '2021-07-05', '12:05:01.345', 5.123, 5.12345, 5.45678999);`,
+				[]interface{}{},
 			},
 			false,
 		},
@@ -259,24 +259,93 @@ func Test_internalDbClient_Get(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			"mssql",
+			"mssql_nullable_null",
 			mssqlClient,
 			args{
-				"SELECT NvarcharTest,VarcharTest,DateTimeTest,DateTime2Test,DateTest,TimeTest,DecimalTest FROM go_TypeTest WHERE Id=1",
+				`SELECT
+				NullableTinyIntTest, NullableSmallIntTest, NullableIntTest, NullableBitTest, NullableNvarcharTest, NullableVarcharTest, NullableNcharTest, NullableCharTest, NullableDateTimeTest, NullableDateTime2Test, NullableDateTest, NullableTimeTest, NullableMoneyTest, NullableFloatTest, NullableDecimalTest
+				FROM go_TypeTest WHERE Id=1`,
 				[]interface{}{},
 			},
 			map[string]interface{}{
-				"NvarcharTest":  "行1",
-				"VarcharTest":   "Row1",
-				"DateTimeTest":  time.Date(2021, 7, 1, 15, 38, 39, 583000000, time.UTC),
-				"DateTime2Test": time.Date(2021, 7, 1, 15, 38, 50, 425781300, time.UTC),
-				"DateTest":      time.Date(2021, 7, 1, 0, 0, 0, 0, time.UTC),
-				"TimeTest":      time.Date(1, 1, 1, 12, 1, 1, 345000000, time.UTC),
-				"DecimalTest":   "1.4567899900",
+				"TinyIntTest":           int64(1),
+				"SmallIntTest":          int64(1),
+				"IntTest":               int64(1),
+				"BitTest":               true,
+				"NvarcharTest":          "行1",
+				"VarcharTest":           "Row1",
+				"NcharTest":             "行1",
+				"CharTest":              "Row1",
+				"DateTimeTest":          time.Date(2021, 7, 1, 15, 38, 39, 583000000, time.UTC),
+				"DateTime2Test":         time.Date(2021, 7, 1, 15, 38, 50, 425781300, time.UTC),
+				"DateTest":              time.Date(2021, 7, 1, 0, 0, 0, 0, time.UTC),
+				"TimeTest":              time.Date(1, 1, 1, 12, 1, 1, 345000000, time.UTC),
+				"MoneyTest":             "1.1230",
+				"FloatTest":             float64(1.12345),
+				"DecimalTest":           "1.4567899900",
+				"NullableTinyIntTest":   nil,
+				"NullableSmallIntTest":  nil,
+				"NullableIntTest":       nil,
+				"NullableBitTest":       nil,
+				"NullableNvarcharTest":  nil,
+				"NullableVarcharTest":   nil,
+				"NullableNcharTest":     nil,
+				"NullableCharTest":      nil,
+				"NullableDateTimeTest":  nil,
+				"NullableDateTime2Test": nil,
+				"NullableDateTest":      nil,
+				"NullableTimeTest":      nil,
+				"NullableMoneyTest":     nil,
+				"NullableFloatTest":     nil,
+				"NullableDecimalTest":   nil,
 			},
 			false,
 		},
+		// {
+		// 	"mssql_nullable_null",
+		// 	mssqlClient,
+		// 	args{
+		// 		`SELECT TinyIntTest, SmallIntTest, IntTest, BitTest, NvarcharTest, VarcharTest, NcharTest, CharTest, DateTimeTest, DateTime2Test, DateTest, TimeTest, MoneyTest, FloatTest, DecimalTest,
+		// 		NullableTinyIntTest, NullableSmallIntTest, NullableIntTest, NullableBitTest, NullableNvarcharTest, NullableVarcharTest, NullableNcharTest, NullableCharTest, NullableDateTimeTest, NullableDateTime2Test, NullableDateTest, NullableTimeTest, NullableMoneyTest, NullableFloatTest, NullableDecimalTest
+		// 		FROM go_TypeTest WHERE Id=3`,
+		// 		[]interface{}{},
+		// 	},
+		// 	map[string]interface{}{
+		// 		"TinyIntTest":           int64(3),
+		// 		"SmallIntTest":          int64(3),
+		// 		"IntTest":               int64(3),
+		// 		"BitTest":               true,
+		// 		"NvarcharTest":          "行3",
+		// 		"VarcharTest":           "Row3",
+		// 		"NcharTest":             "行3",
+		// 		"CharTest":              "Row3",
+		// 		"DateTimeTest":          time.Date(2021, 7, 3, 15, 38, 39, 583000000, time.UTC),
+		// 		"DateTime2Test":         time.Date(2021, 7, 3, 15, 38, 50, 425781300, time.UTC),
+		// 		"DateTest":              time.Date(2021, 7, 3, 0, 0, 0, 0, time.UTC),
+		// 		"TimeTest":              time.Date(1, 1, 1, 12, 3, 1, 345000000, time.UTC),
+		// 		"MoneyTest":             "3.1230",
+		// 		"FloatTest":             float64(3.12345),
+		// 		"DecimalTest":           "3.4567899900",
+		// 		"NullableTinyIntTest":   int64(3),
+		// 		"NullableSmallIntTest":  int64(3),
+		// 		"NullableIntTest":       int64(3),
+		// 		"NullableBitTest":       true,
+		// 		"NullableNvarcharTest":  "行3",
+		// 		"NullableVarcharTest":   "Row3",
+		// 		"NullableNcharTest":     "行3",
+		// 		"NullableCharTest":      "Row3",
+		// 		"NullableDateTimeTest":  time.Date(2021, 7, 3, 15, 38, 39, 583000000, time.UTC),
+		// 		"NullableDateTime2Test": time.Date(2021, 7, 3, 15, 38, 50, 425781300, time.UTC),
+		// 		"NullableDateTest":      time.Date(2021, 7, 3, 0, 0, 0, 0, time.UTC),
+		// 		"NullableTimeTest":      time.Date(1, 1, 1, 12, 3, 1, 345000000, time.UTC),
+		// 		"NullableMoneyTest":     "3.1230",
+		// 		"NullableFloatTest":     float64(3.12345),
+		// 		"NullableDecimalTest":   "3.4567899900",
+		// 	},
+		// 	false,
+		// },
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := tt.client.Get(tt.args.sqlText, tt.args.args...)
@@ -284,68 +353,17 @@ func Test_internalDbClient_Get(t *testing.T) {
 				t.Errorf("internalDbClient.Get() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("internalDbClient.Get() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
 
-func Test_internalDbClient_SliceGet(t *testing.T) {
-	mssqlClient, err := getMsSqlDbClient()
-	if err != nil {
-		t.Fatal(err)
-	}
-	type args struct {
-		sqlText string
-		args    []interface{}
-	}
-	tests := []struct {
-		name    string
-		client  sqlmer.DbClient
-		args    args
-		want    []map[string]interface{}
-		wantErr bool
-	}{
-		{
-			"mssql",
-			mssqlClient,
-			args{
-				"SELECT NvarcharTest,VarcharTest,DateTimeTest,DateTime2Test,DateTest,TimeTest,DecimalTest FROM go_TypeTest WHERE Id IN (1,2)",
-				[]interface{}{},
-			},
-			[]map[string]interface{}{
-				{
-					"NvarcharTest":  "行1",
-					"VarcharTest":   "Row1",
-					"DateTimeTest":  time.Date(2021, 7, 1, 15, 38, 39, 583000000, time.UTC),
-					"DateTime2Test": time.Date(2021, 7, 1, 15, 38, 50, 425781300, time.UTC),
-					"DateTest":      time.Date(2021, 7, 1, 0, 0, 0, 0, time.UTC),
-					"TimeTest":      time.Date(1, 1, 1, 12, 1, 1, 345000000, time.UTC),
-					"DecimalTest":   "1.4567899900",
-				},
-				{
-					"NvarcharTest":  "行2",
-					"VarcharTest":   "Row2",
-					"DateTimeTest":  time.Date(2021, 7, 2, 15, 38, 39, 583000000, time.UTC),
-					"DateTime2Test": time.Date(2021, 7, 2, 15, 38, 50, 425781300, time.UTC),
-					"DateTest":      time.Date(2021, 7, 2, 0, 0, 0, 0, time.UTC),
-					"TimeTest":      time.Date(1, 1, 1, 12, 1, 2, 345000000, time.UTC),
-					"DecimalTest":   "2.4567899900",
-				},
-			},
-			false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := tt.client.SliceGet(tt.args.sqlText, tt.args.args...)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("internalDbClient.Get() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("internalDbClient.Get() = %v, want %v", got, tt.want)
+			for k, v := range got {
+				wantV := tt.want[k]
+				if !reflect.DeepEqual(v, wantV) {
+					if wantFloat, ok := wantV.(float64); ok {
+						if wantFloat-v.(float64) < 0.00001 {
+							continue
+						}
+					}
+					t.Errorf("fieldname = %s, internalDbClient.Get() = %v, want %v", k, v, wantV)
+				}
 			}
 		})
 	}
@@ -390,7 +408,7 @@ func Test_internalDbClient_Rows(t *testing.T) {
 					"DateTimeTest":  time.Date(2021, 7, 2, 15, 38, 39, 583000000, time.UTC),
 					"DateTime2Test": time.Date(2021, 7, 2, 15, 38, 50, 425781300, time.UTC),
 					"DateTest":      time.Date(2021, 7, 2, 0, 0, 0, 0, time.UTC),
-					"TimeTest":      time.Date(1, 1, 1, 12, 1, 2, 345000000, time.UTC),
+					"TimeTest":      time.Date(1, 1, 1, 12, 2, 1, 345000000, time.UTC),
 					"DecimalTest":   "2.4567899900",
 				},
 			},
