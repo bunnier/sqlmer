@@ -70,6 +70,15 @@ func unifyDataType(columnType *sql.ColumnType, dest *interface{}) {
 		case nil:
 			*dest = nil
 		}
+	default: // 将 sql.RawBytes 统一转为 []byte。
+		switch v := (*dest).(type) {
+		case sql.RawBytes:
+			if v == nil {
+				*dest = nil
+				break
+			}
+			*dest = []byte(v)
+		}
 	}
 }
 

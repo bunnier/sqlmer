@@ -73,11 +73,13 @@ func (rs *EnhanceRows) SliceScan() ([]interface{}, error) {
 	rs.Scan(dest...)
 
 	for i := 0; i < len(rs.colTypes); i++ {
+		// 之前为了能让 Scan 修改数据，保存的是指针，而返回上层时候只需要实际数据，因此进行解引用。
 		dest[i] = destRefVal[i].Elem().Interface()
 
-		// 进行统一类型处理。
-		rs.unifyDataType(rs.colTypes[i], &dest[i])
-		extractNullableValue(rs.colTypes[i], &dest[i])
+		extractNullableValue(rs.colTypes[i], &dest[i]) // 进行统一的空值处理逻辑。
+		if dest[i] != nil {
+			rs.unifyDataType(rs.colTypes[i], &dest[i]) // 进行数据库定制的类型处理。
+		}
 	}
 
 	return dest, rs.err

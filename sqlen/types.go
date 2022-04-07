@@ -62,7 +62,7 @@ func extractNullableValue(columnType *sql.ColumnType, srcP *interface{}) {
 			*srcP = nil
 			break
 		}
-		*srcP = []byte(src)
+		*srcP = src
 	}
 }
 
