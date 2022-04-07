@@ -59,7 +59,9 @@ func extractNullableValue(columnType *sql.ColumnType, srcP *interface{}) {
 	case sql.RawBytes:
 		if src == nil {
 			*srcP = nil
+			break
 		}
+		*srcP = []byte(src)
 	}
 }
 

@@ -1,7 +1,6 @@
 package mysql
 
 import (
-	"database/sql"
 	"fmt"
 	"reflect"
 	"strings"
@@ -390,7 +389,7 @@ func Test_internalDbClient_Get(t *testing.T) {
 				"floatTest":         float64(1.456),
 				"doubleTest":        float64(1.15678),
 				"decimalTest":       "1.4567899900",
-				"bitTest":           sql.RawBytes([]uint8{1}),
+				"bitTest":           []byte{1},
 				"nullVarcharTest":   nil,
 				"nullCharTest":      nil,
 				"nullTextTest":      nil,
@@ -405,7 +404,7 @@ func Test_internalDbClient_Get(t *testing.T) {
 			false,
 		},
 		{
-			"mysql_nullable_not_null",
+			"mysql_nullable_hasValue",
 			mysqlClient,
 			args{
 				`SELECT varcharTest, charTest, charTextTest, dateTest, dateTimeTest, timestampTest, floatTest, doubleTest, decimalTest, bitTest,
@@ -423,7 +422,7 @@ func Test_internalDbClient_Get(t *testing.T) {
 				"floatTest":         float64(3.456),
 				"doubleTest":        float64(3.15678),
 				"decimalTest":       "3.4567899900",
-				"bitTest":           sql.RawBytes([]uint8{1}),
+				"bitTest":           []byte{1},
 				"nullVarcharTest":   "行3",
 				"nullCharTest":      "行3char",
 				"nullTextTest":      "行3text",
@@ -433,7 +432,7 @@ func Test_internalDbClient_Get(t *testing.T) {
 				"nullFloatTest":     float64(3.456), // 注意，这里有点特殊，因为 nullable 类型只有 float64，所以转换后 nullable 的 float 不会是 float32
 				"nullDoubleTest":    float64(3.15678),
 				"nullDecimalTest":   "3.4567899900",
-				"nullBitTest":       sql.RawBytes([]uint8{1}),
+				"nullBitTest":       []byte{1},
 			},
 			false,
 		},
