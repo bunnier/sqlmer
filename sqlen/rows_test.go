@@ -63,7 +63,7 @@ func TestEnhanceRows_MapScan(t *testing.T) {
 			t.Errorf("enhancedRows.MapScan() error = %v, wantErr nil", err)
 			return
 		}
-		if id, ok := rowMap["Id"]; !ok || id.(int32) != int32(count) {
+		if id, ok := rowMap["Id"]; !ok || id.(int64) != int64(count) {
 			t.Errorf("enhancedRows.MapScan() Id = %d, wantId %d", id, count)
 		}
 		if str, ok := rowMap["VarcharTest"]; !ok || str.(string) != fmt.Sprintf("行%d", count) {
@@ -99,7 +99,7 @@ func TestEnhanceRows_SliceScan(t *testing.T) {
 			t.Errorf("enhancedRows.SliceScan() error = %v, wantErr nil", err)
 			return
 		}
-		if id, ok := sliceRow[0].(int32); !ok || id != int32(count) {
+		if id, ok := sliceRow[0].(int64); !ok || id != int64(count) {
 			t.Errorf("enhancedRows.SliceScan() Id = %d, wantId %d", id, count)
 		}
 
@@ -127,7 +127,7 @@ func TestEnhanceRow_MapScan(t *testing.T) {
 		t.Errorf("enhancedRow.MapScan() error = %v, wantErr nil", err)
 		return
 	}
-	if id, ok := rowMap["Id"]; !ok || id.(int32) != 1 {
+	if id, ok := rowMap["Id"]; !ok || id.(int64) != 1 {
 		t.Errorf("enhancedRow.MapScan() Id = %d, wantId 1", id)
 	}
 	if str, ok := rowMap["VarcharTest"]; !ok || str.(string) != "行1" {
@@ -145,7 +145,7 @@ func TestEnhanceRow_SliceScan(t *testing.T) {
 		return
 	}
 
-	if id, ok := sliceRow[0].(int32); !ok || id != 1 {
+	if id, ok := sliceRow[0].(int64); !ok || id != 1 {
 		t.Errorf("enhancedRow.SliceScan() Id = %d, wantId 1", id)
 	}
 	if str, ok := sliceRow[1].(string); !ok || str != "行1" {

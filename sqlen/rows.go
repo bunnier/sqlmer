@@ -52,25 +52,19 @@ func (rs *EnhanceRows) noDestScan() ([]interface{}, error) {
 	dest := make([]interface{}, len(rs.colTypes))
 	destRefVal := make([]reflect.Value, len(rs.colTypes))
 	for i, cType := range rs.colTypes {
-		refVal := reflect.New(cType.ScanType()) // 使用数据库驱动标记的类型来接收数据。
-		dest[i] = refVal.Interface()            // 注意，这里传入的是指定值的指针。
-		destRefVal[i] = refVal                  // 保存这个 Reflect.value 在后面用于解引用。
+		refVal := reflect.New(unifyNumber(cType.ScanType())) // 使用数据库驱动标记的类型来接收数据。
+		dest[i] = refVal.Interface()                         // 注意，这里传入的是指定值的指针。
+		destRefVal[i] = refVal                               // 保存这个 Reflect.value 在后面用于解引用。
 	}
 
 	rs.Scan(dest...)
 
 	for i := 0; i < len(rs.colTypes); i++ {
-		// 为了处理 nullable，上面用于 Scan 的类型为指针类型，这里判断是否为 nil，不是的话进行解引用。
-		if destRefVal[i].IsNil() {
-			dest[i] = nil
-		} else {
-			refValElem := destRefVal[i].Elem()
-			dest[i] = refValElem.Interface()
-		}
+		dest[i] = destRefVal[i].Elem().Interface()
 
 		// 进行统一类型处理。
 		rs.unifyDataType(rs.colTypes[i].DatabaseTypeName(), &dest[i])
-		extractNullableValue(&dest[i])
+		extractNullableValue(rs.colTypes[i], &dest[i])
 	}
 
 	return dest, rs.err
