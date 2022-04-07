@@ -12,16 +12,20 @@ func Test_MysqlTransaction(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	// 准备数据。
-	if _, err = mysqlClient.Execute("INSERT INTO go_TypeTest(VarcharTest, dateTest, dateTimeTest, timestampTest, decimalTest) VALUES (N'Row100', '2021-07-03', '2021-07-03 15:38:50.425','2021-07-03 15:38:50.425', 3.45678999)"); err != nil {
+	if _, err = mysqlClient.Execute(`INSERT INTO go_TypeTest(varcharTest, charTest, charTextTest, dateTest, dateTimeTest, timestampTest, floatTest, doubleTest, decimalTest, bitTest)
+	VALUES (N'行31', '行31char', '行31text','2021-07-31','2021-07-31 15:38:50.425','2021-07-31 15:38:50.425', 31.456, 31.15678, 31.45678999, 0);`); err != nil {
 		t.Fatalf("prepare error: %v", err)
 	}
-	if _, err = mysqlClient.Execute("INSERT INTO go_TypeTest(VarcharTest, dateTest, dateTimeTest, timestampTest, decimalTest) VALUES (N'Row101', '2021-07-03', '2021-07-03 15:38:50.425','2021-07-03 15:38:50.425', 3.45678999)"); err != nil {
+	if _, err = mysqlClient.Execute(`INSERT INTO go_TypeTest(varcharTest, charTest, charTextTest, dateTest, dateTimeTest, timestampTest, floatTest, doubleTest, decimalTest, bitTest)
+	VALUES (N'行30', '行30char', '行30text','2021-07-30','2021-07-30 15:38:50.425','2021-07-30 15:38:50.425', 30.456, 30.15678, 30.45678999, 0);
+	`); err != nil {
 		t.Fatalf("prepare error: %v", err)
 	}
 	TransactionFuncTest(t, mysqlClient)
 	// 清理数据
-	if _, err = mysqlClient.Execute("DELETE FROM go_TypeTest WHERE VarcharTest IN(N'Row101', N'Row100')"); err != nil {
+	if _, err = mysqlClient.Execute("DELETE FROM go_TypeTest WHERE VarcharTest IN(N'行30', N'行31')"); err != nil {
 		t.Errorf("clean error: %v", err)
 	}
 }
@@ -77,7 +81,7 @@ func TransactionRollback(t *testing.T, dbClient sqlmer.DbClient) {
 		return
 	}
 	defer tx.Close()
-	res, err := tx.Execute("DELETE FROM go_TypeTest WHERE VarcharTest='Row100'") // Mysql & Sqlserver都有这个表，这条记录其它测试用例都没用到。
+	res, err := tx.Execute("DELETE FROM go_TypeTest WHERE VarcharTest='行30'") // Mysql & Sqlserver都有这个表，这条记录其它测试用例都没用到。
 	if err != nil {
 		t.Errorf("transactionKeeper.Execute() error = %v, wantErr nil", err)
 		return
@@ -91,7 +95,7 @@ func TransactionRollback(t *testing.T, dbClient sqlmer.DbClient) {
 		return
 	}
 
-	if exist, err := dbClient.Exists("SELECT 1 FROM go_TypeTest WHERE VarcharTest='Row100'"); err != nil { // 记录需要依然存在。
+	if exist, err := dbClient.Exists("SELECT 1 FROM go_TypeTest WHERE VarcharTest='行30'"); err != nil { // 记录需要依然存在。
 		t.Errorf("transactionKeeper.Exists() error = %v, wantErr nil", err)
 		return
 	} else if !exist {
@@ -107,7 +111,7 @@ func TransactionCommit(t *testing.T, dbClient sqlmer.DbClient) {
 		return
 	}
 	defer tx.Close()
-	res, err := tx.Execute("DELETE FROM go_TypeTest WHERE VarcharTest='Row100'")
+	res, err := tx.Execute("DELETE FROM go_TypeTest WHERE VarcharTest='行30'")
 	if err != nil {
 		t.Errorf("transactionKeeper.Execute() error = %v, wantErr nil", err)
 		return
@@ -121,7 +125,7 @@ func TransactionCommit(t *testing.T, dbClient sqlmer.DbClient) {
 		return
 	}
 
-	if exist, err := dbClient.Exists("SELECT 1 FROM go_TypeTest WHERE VarcharTest='Row100'"); err != nil { // 记录需要依然存在。
+	if exist, err := dbClient.Exists("SELECT 1 FROM go_TypeTest WHERE VarcharTest='行30'"); err != nil { // 记录需要依然存在。
 		t.Errorf("transactionKeeper.Exists() error = %v, wantErr nil", err)
 		return
 	} else if exist {
@@ -137,7 +141,7 @@ func TransactionCommitAfterRollback(t *testing.T, dbClient sqlmer.DbClient) {
 		return
 	}
 	defer tx.Close()
-	res, err := tx.Execute("DELETE FROM go_TypeTest WHERE VarcharTest='Row101'")
+	res, err := tx.Execute("DELETE FROM go_TypeTest WHERE VarcharTest='行31'")
 	if err != nil {
 		t.Errorf("transactionKeeper.Execute() error = %v, wantErr nil", err)
 		return
@@ -158,7 +162,7 @@ func TransactionCommitAfterRollback(t *testing.T, dbClient sqlmer.DbClient) {
 		}
 	}
 
-	if exist, err := dbClient.Exists("SELECT 1 FROM go_TypeTest WHERE VarcharTest='Row101'"); err != nil { // 记录需要依然存在。
+	if exist, err := dbClient.Exists("SELECT 1 FROM go_TypeTest WHERE VarcharTest='行31'"); err != nil { // 记录需要依然存在。
 		t.Errorf("transactionKeeper.Exists() error = %v, wantErr nil", err)
 		return
 	} else if !exist {
@@ -174,7 +178,7 @@ func TransactionRollbackAfterCommit(t *testing.T, dbClient sqlmer.DbClient) {
 		return
 	}
 	defer tx.Close()
-	res, err := tx.Execute("DELETE FROM go_TypeTest WHERE VarcharTest='Row101'")
+	res, err := tx.Execute("DELETE FROM go_TypeTest WHERE VarcharTest='行31'")
 	if err != nil {
 		t.Errorf("transactionKeeper.Execute() error = %v, wantErr nil", err)
 		return
@@ -195,7 +199,7 @@ func TransactionRollbackAfterCommit(t *testing.T, dbClient sqlmer.DbClient) {
 		}
 	}
 
-	if exist, err := dbClient.Exists("SELECT 1 FROM go_TypeTest WHERE VarcharTest='Row101'"); err != nil { // 记录需要依然存在。
+	if exist, err := dbClient.Exists("SELECT 1 FROM go_TypeTest WHERE VarcharTest='行31'"); err != nil { // 记录需要依然存在。
 		t.Errorf("transactionKeeper.Exists() error = %v, wantErr nil", err)
 		return
 	} else if exist {

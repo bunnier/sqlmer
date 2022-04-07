@@ -64,11 +64,13 @@ func unifyDataType(colDbTypeName string, dest *interface{}) {
 		case []byte:
 			if v == nil {
 				*dest = nil
+				break
 			}
 			*dest = string(v)
 		case sql.RawBytes:
 			if v == nil {
 				*dest = nil
+				break
 			}
 			*dest = string(v)
 		case *string:

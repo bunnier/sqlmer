@@ -64,7 +64,8 @@ func (rs *EnhanceRows) noDestScan() ([]interface{}, error) {
 		if destRefVal[i].IsNil() {
 			dest[i] = nil
 		} else {
-			dest[i] = destRefVal[i].Elem().Interface()
+			refValElem := destRefVal[i].Elem()
+			dest[i] = refValElem.Interface()
 		}
 
 		// 进行统一类型处理。

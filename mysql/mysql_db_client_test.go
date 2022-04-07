@@ -1,6 +1,7 @@
 package mysql
 
 import (
+	"database/sql"
 	"fmt"
 	"reflect"
 	"strings"
@@ -270,7 +271,8 @@ func Test_internalDbClient_Execute(t *testing.T) {
 			"mysql",
 			mysqlClient,
 			args{
-				"INSERT INTO go_TypeTest(VarcharTest, dateTest, dateTimeTest, timestampTest, decimalTest) VALUES (N'行5', @p1, @p1, @p1, 1.45678999)",
+				`INSERT INTO go_TypeTest(varcharTest, charTest, charTextTest, dateTest, dateTimeTest, timestampTest, floatTest, doubleTest, decimalTest, bitTest)
+				VALUES (N'行5', '行5char', '行5text','2021-07-05','2021-07-05 15:38:50.425','2021-07-05 15:38:50.425', 5.456, 5.15678, 5.45678999, 1);`,
 				[]interface{}{now},
 			},
 			false,
@@ -370,18 +372,68 @@ func Test_internalDbClient_Get(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			"mysql",
+			"mysql_nullable_null",
 			mysqlClient,
 			args{
-				"SELECT varcharTest,dateTest,dateTimeTest,timestampTest,decimalTest FROM go_TypeTest WHERE id=1",
+				`SELECT varcharTest, charTest, charTextTest, dateTest, dateTimeTest, timestampTest, floatTest, doubleTest, decimalTest, bitTest,
+				nullVarcharTest, nullCharTest, nullTextTest, nullDateTest, nullDateTimeTest, nullTimestampTest, nullFloatTest, nullDoubleTest, nullDecimalTest, nullBitTest 
+				FROM go_TypeTest WHERE id=1`,
 				[]interface{}{},
 			},
 			map[string]interface{}{
-				"varcharTest":   "行1",
-				"dateTest":      time.Date(2021, 7, 1, 0, 0, 0, 0, time.UTC),
-				"dateTimeTest":  time.Date(2021, 7, 1, 15, 38, 50, 0, time.UTC),
-				"timestampTest": time.Date(2021, 7, 1, 15, 38, 50, 0, time.UTC),
-				"decimalTest":   "1.4567899900",
+				"varcharTest":       "行1",
+				"charTest":          "行1char",
+				"charTextTest":      "行1text",
+				"dateTest":          time.Date(2021, 7, 1, 0, 0, 0, 0, time.UTC),
+				"dateTimeTest":      time.Date(2021, 7, 1, 15, 38, 50, 0, time.UTC),
+				"timestampTest":     time.Date(2021, 7, 1, 15, 38, 50, 0, time.UTC),
+				"floatTest":         float32(1.456),
+				"doubleTest":        float64(1.15678),
+				"decimalTest":       "1.4567899900",
+				"bitTest":           sql.RawBytes([]uint8{1}),
+				"nullVarcharTest":   nil,
+				"nullCharTest":      nil,
+				"nullTextTest":      nil,
+				"nullDateTest":      nil,
+				"nullDateTimeTest":  nil,
+				"nullTimestampTest": nil,
+				"nullFloatTest":     nil,
+				"nullDoubleTest":    nil,
+				"nullDecimalTest":   nil,
+				"nullBitTest":       nil,
+			},
+			false,
+		},
+		{
+			"mysql_nullable_not_null",
+			mysqlClient,
+			args{
+				`SELECT varcharTest, charTest, charTextTest, dateTest, dateTimeTest, timestampTest, floatTest, doubleTest, decimalTest, bitTest,
+				nullVarcharTest, nullCharTest, nullTextTest, nullDateTest, nullDateTimeTest, nullTimestampTest, nullFloatTest, nullDoubleTest, nullDecimalTest, nullBitTest
+				FROM go_TypeTest WHERE id=3`,
+				[]interface{}{},
+			},
+			map[string]interface{}{
+				"varcharTest":       "行3",
+				"charTest":          "行3char",
+				"charTextTest":      "行3text",
+				"dateTest":          time.Date(2021, 7, 3, 0, 0, 0, 0, time.UTC),
+				"dateTimeTest":      time.Date(2021, 7, 3, 15, 38, 50, 0, time.UTC),
+				"timestampTest":     time.Date(2021, 7, 3, 15, 38, 50, 0, time.UTC),
+				"floatTest":         float32(3.456),
+				"doubleTest":        float64(3.15678),
+				"decimalTest":       "3.4567899900",
+				"bitTest":           sql.RawBytes([]uint8{1}),
+				"nullVarcharTest":   "行3",
+				"nullCharTest":      "行3char",
+				"nullTextTest":      "行3text",
+				"nullDateTest":      time.Date(2021, 7, 3, 0, 0, 0, 0, time.UTC),
+				"nullDateTimeTest":  time.Date(2021, 7, 3, 15, 38, 50, 0, time.UTC),
+				"nullTimestampTest": time.Date(2021, 7, 3, 15, 38, 50, 0, time.UTC),
+				"nullFloatTest":     float64(3.456), // 注意，这里有点特殊，因为 nullable 类型只有 float64，所以转换后 nullable 的 float 不会是 float32
+				"nullDoubleTest":    float64(3.15678),
+				"nullDecimalTest":   "3.4567899900",
+				"nullBitTest":       sql.RawBytes([]uint8{1}),
 			},
 			false,
 		},
@@ -393,8 +445,12 @@ func Test_internalDbClient_Get(t *testing.T) {
 				t.Errorf("internalDbClient.Get() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("internalDbClient.Get() = %v, want %v", got, tt.want)
+
+			for k, v := range got {
+				wantV := tt.want[k]
+				if !reflect.DeepEqual(v, wantV) {
+					t.Errorf("fieldname = %s, internalDbClient.Get() = %v, want %v", k, v, wantV)
+				}
 			}
 		})
 	}
