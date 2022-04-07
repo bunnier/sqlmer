@@ -39,7 +39,7 @@ func NewMySqlDbClient(connectionString string, options ...sqlmer.DbClientOption)
 
 	options = append(options,
 		sqlmer.WithConnectionString(DriverName, connectionString),
-		sqlmer.WithUnifyDataTypeFunc(UnifyDataType),
+		sqlmer.WithUnifyDataTypeFunc(unifyDataType),
 		sqlmer.WithBindArgsFunc(bindMySqlArgs)) // mysql 的驱动不支持命名参数，这里需要进行处理。
 	config, err := sqlmer.NewDbClientConfig(options...)
 	if err != nil {
@@ -56,8 +56,8 @@ func NewMySqlDbClient(connectionString string, options ...sqlmer.DbClientOption)
 	}, nil
 }
 
-// UnifyDataType 用于统一数据类型。
-func UnifyDataType(colDbTypeName string, dest *interface{}) {
+// unifyDataType 用于统一数据类型。
+func unifyDataType(colDbTypeName string, dest *interface{}) {
 	switch colDbTypeName {
 	case "VARCHAR", "CHAR", "TEXT", "DECIMAL":
 		switch v := (*dest).(type) {

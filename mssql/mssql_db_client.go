@@ -23,7 +23,7 @@ type MsSqlDbClient struct {
 func NewMsSqlDbClient(connectionString string, options ...sqlmer.DbClientOption) (*MsSqlDbClient, error) {
 	options = append(options,
 		sqlmer.WithConnectionString(DriverName, connectionString),
-		sqlmer.WithUnifyDataTypeFunc(UnifyDataType),
+		sqlmer.WithUnifyDataTypeFunc(unifyDataType),
 		sqlmer.WithBindArgsFunc(bindMsSqlArgs)) // SqlServer 要支持命名参数，需要定制一个参数解析函数。
 	config, err := sqlmer.NewDbClientConfig(options...)
 	if err != nil {
@@ -40,8 +40,8 @@ func NewMsSqlDbClient(connectionString string, options ...sqlmer.DbClientOption)
 	}, nil
 }
 
-// UnifyDataType 用于统一数据类型。
-func UnifyDataType(colDbTypeName string, dest *interface{}) {
+// unifyDataType 用于统一数据类型。
+func unifyDataType(colDbTypeName string, dest *interface{}) {
 	switch colDbTypeName {
 	case "DECIMAL", "SMALLMONEY", "MONEY":
 		switch v := (*dest).(type) {
