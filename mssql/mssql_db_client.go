@@ -48,6 +48,7 @@ func unifyDataType(columnType *sql.ColumnType, dest *interface{}) {
 		case []byte:
 			if v == nil {
 				*dest = nil
+				break
 			}
 			*dest = string(v)
 		case *string:

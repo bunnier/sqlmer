@@ -65,9 +65,9 @@ func (rs *EnhanceRows) SliceScan() ([]interface{}, error) {
 	dest := make([]interface{}, len(rs.colTypes))
 	destRefVal := make([]reflect.Value, len(rs.colTypes))
 	for i, cType := range rs.colTypes {
-		refVal := reflect.New(unifyNumber(cType.ScanType())) // 使用数据库驱动标记的类型来接收数据。
-		dest[i] = refVal.Interface()                         // 注意，这里传入的是指定值的指针。
-		destRefVal[i] = refVal                               // 保存这个 Reflect.value 在后面用于解引用。
+		refVal := reflect.New(unifyType(cType)) // 使用数据库驱动标记的类型来接收数据。
+		dest[i] = refVal.Interface()            // 注意，这里传入的是指定值的指针。
+		destRefVal[i] = refVal                  // 保存这个 Reflect.value 在后面用于解引用。
 	}
 
 	rs.Scan(dest...)
