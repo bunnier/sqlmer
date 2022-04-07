@@ -11,21 +11,28 @@ import (
 )
 
 func mustGetMssqlDb(t *testing.T) *sql.DB {
-	db, err := sql.Open("sqlserver", testConf.SqlServer)
+	db, err := sql.Open("mysql", testConf.MySql)
 	if err != nil {
 		t.Errorf("sql.Open() error = %v, wantErr nil", err)
 	}
+
 	if err = db.Ping(); err != nil {
 		t.Errorf("db.Ping() error = %v, wantErr nil", err)
 	}
+
 	return db
 }
 
 func unifyDataTypeFn(colDbTypeName string, dest *interface{}) {
 	switch colDbTypeName {
-	case "VARCHAR", "DECIMAL":
+	case "VARCHAR", "CHAR", "TEXT", "DECIMAL":
 		switch v := (*dest).(type) {
 		case []byte:
+			if v == nil {
+				*dest = nil
+			}
+			*dest = string(v)
+		case sql.RawBytes:
 			if v == nil {
 				*dest = nil
 			}
@@ -42,7 +49,7 @@ func TestEnhanceRows_MapScan(t *testing.T) {
 	db := NewDbEnhance(mustGetMssqlDb(t), unifyDataTypeFn)
 
 	const testNum int64 = 3
-	enhancedRows, err := db.EnhancedQuery("SELECT Id, VarcharTest FROM go_TypeTest WHERE Id<=@p1", testNum)
+	enhancedRows, err := db.EnhancedQuery("SELECT Id, VarcharTest FROM go_TypeTest WHERE Id<=?", testNum)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -56,10 +63,10 @@ func TestEnhanceRows_MapScan(t *testing.T) {
 			t.Errorf("enhancedRows.MapScan() error = %v, wantErr nil", err)
 			return
 		}
-		if id, ok := rowMap["Id"]; !ok || id.(int64) != count {
+		if id, ok := rowMap["Id"]; !ok || id.(int32) != int32(count) {
 			t.Errorf("enhancedRows.MapScan() Id = %d, wantId %d", id, count)
 		}
-		if str, ok := rowMap["VarcharTest"]; !ok || str.(string) != fmt.Sprintf("Row%d", count) {
+		if str, ok := rowMap["VarcharTest"]; !ok || str.(string) != fmt.Sprintf("行%d", count) {
 			t.Errorf("enhancedRows.MapScan() VarcharTest = %v, wantVarcharTest %v", str.(string), fmt.Sprintf("Row%d", count))
 		}
 	}
@@ -78,7 +85,7 @@ func TestEnhanceRows_SliceScan(t *testing.T) {
 	db := NewDbEnhance(mustGetMssqlDb(t), unifyDataTypeFn)
 
 	const testNum int64 = 3
-	enhancedRows, err := db.EnhancedQuery("SELECT Id, VarcharTest, DecimalTest FROM go_TypeTest WHERE Id<=@p1", testNum)
+	enhancedRows, err := db.EnhancedQuery("SELECT Id, VarcharTest, DecimalTest FROM go_TypeTest WHERE Id<=?", testNum)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -92,11 +99,11 @@ func TestEnhanceRows_SliceScan(t *testing.T) {
 			t.Errorf("enhancedRows.SliceScan() error = %v, wantErr nil", err)
 			return
 		}
-		if id, ok := sliceRow[0].(int64); !ok || id != count {
+		if id, ok := sliceRow[0].(int32); !ok || id != int32(count) {
 			t.Errorf("enhancedRows.SliceScan() Id = %d, wantId %d", id, count)
 		}
 
-		if str, ok := sliceRow[1].(string); !ok || str != fmt.Sprintf("Row%d", count) {
+		if str, ok := sliceRow[1].(string); !ok || str != fmt.Sprintf("行%d", count) {
 			t.Errorf("enhancedRows.SliceScan() VarcharTest = %v, wantVarcharTest %v", str, fmt.Sprintf("Row%d", count))
 		}
 	}
@@ -120,10 +127,10 @@ func TestEnhanceRow_MapScan(t *testing.T) {
 		t.Errorf("enhancedRow.MapScan() error = %v, wantErr nil", err)
 		return
 	}
-	if id, ok := rowMap["Id"]; !ok || id.(int64) != int64(1) {
+	if id, ok := rowMap["Id"]; !ok || id.(int32) != 1 {
 		t.Errorf("enhancedRow.MapScan() Id = %d, wantId 1", id)
 	}
-	if str, ok := rowMap["VarcharTest"]; !ok || str.(string) != "Row1" {
+	if str, ok := rowMap["VarcharTest"]; !ok || str.(string) != "行1" {
 		t.Errorf("enhancedRow.MapScan() VarcharTest = %v, wantVarcharTest Row1", str)
 	}
 }
@@ -138,10 +145,10 @@ func TestEnhanceRow_SliceScan(t *testing.T) {
 		return
 	}
 
-	if id, ok := sliceRow[0].(int64); !ok || id != 1 {
+	if id, ok := sliceRow[0].(int32); !ok || id != 1 {
 		t.Errorf("enhancedRow.SliceScan() Id = %d, wantId 1", id)
 	}
-	if str, ok := sliceRow[1].(string); !ok || str != "Row1" {
+	if str, ok := sliceRow[1].(string); !ok || str != "行1" {
 		t.Errorf("enhancedRow.SliceScan() VarcharTest = %v, wantVarcharTest Row1", str)
 	}
 }
@@ -161,7 +168,7 @@ func TestEnhanceRow_Scan(t *testing.T) {
 	if id != 1 {
 		t.Errorf("enhancedRow.Scan() Id = %d, wantId 1", id)
 	}
-	if str != "Row1" {
+	if str != "行1" {
 		t.Errorf("enhancedRow.Scan() VarcharTest = %v, wantVarcharTest Row1", str)
 	}
 }
