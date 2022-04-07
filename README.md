@@ -16,21 +16,6 @@ https://pkg.go.dev/github.com/bunnier/sqlmer
 
 > Tips: 主交互接口为[DbClient](/db_client.go)。
 
-## 类型映射
-
-> nullable 的字段，如果值为 null，默认均以 nil 返回。
-
-### MySql
-
-| db datatype                                        | Go datatype |
-| -------------------------------------------------- | ----------- |
-| varchar/char/text                                  | string      |
-| date/datetime/timestamp                            | time.Time   |
-| decimal                                            | string      |
-| float/double                                       | float64     |
-| small int / tiny int / int / unsigned int / bigint | int64       |
-| bit                                                | []byte      |
-
 ## 简单样例
 
 ```go
@@ -124,6 +109,32 @@ CREATE TABLE MainDemo(
 	}
 }
 ```
+
+## 类型映射
+
+> nullable 的字段，如果值为 null，默认均以 nil 返回。
+
+### MySql
+
+| db datatype                                        | Go datatype |
+|----------------------------------------------------|-------------|
+| varchar / char / text                              | string      |
+| tiny int / small int / int / unsigned int / bigint | int64       |
+| float / double                                     | float64     |
+| decimal                                            | string      |
+| date / datetime / timestamp                        | time.Time   |
+| bit (binary)                                       | []byte      |
+
+### SQL Server
+
+| db datatype                              | Go datatype |
+|------------------------------------------|-------------|
+| nvarchar / nchar / varchar / char / text | string      |
+| small int / tiny int / int / bigint      | int64       |
+| float                                    | float64     |
+| money / decimal                          | string      |
+| date / datetime / datetime2 / time       | time.Time   |
+| bit (boolean)                            | bool        |
 
 ## 测试用例
 
