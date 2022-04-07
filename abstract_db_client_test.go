@@ -1,7 +1,6 @@
 package sqlmer_test
 
 import (
-	"database/sql"
 	"reflect"
 	"testing"
 	"time"
@@ -70,7 +69,7 @@ func Test_internalDbClient_Scalar(t *testing.T) {
 				"SELECT Id FROM go_TypeTest WHERE id=@p1",
 				[]interface{}{1},
 			},
-			int64(1),
+			int32(1),
 			false,
 		},
 	}
@@ -229,10 +228,10 @@ func Test_internalDbClient_Exists(t *testing.T) {
 }
 
 func Test_internalDbClient_Get(t *testing.T) {
-	mssqlClient, err := getMsSqlDbClient()
-	if err != nil {
-		t.Fatal(err)
-	}
+	// mssqlClient, err := getMsSqlDbClient()
+	// if err != nil {
+	// 	t.Fatal(err)
+	// }
 	mysqlClient, err := getMySqlDbClient()
 	if err != nil {
 		t.Fatal(err)
@@ -248,24 +247,24 @@ func Test_internalDbClient_Get(t *testing.T) {
 		want    map[string]interface{}
 		wantErr bool
 	}{
-		{
-			"mssql",
-			mssqlClient,
-			args{
-				"SELECT NvarcharTest,VarcharTest,DateTimeTest,DateTime2Test,DateTest,TimeTest,DecimalTest FROM go_TypeTest WHERE Id=1",
-				[]interface{}{},
-			},
-			map[string]interface{}{
-				"NvarcharTest":  "行1",
-				"VarcharTest":   "Row1",
-				"DateTimeTest":  time.Date(2021, 7, 1, 15, 38, 39, 583000000, time.UTC),
-				"DateTime2Test": time.Date(2021, 7, 1, 15, 38, 50, 425781300, time.UTC),
-				"DateTest":      time.Date(2021, 7, 1, 0, 0, 0, 0, time.UTC),
-				"TimeTest":      time.Date(1, 1, 1, 12, 1, 1, 345000000, time.UTC),
-				"DecimalTest":   sql.NullString{String: "1.4567899900", Valid: true},
-			},
-			false,
-		},
+		// {
+		// 	"mssql",
+		// 	mssqlClient,
+		// 	args{
+		// 		"SELECT NvarcharTest,VarcharTest,DateTimeTest,DateTime2Test,DateTest,TimeTest,DecimalTest FROM go_TypeTest WHERE Id=1",
+		// 		[]interface{}{},
+		// 	},
+		// 	map[string]interface{}{
+		// 		"NvarcharTest":  "行1",
+		// 		"VarcharTest":   "Row1",
+		// 		"DateTimeTest":  time.Date(2021, 7, 1, 15, 38, 39, 583000000, time.UTC),
+		// 		"DateTime2Test": time.Date(2021, 7, 1, 15, 38, 50, 425781300, time.UTC),
+		// 		"DateTest":      time.Date(2021, 7, 1, 0, 0, 0, 0, time.UTC),
+		// 		"TimeTest":      time.Date(1, 1, 1, 12, 1, 1, 345000000, time.UTC),
+		// 		"DecimalTest":   "1.4567899900",
+		// 	},
+		// 	false,
+		// },
 		{
 			"mysql",
 			mysqlClient,
@@ -278,7 +277,7 @@ func Test_internalDbClient_Get(t *testing.T) {
 				"dateTest":      time.Date(2021, 7, 1, 0, 0, 0, 0, time.UTC),
 				"dateTimeTest":  time.Date(2021, 7, 1, 15, 38, 50, 0, time.UTC),
 				"timestampTest": time.Date(2021, 7, 1, 15, 38, 50, 0, time.UTC),
-				"decimalTest":   sql.NullString{String: "1.4567899900", Valid: true},
+				"decimalTest":   "1.4567899900",
 			},
 			false,
 		},
@@ -332,7 +331,7 @@ func Test_internalDbClient_SliceGet(t *testing.T) {
 					"DateTime2Test": time.Date(2021, 7, 1, 15, 38, 50, 425781300, time.UTC),
 					"DateTest":      time.Date(2021, 7, 1, 0, 0, 0, 0, time.UTC),
 					"TimeTest":      time.Date(1, 1, 1, 12, 1, 1, 345000000, time.UTC),
-					"DecimalTest":   sql.NullString{String: "1.4567899900", Valid: true},
+					"DecimalTest":   "1.4567899900",
 				},
 				{
 					"NvarcharTest":  "行2",
@@ -341,7 +340,7 @@ func Test_internalDbClient_SliceGet(t *testing.T) {
 					"DateTime2Test": time.Date(2021, 7, 2, 15, 38, 50, 425781300, time.UTC),
 					"DateTest":      time.Date(2021, 7, 2, 0, 0, 0, 0, time.UTC),
 					"TimeTest":      time.Date(1, 1, 1, 12, 1, 2, 345000000, time.UTC),
-					"DecimalTest":   sql.NullString{String: "2.4567899900", Valid: true},
+					"DecimalTest":   "2.4567899900",
 				},
 			},
 			false,
@@ -359,14 +358,14 @@ func Test_internalDbClient_SliceGet(t *testing.T) {
 					"dateTest":      time.Date(2021, 7, 1, 0, 0, 0, 0, time.UTC),
 					"dateTimeTest":  time.Date(2021, 7, 1, 15, 38, 50, 0, time.UTC),
 					"timestampTest": time.Date(2021, 7, 1, 15, 38, 50, 0, time.UTC),
-					"decimalTest":   sql.NullString{String: "1.4567899900", Valid: true},
+					"decimalTest":   "1.4567899900",
 				},
 				{
 					"varcharTest":   "行2",
 					"dateTest":      time.Date(2021, 7, 2, 0, 0, 0, 0, time.UTC),
 					"dateTimeTest":  time.Date(2021, 7, 2, 15, 38, 50, 0, time.UTC),
 					"timestampTest": time.Date(2021, 7, 2, 15, 38, 50, 0, time.UTC),
-					"decimalTest":   sql.NullString{String: "2.4567899900", Valid: true},
+					"decimalTest":   "2.4567899900",
 				},
 			},
 			false,
@@ -421,7 +420,7 @@ func Test_internalDbClient_Rows(t *testing.T) {
 					"DateTime2Test": time.Date(2021, 7, 1, 15, 38, 50, 425781300, time.UTC),
 					"DateTest":      time.Date(2021, 7, 1, 0, 0, 0, 0, time.UTC),
 					"TimeTest":      time.Date(1, 1, 1, 12, 1, 1, 345000000, time.UTC),
-					"DecimalTest":   sql.NullString{String: "1.4567899900", Valid: true},
+					"DecimalTest":   "1.4567899900",
 				},
 				{
 					"NvarcharTest":  "行2",
@@ -430,7 +429,7 @@ func Test_internalDbClient_Rows(t *testing.T) {
 					"DateTime2Test": time.Date(2021, 7, 2, 15, 38, 50, 425781300, time.UTC),
 					"DateTest":      time.Date(2021, 7, 2, 0, 0, 0, 0, time.UTC),
 					"TimeTest":      time.Date(1, 1, 1, 12, 1, 2, 345000000, time.UTC),
-					"DecimalTest":   sql.NullString{String: "2.4567899900", Valid: true},
+					"DecimalTest":   "2.4567899900",
 				},
 			},
 			false,
@@ -448,14 +447,14 @@ func Test_internalDbClient_Rows(t *testing.T) {
 					"dateTest":      time.Date(2021, 7, 1, 0, 0, 0, 0, time.UTC),
 					"dateTimeTest":  time.Date(2021, 7, 1, 15, 38, 50, 0, time.UTC),
 					"timestampTest": time.Date(2021, 7, 1, 15, 38, 50, 0, time.UTC),
-					"decimalTest":   sql.NullString{String: "1.4567899900", Valid: true},
+					"decimalTest":   "1.4567899900",
 				},
 				{
 					"varcharTest":   "行2",
 					"dateTest":      time.Date(2021, 7, 2, 0, 0, 0, 0, time.UTC),
 					"dateTimeTest":  time.Date(2021, 7, 2, 15, 38, 50, 0, time.UTC),
 					"timestampTest": time.Date(2021, 7, 2, 15, 38, 50, 0, time.UTC),
-					"decimalTest":   sql.NullString{String: "2.4567899900", Valid: true},
+					"decimalTest":   "2.4567899900",
 				},
 			},
 			false,

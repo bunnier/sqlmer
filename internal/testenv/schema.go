@@ -32,6 +32,8 @@ INSERT INTO go_TypeTest (NvarcharTest, VarcharTest, DateTimeTest, DateTime2Test,
 VALUES (N'行3', 'Row3', '2021-07-03 15:38:39.583', '2021-07-03 15:38:50.4257813', '2021-07-03', '12:01:03.345', 3.45678999);
 INSERT INTO go_TypeTest (NvarcharTest, VarcharTest, DateTimeTest, DateTime2Test, DateTest, TimeTest, DecimalTest)
 VALUES (N'行4', 'Row4', '2021-07-04 15:38:39.583', '2021-07-04 15:38:50.4257813', '2021-07-04', '12:01:04.345', 4.45678999);
+INSERT INTO go_TypeTest (NvarcharTest, VarcharTest, DateTimeTest, DateTime2Test, DateTest, TimeTest, DecimalTest)
+VALUES (N'行4', null, null, null, null, null,null);
 	`, Drop: `DROP TABLE go_TypeTest`,
 	},
 }
@@ -64,6 +66,10 @@ VALUES (N'行3', '2021-07-03', '2021-07-03 15:38:50.425','2021-07-03 15:38:50.42
 	{Create: `
 INSERT INTO go_TypeTest(VarcharTest, dateTest, dateTimeTest, timestampTest, decimalTest)
 VALUES (N'行4', '2021-07-04', '2021-07-04 15:38:50.425','2021-07-04 15:38:50.425', 4.45678999);
+`, Drop: ``},
+	{Create: `
+INSERT INTO go_TypeTest(VarcharTest, dateTest, dateTimeTest, timestampTest, decimalTest)
+VALUES (N'行5', null,null,null,null);
 `, Drop: ``},
 }
 

@@ -10,10 +10,11 @@ var _ EnhancedDbExer = (*DbEnhance)(nil)
 // DbEnhance 是对原生 sql.DB 的包装，除了原本的方法外，另外实现了 EnhancedDbExer 接口定义的额外方法。
 type DbEnhance struct {
 	*sql.DB
+	unifyDataType UnifyDataTypeFn // 用于统一不同驱动在 Go 中的映射类型。
 }
 
-func NewDbEnhance(db *sql.DB) *DbEnhance {
-	return &DbEnhance{db}
+func NewDbEnhance(db *sql.DB, unifyDataTypeFn UnifyDataTypeFn) *DbEnhance {
+	return &DbEnhance{db, unifyDataTypeFn}
 }
 
 // EnhancedQueryRow executes a query that is expected to return at most one row.
@@ -42,5 +43,5 @@ func (db *DbEnhance) EnhancedQueryContext(ctx context.Context, query string, arg
 	if err != nil {
 		return nil, err
 	}
-	return &EnhanceRows{rows, nil, nil, nil}, nil
+	return &EnhanceRows{rows, db.unifyDataType, nil, nil, nil}, nil
 }

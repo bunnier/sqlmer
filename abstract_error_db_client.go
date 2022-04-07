@@ -20,7 +20,7 @@ func (client *AbstractDbClient) CreateTransaction() (TransactionKeeper, error) {
 	txDbClient := &AbstractDbClient{
 		client.config,
 		client.SqlDB,
-		sqlen.NewTxEnhance(tx), // 新的client中的实际执行对象使用开启的事务。
+		sqlen.NewTxEnhance(tx, client.config.unifyDataType), // 新的client中的实际执行对象使用开启的事务。
 	}
 
 	return &abstractTransactionKeeper{

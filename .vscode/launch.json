@@ -10,7 +10,10 @@
             "args": [
                 "-a=CLEAN",
                 "-c=../../test_conf.yml"
-            ]
+            ],
+            "env": {
+                "GODEBUG": "tls10default=1"
+            }
         }
     ]
 }

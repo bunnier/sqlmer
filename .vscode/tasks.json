@@ -4,17 +4,17 @@
         {
             "label": "Prepare", // 用于准备测试环境。
             "type": "shell",
-            "command": "go run ./internal/testcmd/main.go -a PREPARE -c test_conf.yml",
+            "command": "GODEBUG=tls10default=1 go run ./internal/testcmd/main.go -a PREPARE -c test_conf.yml",
         },
         {
             "label": "Clean", // 用于销毁测试环境。
             "type": "shell",
-            "command": "go run ./internal/testcmd/main.go -a CLEAN -c test_conf.yml",
+            "command": "GODEBUG=tls10default=1 go run ./internal/testcmd/main.go -a CLEAN -c test_conf.yml",
         },
         {
             "label": "Test", // 测试本库。
             "type": "shell",
-            "command": "go test -v -timeout 30s ./sqlen .",
+            "command": "GODEBUG=tls10default=1 go test -v -timeout 30s ./sqlen .",
         },
         {
             "label": "TestFlow", // 运行整个测试流程

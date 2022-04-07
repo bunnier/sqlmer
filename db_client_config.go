@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"time"
+
+	"github.com/bunnier/sqlmer/sqlen"
 )
 
 type DbClientConfig struct {
@@ -16,7 +18,8 @@ type DbClientConfig struct {
 	connectionString string  // 连接字符串。
 	db               *sql.DB // 数据库对象。
 
-	bindArgsFunc BindSqlArgsFunc // 用于处理 sql 语句和所给的参数。
+	bindArgsFunc  BindSqlArgsFunc       // 用于处理 sql 语句和所给的参数。
+	unifyDataType sqlen.UnifyDataTypeFn // 用于统一不同驱动在 Go 中的映射类型。
 }
 
 // NewDbClientConfig 创建一个数据库连接配置。
@@ -32,6 +35,7 @@ func NewDbClientConfig(options ...DbClientOption) (*DbClientConfig, error) {
 		func(s string, i ...interface{}) (string, []interface{}, error) {
 			return s, i, nil
 		},
+		func(colDbTypeName string, dest *interface{}) {},
 	}
 
 	var err error
@@ -84,6 +88,14 @@ func WithConnectionString(driver string, connectionString string) DbClientOption
 func WithPingCheck(withPingCheck bool) DbClientOption {
 	return func(config *DbClientConfig) error {
 		config.withPingCheck = withPingCheck
+		return nil
+	}
+}
+
+// WithUnifyDataTypeFunc 用于为 DbClient 注入驱动相关的类型转换逻辑。
+func WithUnifyDataTypeFunc(unifyDataType sqlen.UnifyDataTypeFn) DbClientOption {
+	return func(config *DbClientConfig) error {
+		config.unifyDataType = unifyDataType
 		return nil
 	}
 }
