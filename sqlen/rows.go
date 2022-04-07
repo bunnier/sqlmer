@@ -6,7 +6,7 @@ import (
 )
 
 // 用于统一不同驱动在 Go 中的映射类型。
-type UnifyDataTypeFn func(colDbTypeName string, dest *interface{})
+type UnifyDataTypeFn func(columnType *sql.ColumnType, dest *interface{})
 
 // EnhanceRows 用于在 Enhanced 方法中替换元生的 sql.Rows。
 type EnhanceRows struct {
@@ -39,9 +39,22 @@ func (rs *EnhanceRows) Scan(dest ...interface{}) error {
 	return rs.Rows.Scan(dest...)
 }
 
-// noDestScan 自动生成 dest 数组后，通过 Scan 来查询数据。
-// (原生 Scan 方法要求和查询的列完全一致，本方法做个兼容。)
-func (rs *EnhanceRows) noDestScan() ([]interface{}, error) {
+// MapScan 用于把一行数据填充到 map 中。
+func (rs *EnhanceRows) MapScan(dest map[string]interface{}) error {
+	values, err := rs.SliceScan()
+	if err != nil {
+		return err
+	}
+
+	for i, column := range rs.columns {
+		dest[column] = values[i]
+	}
+
+	return nil
+}
+
+// SliceScan 用 Slice 的方式返回一行数据。
+func (rs *EnhanceRows) SliceScan() ([]interface{}, error) {
 	if rs.err != nil {
 		return nil, rs.err
 	}
@@ -63,30 +76,11 @@ func (rs *EnhanceRows) noDestScan() ([]interface{}, error) {
 		dest[i] = destRefVal[i].Elem().Interface()
 
 		// 进行统一类型处理。
-		rs.unifyDataType(rs.colTypes[i].DatabaseTypeName(), &dest[i])
+		rs.unifyDataType(rs.colTypes[i], &dest[i])
 		extractNullableValue(rs.colTypes[i], &dest[i])
 	}
 
 	return dest, rs.err
-}
-
-// MapScan 用于把一行数据填充到 map 中。
-func (rs *EnhanceRows) MapScan(dest map[string]interface{}) error {
-	values, err := rs.noDestScan()
-	if err != nil {
-		return err
-	}
-
-	for i, column := range rs.columns {
-		dest[column] = values[i]
-	}
-
-	return nil
-}
-
-// SliceScan 用 Slice 的方式返回一行数据。
-func (rs *EnhanceRows) SliceScan() ([]interface{}, error) {
-	return rs.noDestScan()
 }
 
 func (r *EnhanceRows) Err() error {

@@ -35,7 +35,7 @@ func NewDbClientConfig(options ...DbClientOption) (*DbClientConfig, error) {
 		func(s string, i ...interface{}) (string, []interface{}, error) {
 			return s, i, nil
 		},
-		func(colDbTypeName string, dest *interface{}) {},
+		func(columnType *sql.ColumnType, dest *interface{}) {},
 	}
 
 	var err error

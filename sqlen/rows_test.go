@@ -23,8 +23,8 @@ func mustGetMssqlDb(t *testing.T) *sql.DB {
 	return db
 }
 
-func unifyDataTypeFn(colDbTypeName string, dest *interface{}) {
-	switch colDbTypeName {
+func unifyDataTypeFn(columnType *sql.ColumnType, dest *interface{}) {
+	switch columnType.DatabaseTypeName() {
 	case "VARCHAR", "CHAR", "TEXT", "DECIMAL":
 		switch v := (*dest).(type) {
 		case sql.RawBytes:
