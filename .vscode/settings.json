@@ -1,6 +1,0 @@
-{
-    "go.testFlags": ["-v"],
-    "go.testEnvVars": {
-        "GODEBUG": "tls10default=1"
-    }
-}
