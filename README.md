@@ -4,11 +4,11 @@
 
 ## 功能简介
 
-数据库访问库，目前支持MySql和Sql Server。
+数据库访问库，目前支持 MySQL 和 SQL Server。
 
 - SQL语句提供了统一的 `命名参数`、`索引参数` 语法，可直观的使用 map 作为SQL语句参数，并以 map 或 slice 方式返回；
 - 提供了面向map的 `参数`、`结果集` 交互接口，事务和非事务访问均可通过相同接口完成；
-- 扩展了原生 sql.Rows/sql.Row，使其支持 MapScan 以及 SliceScan；
+- 扩展了原生 sql.Rows / sql.Row，使其支持 MapScan 以及 SliceScan；
 
 ## API文档
 
@@ -20,7 +20,7 @@ https://pkg.go.dev/github.com/bunnier/sqlmer
 
 ```go
 func main() {
-	// 获取 DbClient，这里使用 SqlServer 做示范，MySql 也提供了一致的 API 和相应的参数解析逻辑。
+	// 获取 DbClient，这里使用 SqlServer 做示范，MySQL 也提供了一致的 API 和相应的参数解析逻辑。
 	dbClient, err := mssql.NewMsSqlDbClient(
 		"server=127.0.0.1:1433; database=test; user id=dev;password=qwer1234;",
 		sqlmer.WithConnTimeout(time.Second*15), // 连接超时。
@@ -78,7 +78,7 @@ CREATE TABLE MainDemo(
 		return
 	}
 	
-	// 返回interface{}，类型可以自己转换。已经统一了 Sql Server 和 MySql 返回的类型。
+	// 返回interface{}，类型可以自己转换。已经统一了 Sql Server 和 MySQL 返回的类型。
 	fmt.Println(name.(string)) 
 
 	// 获取增强后的sql.Rows（支持SliceScan、MapScan）。
@@ -116,7 +116,7 @@ CREATE TABLE MainDemo(
 
 ### MySql
 
-| db datatype                                        | Go datatype |
+| DB datatype                                        | Go datatype |
 |----------------------------------------------------|-------------|
 | varchar / char / text                              | string      |
 | tiny int / small int / int / unsigned int / bigint | int64       |
@@ -127,7 +127,7 @@ CREATE TABLE MainDemo(
 
 ### SQL Server
 
-| db datatype                              | Go datatype |
+| DB datatype                              | Go datatype |
 |------------------------------------------|-------------|
 | nvarchar / nchar / varchar / char / text | string      |
 | small int / tiny int / int / bigint      | int64       |
@@ -138,10 +138,10 @@ CREATE TABLE MainDemo(
 
 ## 测试用例
 
-运行测试用例需要：
+测试用例 Schema：
 
-1. 配置`test_conf.yml`文件，目前必须 SqlServer/MySql 均配置上才能完整运行测试用例；
-2. 调用`go run ./internal/testcmd/main.go -a PREPARE -c test_conf.yml`来准备环境；
-3. 测试结束后可以通过`go run ./internal/testcmd/main.go -a CLEAN -c test_conf.yml`销毁测试表；
+1. 编辑 `test_conf.yml` 文件，相应数据库的连接字符串；
+2. 如果第 1 步配置的连接字符串有 DDL 权限，可通过调用 `go run ./internal/testcmd/main.go -a PREPARE -c test_conf.yml` 来同时准备 MySQL / SQL Server 环境，如果没有 DDL 权限可自行直接执行 `internal/testenv/*_prepare.sql` 准备环境；
+3. 如果第 1 步配置的连接字符串有 DDL 权限，测试结束后可以通过 `go run ./internal/testcmd/main.go -a CLEAN -c test_conf.yml` 销毁测试表，如果没有 DDL 权限可自行直接执行 `internal/testenv/*_clean.sql` 销毁测试表；
 
-如果你和我一样使用VSCode作为开发工具，可在配置好`test_conf.yml`之后，直接使用.vscode中编写好的Task来准备环境。
+另外，如果你和我一样使用 VSCode 作为开发工具，可在配置好 `test_conf.yml` 之后，直接使用 .vscode 中编写好的 Task 来准备环境。
