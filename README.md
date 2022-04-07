@@ -1,6 +1,9 @@
 # sqlmer
 
+[![License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat)](https://opensource.org/licenses/MIT)
 [![Go](https://github.com/bunnier/sqlmer/actions/workflows/go.yml/badge.svg)](https://github.com/bunnier/sqlmer/actions/workflows/go.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/bunnier/sqlmer)](https://goreportcard.com/report/github.com/bunnier/sqlmer)
+[![Go Reference](https://pkg.go.dev/badge/github.com/bunnier/sqlmer.svg)](https://pkg.go.dev/github.com/bunnier/sqlmer)
 
 ## 功能简介
 
@@ -9,12 +12,6 @@
 - SQL语句提供了统一的 `命名参数`、`索引参数` 语法，可直观的使用 map 作为SQL语句参数，并以 map 或 slice 方式返回；
 - 提供了面向map的 `参数`、`结果集` 交互接口，事务和非事务访问均可通过相同接口完成；
 - 扩展了原生 sql.Rows / sql.Row，使其支持 MapScan 以及 SliceScan；
-
-## API文档
-
-https://pkg.go.dev/github.com/bunnier/sqlmer
-
-> Tips: 主交互接口为[DbClient](/db_client.go)。
 
 ## 简单样例
 
