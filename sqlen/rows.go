@@ -65,9 +65,9 @@ func (rs *EnhanceRows) SliceScan() ([]interface{}, error) {
 	dest := make([]interface{}, len(rs.colTypes))
 	destRefVal := make([]reflect.Value, len(rs.colTypes))
 	for i, cType := range rs.colTypes {
-		refVal := reflect.New(unifyType(cType)) // 使用数据库驱动标记的类型来接收数据。
-		dest[i] = refVal.Interface()            // 注意，这里传入的是指定值的指针。
-		destRefVal[i] = refVal                  // 保存这个 Reflect.value 在后面用于解引用。
+		refVal := reflect.New(unifyScanType(cType)) // 使用数据库驱动标记的类型来接收数据。
+		dest[i] = refVal.Interface()                // 注意，这里传入的是指定值的指针。
+		destRefVal[i] = refVal                      // 保存这个 Reflect.value 在后面用于解引用。
 	}
 
 	rs.Scan(dest...)
@@ -76,7 +76,7 @@ func (rs *EnhanceRows) SliceScan() ([]interface{}, error) {
 		// 之前为了能让 Scan 修改数据，保存的是指针，而返回上层时候只需要实际数据，因此进行解引用。
 		dest[i] = destRefVal[i].Elem().Interface()
 
-		extractNullableValue(rs.colTypes[i], &dest[i]) // 进行统一的空值处理逻辑。
+		extractNullableColumnValue(rs.colTypes[i], &dest[i]) // 进行统一的空值处理逻辑。
 		if dest[i] != nil {
 			rs.unifyDataType(rs.colTypes[i], &dest[i]) // 进行数据库定制的类型处理。
 		}

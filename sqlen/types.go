@@ -6,8 +6,8 @@ import (
 	"time"
 )
 
-// extractNullableValue 用于将 nullable 类型提取为实际值。
-func extractNullableValue(columnType *sql.ColumnType, srcP *interface{}) {
+// extractNullableColumnValue 用于将 nullable 类型提取为实际值。
+func extractNullableColumnValue(columnType *sql.ColumnType, srcP *interface{}) {
 	switch src := (*srcP).(type) {
 	case sql.NullBool:
 		if !src.Valid {
@@ -95,7 +95,7 @@ var (
 )
 
 // 为了统一可空字段和非可空字段的返回值，这里统一将数字类型提升到 nullable 支持的类型。
-func unifyType(columnType *sql.ColumnType) reflect.Type {
+func unifyScanType(columnType *sql.ColumnType) reflect.Type {
 	nullable, ok := columnType.Nullable()
 	nullable = nullable && ok
 
