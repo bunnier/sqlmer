@@ -61,20 +61,12 @@ func unifyDataType(colDbTypeName string, dest *interface{}) {
 	switch colDbTypeName {
 	case "VARCHAR", "CHAR", "TEXT", "DECIMAL":
 		switch v := (*dest).(type) {
-		case []byte:
-			if v == nil {
-				*dest = nil
-				break
-			}
-			*dest = string(v)
 		case sql.RawBytes:
 			if v == nil {
 				*dest = nil
 				break
 			}
 			*dest = string(v)
-		case *string:
-			*dest = v
 		case nil:
 			*dest = nil
 		}
