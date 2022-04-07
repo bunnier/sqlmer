@@ -14,12 +14,12 @@ func Test_MysqlTransaction(t *testing.T) {
 	}
 
 	// 准备数据。
-	if _, err = mysqlClient.Execute(`INSERT INTO go_TypeTest(varcharTest, charTest, charTextTest, dateTest, dateTimeTest, timestampTest, floatTest, doubleTest, decimalTest, bitTest)
-	VALUES (N'行31', '行31char', '行31text','2021-07-31','2021-07-31 15:38:50.425','2021-07-31 15:38:50.425', 31.456, 31.15678, 31.45678999, 0);`); err != nil {
+	if _, err = mysqlClient.Execute(`INSERT INTO go_TypeTest(intTest, tinyintTest, smallIntTest, bigIntTest, unsignedTest, varcharTest, charTest, charTextTest, dateTest, dateTimeTest, timestampTest, floatTest, doubleTest, decimalTest, bitTest)
+	VALUES (31, 31, 31, 31, 31, N'行31', '行31char', '行31text','2021-07-31','2021-07-31 15:38:50.425','2021-07-31 15:38:50.425', 31.456, 31.15678, 31.45678999, 0);`); err != nil {
 		t.Fatalf("prepare error: %v", err)
 	}
-	if _, err = mysqlClient.Execute(`INSERT INTO go_TypeTest(varcharTest, charTest, charTextTest, dateTest, dateTimeTest, timestampTest, floatTest, doubleTest, decimalTest, bitTest)
-	VALUES (N'行30', '行30char', '行30text','2021-07-30','2021-07-30 15:38:50.425','2021-07-30 15:38:50.425', 30.456, 30.15678, 30.45678999, 0);
+	if _, err = mysqlClient.Execute(`INSERT INTO go_TypeTest(intTest, tinyintTest, smallIntTest, bigIntTest, unsignedTest, varcharTest, charTest, charTextTest, dateTest, dateTimeTest, timestampTest, floatTest, doubleTest, decimalTest, bitTest)
+	VALUES (30, 30, 30, 30, 30, N'行30', '行30char', '行30text','2021-07-30','2021-07-30 15:38:50.425','2021-07-30 15:38:50.425', 30.456, 30.15678, 30.45678999, 0);
 	`); err != nil {
 		t.Fatalf("prepare error: %v", err)
 	}

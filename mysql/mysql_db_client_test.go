@@ -270,8 +270,8 @@ func Test_internalDbClient_Execute(t *testing.T) {
 			"mysql",
 			mysqlClient,
 			args{
-				`INSERT INTO go_TypeTest(varcharTest, charTest, charTextTest, dateTest, dateTimeTest, timestampTest, floatTest, doubleTest, decimalTest, bitTest)
-				VALUES (N'行5', '行5char', '行5text','2021-07-05','2021-07-05 15:38:50.425','2021-07-05 15:38:50.425', 5.456, 5.15678, 5.45678999, 1);`,
+				`INSERT INTO go_TypeTest(intTest, tinyintTest, smallIntTest, bigIntTest, unsignedTest, varcharTest, charTest, charTextTest, dateTest, dateTimeTest, timestampTest, floatTest, doubleTest, decimalTest, bitTest)
+				VALUES (5, 5, 5, 5, 5, N'行5', '行5char', '行5text','2021-07-05','2021-07-05 15:38:50.425','2021-07-05 15:38:50.425', 5.456, 5.15678, 5.45678999, 1);`,
 				[]interface{}{now},
 			},
 			false,
@@ -374,12 +374,17 @@ func Test_internalDbClient_Get(t *testing.T) {
 			"mysql_nullable_null",
 			mysqlClient,
 			args{
-				`SELECT varcharTest, charTest, charTextTest, dateTest, dateTimeTest, timestampTest, floatTest, doubleTest, decimalTest, bitTest,
-				nullVarcharTest, nullCharTest, nullTextTest, nullDateTest, nullDateTimeTest, nullTimestampTest, nullFloatTest, nullDoubleTest, nullDecimalTest, nullBitTest 
+				`SELECT intTest, tinyintTest, smallIntTest, bigIntTest, unsignedTest, varcharTest, charTest, charTextTest, dateTest, dateTimeTest, timestampTest, floatTest, doubleTest, decimalTest, bitTest,
+				nullIntTest, nullTinyintTest, nullSmallIntTest, nullBigIntTest, nullUnsignedTest, nullVarcharTest, nullCharTest, nullTextTest, nullDateTest, nullDateTimeTest, nullTimestampTest, nullFloatTest, nullDoubleTest, nullDecimalTest, nullBitTest 
 				FROM go_TypeTest WHERE id=1`,
 				[]interface{}{},
 			},
 			map[string]interface{}{
+				"intTest":           int64(1),
+				"tinyintTest":       int64(1),
+				"smallIntTest":      int64(1),
+				"bigIntTest":        int64(1),
+				"unsignedTest":      int64(1),
 				"varcharTest":       "行1",
 				"charTest":          "行1char",
 				"charTextTest":      "行1text",
@@ -390,6 +395,11 @@ func Test_internalDbClient_Get(t *testing.T) {
 				"doubleTest":        float64(1.15678),
 				"decimalTest":       "1.4567899900",
 				"bitTest":           []byte{1},
+				"nullIntTest":       nil,
+				"nullTinyintTest":   nil,
+				"nullSmallIntTest":  nil,
+				"nullBigIntTest":    nil,
+				"nullUnsignedTest":  nil,
 				"nullVarcharTest":   nil,
 				"nullCharTest":      nil,
 				"nullTextTest":      nil,
@@ -407,12 +417,17 @@ func Test_internalDbClient_Get(t *testing.T) {
 			"mysql_nullable_hasValue",
 			mysqlClient,
 			args{
-				`SELECT varcharTest, charTest, charTextTest, dateTest, dateTimeTest, timestampTest, floatTest, doubleTest, decimalTest, bitTest,
-				nullVarcharTest, nullCharTest, nullTextTest, nullDateTest, nullDateTimeTest, nullTimestampTest, nullFloatTest, nullDoubleTest, nullDecimalTest, nullBitTest
+				`SELECT intTest, tinyintTest, smallIntTest, bigIntTest, unsignedTest, varcharTest, charTest, charTextTest, dateTest, dateTimeTest, timestampTest, floatTest, doubleTest, decimalTest, bitTest,
+				nullIntTest, nullTinyintTest, nullSmallIntTest, nullBigIntTest, nullUnsignedTest, nullVarcharTest, nullCharTest, nullTextTest, nullDateTest, nullDateTimeTest, nullTimestampTest, nullFloatTest, nullDoubleTest, nullDecimalTest, nullBitTest
 				FROM go_TypeTest WHERE id=3`,
 				[]interface{}{},
 			},
 			map[string]interface{}{
+				"intTest":           int64(3),
+				"tinyintTest":       int64(3),
+				"smallIntTest":      int64(3),
+				"bigIntTest":        int64(3),
+				"unsignedTest":      int64(3),
 				"varcharTest":       "行3",
 				"charTest":          "行3char",
 				"charTextTest":      "行3text",
@@ -423,6 +438,11 @@ func Test_internalDbClient_Get(t *testing.T) {
 				"doubleTest":        float64(3.15678),
 				"decimalTest":       "3.4567899900",
 				"bitTest":           []byte{1},
+				"nullIntTest":       int64(3),
+				"nullTinyintTest":   int64(3),
+				"nullSmallIntTest":  int64(3),
+				"nullBigIntTest":    int64(3),
+				"nullUnsignedTest":  int64(3),
 				"nullVarcharTest":   "行3",
 				"nullCharTest":      "行3char",
 				"nullTextTest":      "行3text",
