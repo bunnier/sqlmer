@@ -19,17 +19,23 @@ CREATE TABLE go_TypeTest
 	DecimalTest decimal(38, 10) NULL
 );
 ALTER TABLE go_TypeTest ADD CONSTRAINT PK_go_TypeTest PRIMARY KEY CLUSTERED (Id);
+
 INSERT INTO go_TypeTest (NvarcharTest, VarcharTest, DateTimeTest, DateTime2Test, DateTest, TimeTest, DecimalTest)
 VALUES (N'行1', 'Row1', '2021-07-01 15:38:39.583', '2021-07-01 15:38:50.4257813', '2021-07-01', '12:01:01.345', 1.45678999);
+
 INSERT INTO go_TypeTest (NvarcharTest, VarcharTest, DateTimeTest, DateTime2Test, DateTest, TimeTest, DecimalTest)
 VALUES (N'行2', 'Row2', '2021-07-02 15:38:39.583', '2021-07-02 15:38:50.4257813', '2021-07-02', '12:01:02.345', 2.45678999);
+
 INSERT INTO go_TypeTest (NvarcharTest, VarcharTest, DateTimeTest, DateTime2Test, DateTest, TimeTest, DecimalTest)
 VALUES (N'行3', 'Row3', '2021-07-03 15:38:39.583', '2021-07-03 15:38:50.4257813', '2021-07-03', '12:01:03.345', 3.45678999);
+
 INSERT INTO go_TypeTest (NvarcharTest, VarcharTest, DateTimeTest, DateTime2Test, DateTest, TimeTest, DecimalTest)
 VALUES (N'行4', 'Row4', '2021-07-04 15:38:39.583', '2021-07-04 15:38:50.4257813', '2021-07-04', '12:01:04.345', 4.45678999);
+
 INSERT INTO go_TypeTest (NvarcharTest, VarcharTest, DateTimeTest, DateTime2Test, DateTest, TimeTest, DecimalTest)
 VALUES (N'行4', null, null, null, null, null,null);
-	`, Drop: `DROP TABLE go_TypeTest`,
+	`,
+		Drop: `DROP TABLE go_TypeTest`,
 	},
 }
 

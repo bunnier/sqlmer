@@ -3,7 +3,8 @@ package testenv
 import "database/sql"
 
 var mysqlSchemas []Schema = []Schema{
-	{Create: `
+	{
+		Create: `
 CREATE TABLE go_TypeTest (
 	id int(11) NOT NULL AUTO_INCREMENT,
 	varcharTest varchar(10) NOT NULL,
@@ -14,27 +15,43 @@ CREATE TABLE go_TypeTest (
 	PRIMARY KEY (id),
 	KEY idx_go_TypeTest (id)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
-`, Drop: `drop table go_TypeTest`},
-	{Create: `
+`,
+		Drop: `DROP TABLE go_TypeTest`,
+	},
+	{
+		Create: `
 INSERT INTO go_TypeTest(VarcharTest, dateTest, dateTimeTest, timestampTest, decimalTest)
 VALUES (N'行1', '2021-07-01', '2021-07-01 15:38:50.425','2021-07-01 15:38:50.425', 1.45678999);
-`, Drop: ``},
-	{Create: `
+`, Drop: ``,
+	},
+	{
+		Create: `
 INSERT INTO go_TypeTest(VarcharTest, dateTest, dateTimeTest, timestampTest, decimalTest)
 VALUES (N'行2', '2021-07-02', '2021-07-02 15:38:50.425','2021-07-02 15:38:50.425', 2.45678999);
-`, Drop: ``},
-	{Create: `
+`,
+		Drop: ``,
+	},
+	{
+		Create: `
 INSERT INTO go_TypeTest(VarcharTest, dateTest, dateTimeTest, timestampTest, decimalTest)
 VALUES (N'行3', '2021-07-03', '2021-07-03 15:38:50.425','2021-07-03 15:38:50.425', 3.45678999);
-`, Drop: ``},
-	{Create: `
+`,
+		Drop: ``,
+	},
+	{
+		Create: `
 INSERT INTO go_TypeTest(VarcharTest, dateTest, dateTimeTest, timestampTest, decimalTest)
 VALUES (N'行4', '2021-07-04', '2021-07-04 15:38:50.425','2021-07-04 15:38:50.425', 4.45678999);
-`, Drop: ``},
-	{Create: `
+`,
+		Drop: ``,
+	},
+	{
+		Create: `
 INSERT INTO go_TypeTest(VarcharTest, dateTest, dateTimeTest, timestampTest, decimalTest)
 VALUES (N'行5', null,null,null,null);
-`, Drop: ``},
+`,
+		Drop: ``,
+	},
 }
 
 // CreateMysqlSchema 用于初始化 MySql 的测试用表结构。
