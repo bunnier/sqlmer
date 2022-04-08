@@ -9,13 +9,12 @@ import (
 
 // DbClientEx 加强 DbClient ，提供强类型的转化方法。
 type DbClientEx struct {
-	DbClient  // 原始的 DbClient 实例。
-	conv.Conv // 为当前实例提供类型转换的 conv.Conv 实例。
+	DbClient           // 原始的 DbClient 实例。
+	Conv     conv.Conv // 为当前实例提供类型转换的 conv.Conv 实例。
 }
 
-// NewDbClientEx 创建 EnhancedDbClient 的新实例。
-// 其加强 DbClient ，提供强类型的转化方法。
-func NewDbClientEx(raw DbClient) *DbClientEx {
+// Extend 加强 DbClient ，提供强类型的转化方法。
+func Extend(raw DbClient) *DbClientEx {
 	// 提供 mysql 的 snake_case 名称的字段到 Go 的 CamelCase 字段的匹配。
 	dbConv := conv.Conv{
 		Conf: conv.Config{
@@ -249,9 +248,73 @@ func (c *DbClientEx) MustScalarBool(query string, args ...any) (value *bool, ok 
 	return
 }
 
+// ScalarFloat32 查询第一行第一列，并返回目标类型的值。
+// 若查询没有命中行，返回空指针和 ok=false ；若有结果但值是 null ，则返回空指针和 ok=true 。
+// 若值不是目标类型，则尝试转换类型。
+func (c *DbClientEx) ScalarFloat32(query string, args ...any) (value *float32, ok bool, err error) {
+	v, ok, err := c.Scalar(query, args...)
+	if !ok || err != nil {
+		return
+	}
+
+	var res float32
+	err = c.Conv.Convert(v, &res)
+	if err != nil {
+		return
+	}
+
+	value = &res
+	return
+}
+
+// MustScalarFloat32 类似 ScalarFloat32 ，但出现错误时不返回 error ，而是 panic 。
+func (c *DbClientEx) MustScalarFloat32(query string, args ...any) (value *float32, ok bool) {
+	value, ok, err := c.ScalarFloat32(query, args...)
+	if err != nil {
+		panic(err)
+	}
+	return
+}
+
+// ScalarFloat64 查询第一行第一列，并返回目标类型的值。
+// 若查询没有命中行，返回空指针和 ok=false ；若有结果但值是 null ，则返回空指针和 ok=true 。
+// 若值不是目标类型，则尝试转换类型。
+func (c *DbClientEx) ScalarFloat64(query string, args ...any) (value *float64, ok bool, err error) {
+	v, ok, err := c.Scalar(query, args...)
+	if !ok || err != nil {
+		return
+	}
+
+	var res float64
+	err = c.Conv.Convert(v, &res)
+	if err != nil {
+		return
+	}
+
+	value = &res
+	return
+}
+
+// MustScalarFloat64 类似 ScalarFloat64 ，但出现错误时不返回 error ，而是 panic 。
+func (c *DbClientEx) MustScalarFloat64(query string, args ...any) (value *float64, ok bool) {
+	value, ok, err := c.ScalarFloat64(query, args...)
+	if err != nil {
+		panic(err)
+	}
+	return
+}
+
 // ScalarType 查询第一行第一列，并返回目标类型的值。
 // 若查询没有命中行，返回空指针和 ok=false ；若有结果但值是 null ，则返回空指针和 ok=true 。
 // 若值不是目标类型，则尝试转换类型。
+//
+// 例：
+//   var s string
+//   v, ok, err := client.ScalarType(reflect.TypeOf(""), query)
+//   if err != nil && ok {
+//     s = v.(string)
+//   }
+//
 func (c *DbClientEx) ScalarType(typ reflect.Type, query string, args ...any) (value any, ok bool, err error) {
 	v, ok, err := c.Scalar(query, args...)
 	if !ok && err != nil {
@@ -265,6 +328,29 @@ func (c *DbClientEx) ScalarType(typ reflect.Type, query string, args ...any) (va
 // MustScalarType 类似 ScalarType ，但出现错误时不返回 error ，而是 panic 。
 func (c *DbClientEx) MustScalarType(typ reflect.Type, query string, args ...any) (value any, ok bool) {
 	value, ok, err := c.ScalarType(typ, query, args...)
+	if err != nil {
+		panic(err)
+	}
+	return
+}
+
+// ScalarOf 查询第一行第一列，并返回与 example 相同类型的值。
+// 若查询没有命中行，返回空指针和 ok=false ；若有结果但值是 null ，则返回空指针和 ok=true 。
+// 若值不是目标类型，则尝试转换类型。
+//
+// 下面两行代码等价：
+//   client.ScalarOf("", query)
+//   client.ScalarType(reflect.TypeOf(""), query)
+//
+func (c *DbClientEx) ScalarOf(example any, query string, args ...any) (value any, ok bool, err error) {
+	exampleTyp := reflect.TypeOf(example)
+	return c.ScalarType(exampleTyp, query, args...)
+}
+
+// MustScalarOf 类似 ScalarOf ，但出现错误时不返回 error ，而是 panic 。
+func (c *DbClientEx) MustScalarOf(example any, query string, args ...any) (value any, ok bool, err error) {
+	exampleTyp := reflect.TypeOf(example)
+	value, ok, err = c.ScalarType(exampleTyp, query, args...)
 	if err != nil {
 		panic(err)
 	}
@@ -308,9 +394,6 @@ func (c *DbClientEx) ListType(elemTyp reflect.Type, query string, args ...any) (
 			}
 			row = m
 		} else {
-			// 当前 Scan() 方法会返回驱动相关的类型，而不会自动转换到 go 标准类型，导致 conv 不能。
-			// 但 MapScan()/SliceScan() 会做转换。为了能用到这个转换，先取 slice 然后取第一个元素。
-			// 以后下层库改进，可以 Scan() 出标准类型后，再直接用 Scan() 取数据。
 			vals, err := rows.SliceScan()
 			if err != nil {
 				return nil, err
