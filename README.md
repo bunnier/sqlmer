@@ -129,7 +129,7 @@ CREATE TABLE MainDemo(
 | nvarchar / nchar / varchar / char / text | string      |
 | small int / tiny int / int / bigint      | int64       |
 | float / real                             | float64     |
-| money / decimal                          | string      |
+| small money / money / decimal            | string      |
 | date / datetime / datetime2 / time       | time.Time   |
 | binary / varbinary                       | []byte      |
 | bit                                      | bool        |
