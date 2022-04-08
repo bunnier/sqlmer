@@ -40,7 +40,7 @@ func NewInternalDbClient(config *DbClientConfig) (AbstractDbClient, error) {
 	return AbstractDbClient{
 		config,
 		config.db,
-		sqlen.NewDbEnhance(config.db),
+		sqlen.NewDbEnhance(config.db, config.unifyDataType),
 	}, nil
 }
 

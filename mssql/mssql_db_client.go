@@ -23,6 +23,7 @@ type MsSqlDbClient struct {
 func NewMsSqlDbClient(connectionString string, options ...sqlmer.DbClientOption) (*MsSqlDbClient, error) {
 	options = append(options,
 		sqlmer.WithConnectionString(DriverName, connectionString),
+		sqlmer.WithUnifyDataTypeFunc(unifyDataType),
 		sqlmer.WithBindArgsFunc(bindMsSqlArgs)) // SqlServer 要支持命名参数，需要定制一个参数解析函数。
 	config, err := sqlmer.NewDbClientConfig(options...)
 	if err != nil {
@@ -37,6 +38,34 @@ func NewMsSqlDbClient(connectionString string, options ...sqlmer.DbClientOption)
 	return &MsSqlDbClient{
 		internalDbClient,
 	}, nil
+}
+
+// unifyDataType 用于统一数据类型。
+func unifyDataType(columnType *sql.ColumnType, dest *interface{}) {
+	switch columnType.DatabaseTypeName() {
+	case "DECIMAL", "SMALLMONEY", "MONEY":
+		switch v := (*dest).(type) {
+		case []byte:
+			if v == nil {
+				*dest = nil
+				break
+			}
+			*dest = string(v)
+		case *string:
+			*dest = v
+		case nil:
+			*dest = nil
+		}
+
+	case "VARBINARY", "BINARY":
+		switch v := (*dest).(type) {
+		case []byte:
+			if v == nil { // 将 nil 的切片转为无类型 nil。
+				*dest = nil
+				break
+			}
+		}
+	}
 }
 
 // bindMsSqlArgs 用于对 sql 语句和参数进行预处理。

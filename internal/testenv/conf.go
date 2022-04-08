@@ -32,3 +32,8 @@ func MustLoadTestConfig(confPath string) TestConf {
 		return conf
 	}
 }
+
+type Schema struct {
+	Create string
+	Drop   string
+}

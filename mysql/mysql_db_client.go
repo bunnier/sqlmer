@@ -1,6 +1,7 @@
 package mysql
 
 import (
+	"database/sql"
 	"reflect"
 	"strconv"
 	"strings"
@@ -38,6 +39,7 @@ func NewMySqlDbClient(connectionString string, options ...sqlmer.DbClientOption)
 
 	options = append(options,
 		sqlmer.WithConnectionString(DriverName, connectionString),
+		sqlmer.WithUnifyDataTypeFunc(unifyDataType),
 		sqlmer.WithBindArgsFunc(bindMySqlArgs)) // mysql 的驱动不支持命名参数，这里需要进行处理。
 	config, err := sqlmer.NewDbClientConfig(options...)
 	if err != nil {
@@ -52,6 +54,32 @@ func NewMySqlDbClient(connectionString string, options ...sqlmer.DbClientOption)
 	return &MySqlDbClient{
 		internalDbClient,
 	}, nil
+}
+
+// unifyDataType 用于统一数据类型。
+func unifyDataType(columnType *sql.ColumnType, dest *interface{}) {
+	switch columnType.DatabaseTypeName() {
+	case "VARCHAR", "CHAR", "TEXT", "DECIMAL":
+		switch v := (*dest).(type) {
+		case sql.RawBytes:
+			if v == nil {
+				*dest = nil
+				break
+			}
+			*dest = string(v)
+		case nil:
+			*dest = nil
+		}
+	default: // 将 sql.RawBytes 统一转为 []byte。
+		switch v := (*dest).(type) {
+		case sql.RawBytes:
+			if v == nil {
+				*dest = nil
+				break
+			}
+			*dest = []byte(v)
+		}
+	}
 }
 
 // bindMySqlArgs 用于对 sql 语句和参数进行预处理。

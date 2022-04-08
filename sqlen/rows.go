@@ -2,12 +2,17 @@ package sqlen
 
 import (
 	"database/sql"
-	"fmt"
+	"reflect"
 )
+
+// 用于统一不同驱动在 Go 中的映射类型。
+type UnifyDataTypeFn func(columnType *sql.ColumnType, dest *interface{})
 
 // EnhanceRows 用于在 Enhanced 方法中替换元生的 sql.Rows。
 type EnhanceRows struct {
 	*sql.Rows
+	unifyDataType UnifyDataTypeFn
+
 	err error
 
 	columns  []string
@@ -31,51 +36,18 @@ func (rs *EnhanceRows) Scan(dest ...interface{}) error {
 	rs.initColumns()
 
 	// 用原生 row 的 Scan 方法获取数据。
-	rs.err = rs.Rows.Scan(dest...)
-	if rs.err != nil {
-		return rs.err
-	}
-
-	// 进行统一的类型处理。
-	for i := 0; i < len(rs.colTypes); i++ {
-		if destP, ok := dest[i].(*interface{}); ok {
-			if rs.err = mapDataType(rs.colTypes[i], destP); rs.err != nil {
-				return rs.err
-			}
-		}
-	}
-
-	return nil
-}
-
-// noDestScan 自动生成 dest 数组后，通过 Scan 来查询数据。
-// (原生 Scan 方法要求和查询的列完全一致，本方法做个兼容。)
-func (rs *EnhanceRows) noDestScan() ([]interface{}, error) {
-	if rs.err != nil {
-		return nil, rs.err
-	}
-
-	rs.initColumns()
-
-	// 用来存放 Scan 后返回的数据，db 库要求和查询的列完全一致，所以需要判断 columns 长度。
-	dest := make([]interface{}, len(rs.columns))
-	for i := range dest {
-		dest[i] = new(interface{})
-	}
-
-	rs.Scan(dest...)
-	return dest, rs.err
+	return rs.Rows.Scan(dest...)
 }
 
 // MapScan 用于把一行数据填充到 map 中。
 func (rs *EnhanceRows) MapScan(dest map[string]interface{}) error {
-	values, err := rs.noDestScan()
+	values, err := rs.SliceScan()
 	if err != nil {
 		return err
 	}
 
 	for i, column := range rs.columns {
-		dest[column] = *(values[i].(*interface{}))
+		dest[column] = values[i]
 	}
 
 	return nil
@@ -83,16 +55,34 @@ func (rs *EnhanceRows) MapScan(dest map[string]interface{}) error {
 
 // SliceScan 用 Slice 的方式返回一行数据。
 func (rs *EnhanceRows) SliceScan() ([]interface{}, error) {
-	values, err := rs.noDestScan()
-	if err != nil {
-		return nil, err
+	if rs.err != nil {
+		return nil, rs.err
 	}
 
-	for i := range rs.columns {
-		values[i] = *(values[i].(*interface{}))
+	rs.initColumns()
+
+	// 用来存放 Scan 后返回的数据，db 库要求和查询的列完全一致，所以需要判断 columns 长度。
+	dest := make([]interface{}, len(rs.colTypes))
+	destRefVal := make([]reflect.Value, len(rs.colTypes))
+	for i, cType := range rs.colTypes {
+		refVal := reflect.New(unifyScanType(cType)) // 使用数据库驱动标记的类型来接收数据。
+		dest[i] = refVal.Interface()                // 注意，这里传入的是指定值的指针。
+		destRefVal[i] = refVal                      // 保存这个 Reflect.value 在后面用于解引用。
 	}
 
-	return values, nil
+	rs.Scan(dest...)
+
+	for i := 0; i < len(rs.colTypes); i++ {
+		// 之前为了能让 Scan 修改数据，保存的是指针，而返回上层时候只需要实际数据，因此进行解引用。
+		dest[i] = destRefVal[i].Elem().Interface()
+
+		extractNullableColumnValue(rs.colTypes[i], &dest[i]) // 进行统一的空值处理逻辑。
+		if dest[i] != nil {
+			rs.unifyDataType(rs.colTypes[i], &dest[i]) // 进行数据库定制的类型处理。
+		}
+	}
+
+	return dest, rs.err
 }
 
 func (r *EnhanceRows) Err() error {
@@ -100,38 +90,4 @@ func (r *EnhanceRows) Err() error {
 		return r.err
 	}
 	return r.Rows.Err()
-}
-
-// mapDataType 用于处理数据库类型到 Go 类型的映射关系。
-func mapDataType(colType *sql.ColumnType, dest *interface{}) error {
-	switch colType.DatabaseTypeName() {
-	// DECIMAL 类型统一使用 string 方式返回。
-	case "DECIMAL":
-		switch v := (*dest).(type) {
-		case []byte:
-			*dest = string(v)
-			return nil
-		case string:
-			*dest = v
-		case nil:
-			return nil // DBNull.
-		default:
-			return fmt.Errorf("sqlmer: cannot convert DECIMAL field, colname=%s, value=%v", colType.Name(), v)
-		}
-	// 字符串在 MySql 等一些驱动中默认是 []byte，这里也做个处理。
-	case "NVARCHAR", "VARCHAR":
-		switch v := (*dest).(type) {
-		case []byte:
-			*dest = string(v)
-			return nil
-		case string:
-			*dest = v
-		case nil:
-			return nil // DBNull.
-		default:
-			return fmt.Errorf("sqlmer: cannot convert VARCHAR/NVARCHAR field, colname=%s, value=%v", colType.Name(), v)
-		}
-	}
-
-	return nil
 }
