@@ -14,10 +14,10 @@ func Test_MssqlTransaction(t *testing.T) {
 	}
 	if _, err = mssqlClient.Execute(
 		`
-INSERT INTO go_TypeTest (TinyIntTest, SmallIntTest, IntTest, BitTest, NvarcharTest, VarcharTest, NcharTest, CharTest, DateTimeTest, DateTime2Test, DateTest, TimeTest, MoneyTest, FloatTest, DecimalTest)
-	VALUES (30, 30, 30, 30, N'行30', 'Row30', N'行30', 'Row30', '2021-07-30 15:38:39.583', '2021-07-30 15:38:50.4257813', '2021-07-30', '12:30:01.345', 30.123, 30.12345, 30.45678999);
-INSERT INTO go_TypeTest (TinyIntTest, SmallIntTest, IntTest, BitTest, NvarcharTest, VarcharTest, NcharTest, CharTest, DateTimeTest, DateTime2Test, DateTest, TimeTest, MoneyTest, FloatTest, DecimalTest)
-	VALUES (31, 31, 31, 31, N'行31', 'Row31', N'行31', 'Row31', '2021-07-31 15:38:39.583', '2021-07-31 15:38:50.4257813', '2021-07-31', '12:31:01.345', 31.123, 31.12345, 31.45678999);`); err != nil {
+INSERT INTO go_TypeTest (TinyIntTest, SmallIntTest, IntTest, BitTest, NvarcharTest, VarcharTest, NcharTest, CharTest, DateTimeTest, DateTime2Test, DateTest, TimeTest, MoneyTest, FloatTest, DecimalTest, BinaryTest)
+	VALUES (30, 30, 30, 30, N'行30', 'Row30', N'行30', 'Row30', '2021-07-30 15:38:39.583', '2021-07-30 15:38:50.4257813', '2021-07-30', '12:30:01.345', 30.123, 30.12345, 30.45678999, 1);
+INSERT INTO go_TypeTest (TinyIntTest, SmallIntTest, IntTest, BitTest, NvarcharTest, VarcharTest, NcharTest, CharTest, DateTimeTest, DateTime2Test, DateTest, TimeTest, MoneyTest, FloatTest, DecimalTest, BinaryTest)
+	VALUES (31, 31, 31, 31, N'行31', 'Row31', N'行31', 'Row31', '2021-07-31 15:38:39.583', '2021-07-31 15:38:50.4257813', '2021-07-31', '12:31:01.345', 31.123, 31.12345, 31.45678999, 1);`); err != nil {
 		t.Fatal(err)
 	}
 	TransactionFuncTest(t, mssqlClient)

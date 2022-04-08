@@ -120,7 +120,7 @@ CREATE TABLE MainDemo(
 | float / double                                     | float64     |
 | decimal                                            | string      |
 | date / datetime / timestamp                        | time.Time   |
-| bit (binary)                                       | []byte      |
+| bit                                                | []byte      |
 
 ### SQL Server
 
@@ -131,7 +131,8 @@ CREATE TABLE MainDemo(
 | float                                    | float64     |
 | money / decimal                          | string      |
 | date / datetime / datetime2 / time       | time.Time   |
-| bit (boolean)                            | bool        |
+| binary / varbinary                       | []byte      |
+| bit                                      | bool        |
 
 ## 测试用例
 

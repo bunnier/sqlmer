@@ -56,6 +56,15 @@ func unifyDataType(columnType *sql.ColumnType, dest *interface{}) {
 		case nil:
 			*dest = nil
 		}
+
+	case "VARBINARY", "BINARY":
+		switch v := (*dest).(type) {
+		case []byte:
+			if v == nil { // 将 nil 的切片转为无类型 nil。
+				*dest = nil
+				break
+			}
+		}
 	}
 }
 

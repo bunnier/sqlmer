@@ -3,6 +3,7 @@ package mssql
 import (
 	"database/sql"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -158,8 +159,8 @@ func Test_internalDbClient_Execute(t *testing.T) {
 			"mssql",
 			mssqlClient,
 			args{
-				`INSERT INTO go_TypeTest (TinyIntTest, SmallIntTest, IntTest, BitTest, NvarcharTest, VarcharTest, NcharTest, CharTest, DateTimeTest, DateTime2Test, DateTest, TimeTest, MoneyTest, FloatTest, DecimalTest)
-				VALUES (5, 5, 5, 5, N'行5', 'Row5', N'行5', 'Row5', '2021-07-05 15:38:39.583', '2021-07-05 15:38:50.4257813', '2021-07-05', '12:05:01.345', 5.123, 5.12345, 5.45678999);`,
+				`INSERT INTO go_TypeTest (TinyIntTest, SmallIntTest, IntTest, BitTest, NvarcharTest, VarcharTest, NcharTest, CharTest, DateTimeTest, DateTime2Test, DateTest, TimeTest, MoneyTest, FloatTest, DecimalTest, BinaryTest)
+				VALUES (5, 5, 5, 5, N'行5', 'Row5', N'行5', 'Row5', '2021-07-05 15:38:39.583', '2021-07-05 15:38:50.4257813', '2021-07-05', '12:05:01.345', 5.123, 5.12345, 5.45678999, 1);`,
 				[]interface{}{},
 			},
 			false,
@@ -262,8 +263,8 @@ func Test_internalDbClient_Get(t *testing.T) {
 			"mssql_nullable_null",
 			mssqlClient,
 			args{
-				`SELECT
-				NullableTinyIntTest, NullableSmallIntTest, NullableIntTest, NullableBitTest, NullableNvarcharTest, NullableVarcharTest, NullableNcharTest, NullableCharTest, NullableDateTimeTest, NullableDateTime2Test, NullableDateTest, NullableTimeTest, NullableMoneyTest, NullableFloatTest, NullableDecimalTest
+				`SELECT TinyIntTest, SmallIntTest, IntTest, BitTest, NvarcharTest, VarcharTest, NcharTest, CharTest, DateTimeTest, DateTime2Test, DateTest, TimeTest, MoneyTest, FloatTest, DecimalTest, BinaryTest,
+				NullableTinyIntTest, NullableSmallIntTest, NullableIntTest, NullableBitTest, NullableNvarcharTest, NullableVarcharTest, NullableNcharTest, NullableCharTest, NullableDateTimeTest, NullableDateTime2Test, NullableDateTest, NullableTimeTest, NullableMoneyTest, NullableFloatTest, NullableDecimalTest, NullableBinaryTest
 				FROM go_TypeTest WHERE Id=1`,
 				[]interface{}{},
 			},
@@ -283,6 +284,7 @@ func Test_internalDbClient_Get(t *testing.T) {
 				"MoneyTest":             "1.1230",
 				"FloatTest":             float64(1.12345),
 				"DecimalTest":           "1.4567899900",
+				"BinaryTest":            []byte{1},
 				"NullableTinyIntTest":   nil,
 				"NullableSmallIntTest":  nil,
 				"NullableIntTest":       nil,
@@ -298,6 +300,7 @@ func Test_internalDbClient_Get(t *testing.T) {
 				"NullableMoneyTest":     nil,
 				"NullableFloatTest":     nil,
 				"NullableDecimalTest":   nil,
+				"NullableBinaryTest":    nil,
 			},
 			false,
 		},
@@ -305,8 +308,8 @@ func Test_internalDbClient_Get(t *testing.T) {
 			"mssql_nullable_hasValue",
 			mssqlClient,
 			args{
-				`SELECT TinyIntTest, SmallIntTest, IntTest, BitTest, NvarcharTest, VarcharTest, NcharTest, CharTest, DateTimeTest, DateTime2Test, DateTest, TimeTest, MoneyTest, FloatTest, DecimalTest,
-				NullableTinyIntTest, NullableSmallIntTest, NullableIntTest, NullableBitTest, NullableNvarcharTest, NullableVarcharTest, NullableNcharTest, NullableCharTest, NullableDateTimeTest, NullableDateTime2Test, NullableDateTest, NullableTimeTest, NullableMoneyTest, NullableFloatTest, NullableDecimalTest
+				`SELECT TinyIntTest, SmallIntTest, IntTest, BitTest, NvarcharTest, VarcharTest, NcharTest, CharTest, DateTimeTest, DateTime2Test, DateTest, TimeTest, MoneyTest, FloatTest, DecimalTest, BinaryTest,
+				NullableTinyIntTest, NullableSmallIntTest, NullableIntTest, NullableBitTest, NullableNvarcharTest, NullableVarcharTest, NullableNcharTest, NullableCharTest, NullableDateTimeTest, NullableDateTime2Test, NullableDateTest, NullableTimeTest, NullableMoneyTest, NullableFloatTest, NullableDecimalTest, NullableBinaryTest
 				FROM go_TypeTest WHERE Id=3`,
 				[]interface{}{},
 			},
@@ -326,6 +329,7 @@ func Test_internalDbClient_Get(t *testing.T) {
 				"MoneyTest":             "3.1230",
 				"FloatTest":             float64(3.12345),
 				"DecimalTest":           "3.4567899900",
+				"BinaryTest":            []byte{1},
 				"NullableTinyIntTest":   int64(3),
 				"NullableSmallIntTest":  int64(3),
 				"NullableIntTest":       int64(3),
@@ -341,6 +345,7 @@ func Test_internalDbClient_Get(t *testing.T) {
 				"NullableMoneyTest":     "3.1230",
 				"NullableFloatTest":     float64(3.12345),
 				"NullableDecimalTest":   "3.4567899900",
+				"NullableBinaryTest":    []byte{1},
 			},
 			false,
 		},
@@ -359,6 +364,10 @@ func Test_internalDbClient_Get(t *testing.T) {
 				if !reflect.DeepEqual(v, wantV) {
 					if wantFloat, ok := wantV.(float64); ok {
 						if wantFloat-v.(float64) < 0.00001 {
+							continue
+						}
+					} else if wantString, ok := wantV.(string); ok {
+						if wantString == strings.Trim(v.(string), " ") {
 							continue
 						}
 					}
