@@ -128,7 +128,7 @@ CREATE TABLE MainDemo(
 |------------------------------------------|-------------|
 | nvarchar / nchar / varchar / char / text | string      |
 | small int / tiny int / int / bigint      | int64       |
-| float                                    | float64     |
+| float / real                             | float64     |
 | money / decimal                          | string      |
 | date / datetime / datetime2 / time       | time.Time   |
 | binary / varbinary                       | []byte      |
