@@ -31,8 +31,8 @@ func Test_NewMySqlDbClient(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if !strings.Contains(dbClient.ConnectionString(), testConf.MySql) {
-		t.Errorf("mysqlDbClient.ConnectionString() connString = %v, want contains  %v", dbClient.ConnectionString(), testConf.MySql)
+	if !strings.Contains(dbClient.Dsn(), testConf.MySql) {
+		t.Errorf("mysqlDbClient.Dsn() connString = %v, want contains  %v", dbClient.Dsn(), testConf.MySql)
 	}
 
 	_, err = NewMySqlDbClient("test",

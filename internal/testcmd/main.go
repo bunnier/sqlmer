@@ -96,8 +96,8 @@ func Clean(testConf testenv.TestConf) {
 	fmt.Println("Cleaned.")
 }
 
-func getDb(driver string, connectionString string) (*sql.DB, error) {
-	db, err := sql.Open(driver, connectionString)
+func getDb(driver string, Dsn string) (*sql.DB, error) {
+	db, err := sql.Open(driver, Dsn)
 	if err != nil {
 		return nil, err
 	}

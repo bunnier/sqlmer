@@ -28,16 +28,16 @@ type MySqlDbClient struct {
 }
 
 // NewMySqlDbClient 用于创建一个 MySqlDbClient。
-func NewMySqlDbClient(connectionString string, options ...sqlmer.DbClientOption) (*MySqlDbClient, error) {
+func NewMySqlDbClient(dsn string, options ...sqlmer.DbClientOption) (*MySqlDbClient, error) {
 	var dsnConfig *mysqlDriver.Config
 	var err error
 
-	if dsnConfig, err = mysqlDriver.ParseDSN(connectionString); err != nil {
+	if dsnConfig, err = mysqlDriver.ParseDSN(dsn); err != nil {
 		return nil, err
 	}
 
 	fixedOptions := []sqlmer.DbClientOption{
-		sqlmer.WithConnectionString(DriverName, connectionString),
+		sqlmer.WithDsn(DriverName, dsn),
 		sqlmer.WithGetScanTypeFunc(getScanTypeFn(dsnConfig)),        // 定制 Scan 类型逻辑。
 		sqlmer.WithUnifyDataTypeFunc(getUnifyDataTypeFn(dsnConfig)), // 定制类型转换逻辑。
 		sqlmer.WithBindArgsFunc(bindMySqlArgs),                      // 定制参数绑定逻辑。

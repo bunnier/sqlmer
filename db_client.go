@@ -8,9 +8,9 @@ import (
 
 // DbClient 定义了数据库访问客户端。
 type DbClient interface {
-	ConnectionString() string // ConnectionString 用于获取当前实例所使用的数据库连接字符串。
-	ErrorDbClient             // error 版本 API。
-	MustDbClient              // panic 版本 API。
+	Dsn() string  // Dsn 用于获取当前实例所使用的数据库连接字符串。
+	ErrorDbClient // error 版本 API。
+	MustDbClient  // panic 版本 API。
 }
 
 // ErrorDbClient 为 error 版本 API。

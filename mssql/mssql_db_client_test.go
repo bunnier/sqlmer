@@ -30,8 +30,8 @@ func Test_NewMsSqlDbClient(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if dbClient.ConnectionString() != testConf.SqlServer {
-		t.Errorf("mssqlDbClient.ConnectionString() connString = %v, wantConnString %v", dbClient.ConnectionString(), testConf.SqlServer)
+	if dbClient.Dsn() != testConf.SqlServer {
+		t.Errorf("mssqlDbClient.Dsn() connString = %v, wantConnString %v", dbClient.Dsn(), testConf.SqlServer)
 	}
 
 	if dbClient, err = NewMsSqlDbClient("test",

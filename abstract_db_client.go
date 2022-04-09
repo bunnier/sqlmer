@@ -25,12 +25,12 @@ func NewAbstractDbClient(config *DbClientConfig) (*AbstractDbClient, error) {
 
 	// db 可能已经由 option 传入了。
 	if config.Db == nil {
-		if config.Driver == "" || config.ConnectionString == "" {
-			return nil, errors.Wrap(ErrConnect, "driver or connectionString is empty")
+		if config.Driver == "" || config.Dsn == "" {
+			return nil, errors.Wrap(ErrConnect, "driver or dsn is empty")
 		}
 
 		var err error
-		config.Db, err = getDb(ctx, config.Driver, config.ConnectionString, config.withPingCheck)
+		config.Db, err = getDb(ctx, config.Driver, config.Dsn, config.withPingCheck)
 		if err != nil {
 			return nil, err
 		}
@@ -45,8 +45,8 @@ func NewAbstractDbClient(config *DbClientConfig) (*AbstractDbClient, error) {
 }
 
 // 用于获取数据库连接池对象。
-func getDb(ctx context.Context, driverName string, connectionString string, withPingCheck bool) (*sql.DB, error) {
-	db, err := sql.Open(driverName, connectionString) // 获取连接池。
+func getDb(ctx context.Context, driverName string, dsn string, withPingCheck bool) (*sql.DB, error) {
+	db, err := sql.Open(driverName, dsn) // 获取连接池。
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +65,7 @@ func (client *AbstractDbClient) getExecTimeoutContext() (context.Context, contex
 	return context.WithTimeout(context.Background(), client.config.execTimeout)
 }
 
-// ConnectionString 用于获取当前实例所使用的数据库连接字符串。
-func (client *AbstractDbClient) ConnectionString() string {
-	return client.config.ConnectionString
+// Dsn 用于获取当前实例所使用的数据库连接字符串。
+func (client *AbstractDbClient) Dsn() string {
+	return client.config.Dsn
 }

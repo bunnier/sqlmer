@@ -15,9 +15,9 @@ type DbClientConfig struct {
 	execTimeout   time.Duration   // 语句执行超时时间。
 	withPingCheck bool            // 用于指定是否在 DbClient 初始化时候进行 ping 操作。
 
-	Driver           string  // 数据库驱动名称。
-	ConnectionString string  // 连接字符串。
-	Db               *sql.DB // 数据库对象。
+	Driver string  // 数据库驱动名称。
+	Dsn    string  // 连接字符串。
+	Db     *sql.DB // 数据库对象。
 
 	bindArgsFunc      BindSqlArgsFunc       // 用于处理 sql 语句和所给的参数。
 	getScanTypeFunc   sqlen.GetScanTypeFunc // 用于根据列信息获取用于 Scan 的类型。
@@ -27,13 +27,13 @@ type DbClientConfig struct {
 // NewDbClientConfig 创建一个数据库连接配置。
 func NewDbClientConfig(options ...DbClientOption) (*DbClientConfig, error) {
 	config := &DbClientConfig{
-		context:          context.Background(),
-		connTimeout:      time.Second * 30,
-		execTimeout:      time.Second * 30,
-		withPingCheck:    false,
-		Driver:           "",
-		ConnectionString: "",
-		Db:               nil,
+		context:       context.Background(),
+		connTimeout:   time.Second * 30,
+		execTimeout:   time.Second * 30,
+		withPingCheck: false,
+		Driver:        "",
+		Dsn:           "",
+		Db:            nil,
 		bindArgsFunc: func(s string, i ...interface{}) (string, []interface{}, error) {
 			return s, i, nil
 		},
@@ -73,19 +73,19 @@ func WithConnTimeout(timeout time.Duration) DbClientOption {
 }
 
 // WithDb 用于用现有的 sql.DB 初始化 DbClientOption。
-func WithDb(db *sql.DB, driver string, connectionString string) DbClientOption {
+func WithDb(db *sql.DB, driver string, dsn string) DbClientOption {
 	return func(config *DbClientConfig) error {
 		config.Db = db
-		config.ConnectionString = connectionString
+		config.Dsn = dsn
 		config.Driver = driver
 		return nil
 	}
 }
 
-// WithConnectionString 用于用现有的 sql.DB 初始化 DbClientOption。
-func WithConnectionString(driver string, connectionString string) DbClientOption {
+// WithDsn 用于用现有的 sql.DB 初始化 DbClientOption。
+func WithDsn(driver string, dsn string) DbClientOption {
 	return func(config *DbClientConfig) error {
-		config.ConnectionString = connectionString
+		config.Dsn = dsn
 		config.Driver = driver
 		return nil
 	}
