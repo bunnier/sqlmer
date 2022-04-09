@@ -72,7 +72,7 @@ func bindArgs(sqlText string, args ...interface{}) (string, []interface{}, error
 			if value, ok := mapArgs[paramName]; ok {
 				resultArgs = append(resultArgs, value)
 			} else {
-				return "", nil, fmt.Errorf("%w:\nlack of parameter:\nsql = %s", sqlmer.ErrParseParamFailed, namedParsedResult.Sql)
+				return "", nil, fmt.Errorf("%w:\nlack of parameter\nsql = %s", sqlmer.ErrParseParamFailed, namedParsedResult.Sql)
 			}
 		}
 		return namedParsedResult.Sql, resultArgs, nil
@@ -82,26 +82,26 @@ func bindArgs(sqlText string, args ...interface{}) (string, []interface{}, error
 	for _, paramName := range namedParsedResult.Names {
 		// 从参数名称提取索引。
 		if paramName[0] != 'p' {
-			return "", nil, fmt.Errorf("%w: parsing parameter failed:\nsql = %s", sqlmer.ErrParseParamFailed, namedParsedResult.Sql)
+			return "", nil, fmt.Errorf("%w: parsing parameter failed\nsql = %s", sqlmer.ErrParseParamFailed, namedParsedResult.Sql)
 		}
 		index, err := strconv.Atoi(paramName[1:])
 		if err != nil {
-			return "", nil, fmt.Errorf("%w: parsing parameter failed:\nsql = %s", sqlmer.ErrParseParamFailed, namedParsedResult.Sql)
+			return "", nil, fmt.Errorf("%w: parsing parameter failed\nsql = %s", sqlmer.ErrParseParamFailed, namedParsedResult.Sql)
 		}
 		index-- // 占位符从0开始。
 		if index < 0 || index > paramNameCount-1 {
-			return "", nil, fmt.Errorf("%w: lack of parameter:\nsql = %s", sqlmer.ErrParseParamFailed, namedParsedResult.Sql) // 索引对不上参数。
+			return "", nil, fmt.Errorf("%w: lack of parameter\nsql = %s", sqlmer.ErrParseParamFailed, namedParsedResult.Sql) // 索引对不上参数。
 		}
 
 		if index >= argsCount {
-			return "", nil, fmt.Errorf("%w: parsing parameter failed:\nsql = %s", sqlmer.ErrParseParamFailed, namedParsedResult.Sql)
+			return "", nil, fmt.Errorf("%w: parsing parameter failed\nsql = %s", sqlmer.ErrParseParamFailed, namedParsedResult.Sql)
 		}
 
 		resultArgs = append(resultArgs, args[index])
 	}
 
 	if paramNameCount > len(resultArgs) {
-		return "", nil, fmt.Errorf("%w: parsing parameter failed:\nsql = %s", sqlmer.ErrParseParamFailed, namedParsedResult.Sql)
+		return "", nil, fmt.Errorf("%w: parsing parameter failed\nsql = %s", sqlmer.ErrParseParamFailed, namedParsedResult.Sql)
 	}
 
 	return namedParsedResult.Sql, resultArgs, nil

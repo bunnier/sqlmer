@@ -42,5 +42,5 @@ func getExecutingSqlError(err error, rawSql string, fixedSql string, params []in
 			sb.WriteString(fmt.Sprintf("@p%d=%v", i+1, v))
 		}
 	}
-	return fmt.Errorf("%w:\ninput sql = %s\nexecuting sql = %s%s", err, rawSql, fixedSql, sb.String())
+	return fmt.Errorf("%w: %s\ninput sql = %s\nexecuting sql = %s%s", ErrExecutingSql, err.Error(), rawSql, fixedSql, sb.String())
 }
