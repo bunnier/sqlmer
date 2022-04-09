@@ -2,8 +2,7 @@ package sqlmer
 
 import (
 	"database/sql"
-
-	"github.com/pkg/errors"
+	"fmt"
 )
 
 var _ DbClient = (*abstractTransactionKeeper)(nil)
@@ -32,7 +31,7 @@ func (transKeeper *abstractTransactionKeeper) Commit() error {
 	}
 
 	if transKeeper.transactionCompleted {
-		return errors.WithMessage(ErrTran, "trans has already completed")
+		return fmt.Errorf("%w: trans has already completed", ErrTran)
 	}
 
 	transKeeper.transactionCompleted = true
@@ -47,7 +46,7 @@ func (transKeeper *abstractTransactionKeeper) Rollback() error {
 	}
 
 	if transKeeper.transactionCompleted {
-		return errors.WithMessage(ErrTran, "trans has already completed")
+		return fmt.Errorf("%w: trans has already completed", ErrTran)
 	}
 
 	transKeeper.transactionCompleted = true

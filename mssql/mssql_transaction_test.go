@@ -3,8 +3,9 @@ package mssql
 import (
 	"testing"
 
+	"errors"
+
 	"github.com/bunnier/sqlmer"
-	"github.com/pkg/errors"
 )
 
 func Test_MssqlTransaction(t *testing.T) {

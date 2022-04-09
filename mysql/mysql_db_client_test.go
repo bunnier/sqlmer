@@ -1,6 +1,7 @@
 package mysql
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"strings"
@@ -9,7 +10,6 @@ import (
 
 	"github.com/bunnier/sqlmer"
 	"github.com/bunnier/sqlmer/internal/testenv"
-	"github.com/pkg/errors"
 	"golang.org/x/sync/errgroup"
 )
 

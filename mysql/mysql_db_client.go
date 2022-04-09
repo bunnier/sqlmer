@@ -2,6 +2,7 @@ package mysql
 
 import (
 	"database/sql"
+	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
@@ -11,7 +12,6 @@ import (
 
 	"github.com/bunnier/sqlmer"
 	"github.com/bunnier/sqlmer/sqlen"
-	"github.com/pkg/errors"
 
 	mysqlDriver "github.com/go-sql-driver/mysql"
 )
@@ -72,7 +72,7 @@ func bindMySqlArgs(sqlText string, args ...interface{}) (string, []interface{}, 
 			if value, ok := mapArgs[paramName]; ok {
 				resultArgs = append(resultArgs, value)
 			} else {
-				return "", nil, errors.Wrap(sqlmer.ErrParseParamFailed, "lack of parameter:"+namedParsedResult.Sql)
+				return "", nil, fmt.Errorf("%w:\nlack of parameter:\nsql = %s", sqlmer.ErrParseParamFailed, namedParsedResult.Sql)
 			}
 		}
 		return namedParsedResult.Sql, resultArgs, nil
@@ -82,26 +82,26 @@ func bindMySqlArgs(sqlText string, args ...interface{}) (string, []interface{}, 
 	for _, paramName := range namedParsedResult.Names {
 		// 从参数名称提取索引。
 		if paramName[0] != 'p' {
-			return "", nil, errors.Wrap(sqlmer.ErrParseParamFailed, "parameter error:"+namedParsedResult.Sql)
+			return "", nil, fmt.Errorf("%w: parsing parameter failed:\nsql = %s", sqlmer.ErrParseParamFailed, namedParsedResult.Sql)
 		}
 		index, err := strconv.Atoi(paramName[1:])
 		if err != nil {
-			return "", nil, errors.Wrap(sqlmer.ErrParseParamFailed, "parameter error:"+namedParsedResult.Sql)
+			return "", nil, fmt.Errorf("%w: parsing parameter failed:\nsql = %s", sqlmer.ErrParseParamFailed, namedParsedResult.Sql)
 		}
 		index-- // 占位符从0开始。
 		if index < 0 || index > paramNameCount-1 {
-			return "", nil, errors.Wrap(sqlmer.ErrParseParamFailed, "lack of parameter:"+namedParsedResult.Sql) // 索引对不上参数。
+			return "", nil, fmt.Errorf("%w: lack of parameter:\nsql = %s", sqlmer.ErrParseParamFailed, namedParsedResult.Sql) // 索引对不上参数。
 		}
 
 		if index >= argsCount {
-			return "", nil, errors.Wrap(sqlmer.ErrParseParamFailed, "parameter error:"+namedParsedResult.Sql)
+			return "", nil, fmt.Errorf("%w: parsing parameter failed:\nsql = %s", sqlmer.ErrParseParamFailed, namedParsedResult.Sql)
 		}
 
 		resultArgs = append(resultArgs, args[index])
 	}
 
 	if paramNameCount > len(resultArgs) {
-		return "", nil, errors.Wrap(sqlmer.ErrParseParamFailed, "parameter error:"+namedParsedResult.Sql)
+		return "", nil, fmt.Errorf("%w: parsing parameter failed:\nsql = %s", sqlmer.ErrParseParamFailed, namedParsedResult.Sql)
 	}
 
 	return namedParsedResult.Sql, resultArgs, nil

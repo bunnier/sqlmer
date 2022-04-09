@@ -3,9 +3,9 @@ package sqlmer
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"github.com/bunnier/sqlmer/sqlen"
-	"github.com/pkg/errors"
 )
 
 var _ ErrorDbClient = (*AbstractDbClient)(nil)
@@ -69,7 +69,7 @@ func (client *AbstractDbClient) ExecuteContext(ctx context.Context, sqlText stri
 	}
 
 	if effectRows, err := sqlResult.RowsAffected(); err != nil {
-		return 0, errors.Wrap(ErrGetEffectedRows, err.Error())
+		return 0, fmt.Errorf("%w: %s", ErrGetEffectedRows, err.Error())
 	} else {
 		return effectRows, nil
 	}
@@ -110,7 +110,7 @@ func (client *AbstractDbClient) SizedExecuteContext(ctx context.Context, expecte
 		return err
 	}
 	if effectedRow != expectedSize {
-		return errors.Wrapf(ErrExpectedSizeWrong, "expected: %d, actually: %d, sql=%s", expectedSize, effectedRow, sqlText)
+		return fmt.Errorf("%w: expected: %d, actually: %d\nsql = %s", ErrExpectedSizeWrong, expectedSize, effectedRow, sqlText)
 	}
 	return nil
 }

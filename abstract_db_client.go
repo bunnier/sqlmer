@@ -3,9 +3,9 @@ package sqlmer
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"github.com/bunnier/sqlmer/sqlen"
-	"github.com/pkg/errors"
 )
 
 var _ DbClient = (*AbstractDbClient)(nil)
@@ -26,7 +26,7 @@ func NewAbstractDbClient(config *DbClientConfig) (*AbstractDbClient, error) {
 	// db 可能已经由 option 传入了。
 	if config.Db == nil {
 		if config.Driver == "" || config.Dsn == "" {
-			return nil, errors.Wrap(ErrConnect, "driver or dsn is empty")
+			return nil, fmt.Errorf("%w: driver or dsn is empty", ErrConnect)
 		}
 
 		var err error

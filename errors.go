@@ -1,14 +1,12 @@
 package sqlmer
 
-import (
-	"github.com/pkg/errors"
-)
+import "errors"
 
 // ErrTran 是数据库执行事务操作遇到的错误。
-var ErrTran = errors.New("transKeeper: transaction")
+var ErrTran = errors.New("dbTrans")
 
 // ErrConnect 是 DbClient 获取数据库连接时遇到的错误。
-var ErrConnect = errors.New("dbClient: connect")
+var ErrConnect = errors.New("dbConnect")
 
 // ErrGetEffectedRows 当数据库不支持获取影响行数时候，会返回改类型的错误。
 var ErrGetEffectedRows = errors.New("dbClient: the db driver do not support getting effected rows")

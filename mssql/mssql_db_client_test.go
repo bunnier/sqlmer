@@ -7,9 +7,10 @@ import (
 	"testing"
 	"time"
 
+	"errors"
+
 	"github.com/bunnier/sqlmer"
 	"github.com/bunnier/sqlmer/internal/testenv"
-	"github.com/pkg/errors"
 )
 
 // 初始化测试配置。

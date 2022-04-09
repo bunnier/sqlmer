@@ -3,8 +3,9 @@ package mysql
 import (
 	"testing"
 
+	"errors"
+
 	"github.com/bunnier/sqlmer"
-	"github.com/pkg/errors"
 )
 
 func Test_MysqlTransaction(t *testing.T) {
