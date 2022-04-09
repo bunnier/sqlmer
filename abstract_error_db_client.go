@@ -11,9 +11,9 @@ import (
 var _ ErrorDbClient = (*AbstractDbClient)(nil)
 
 // CreateTransaction 用于开始一个事务。
-// 	returns:
-// 		@tran 返回一个实现了 TransactionKeeper（内嵌 DbClient 接口） 接口的对象，在上面执行的语句会在同一个事务中执行。
-//		@err 创建事务时遇到的错误。
+// returns:
+//  @tran 返回一个实现了 TransactionKeeper（内嵌 DbClient 接口） 接口的对象，在上面执行的语句会在同一个事务中执行。
+//  @err 创建事务时遇到的错误。
 func (client *AbstractDbClient) CreateTransaction() (TransactionKeeper, error) {
 	tx, err := client.Db.Begin()
 	if err != nil {
@@ -32,15 +32,15 @@ func (client *AbstractDbClient) CreateTransaction() (TransactionKeeper, error) {
 }
 
 // Execute 用于执行非查询SQL语句，并返回所影响的行数。
-// 	params:
-// 		@sqlText SQL 语句，支持 @ 的命名参数占位及 @p1...@pn 这样的索引占位符。
-// 		@args SQL 语句的参数，支持通过 map[string]interface{} 提供命名参数值 或 通过变长参数提供索引参数值。
-// 	returns:
-// 		@effectedRows 语句影响的行数。
-// 		@err 执行语句时遇到的错误。
-//	可以通过 errors.Is 判断的特殊 err：
-// 		@sqlmer.ErrParseParamFailed: 当 SQL 语句中的参数解析失败时返回该类错误。
-// 		@sqlmer.ErrGetEffectedRows: 当执行成功，但驱动不支持获取影响行数时候，返回该类型错误。
+// params:
+//  @sqlText SQL 语句，支持 @ 的命名参数占位及 @p1...@pn 这样的索引占位符。
+//  @args SQL 语句的参数，支持通过 map[string]interface{} 提供命名参数值 或 通过变长参数提供索引参数值。
+// returns:
+//  @effectedRows 语句影响的行数。
+//  @err 执行语句时遇到的错误。
+// 可以通过 errors.Is 判断的特殊 err：
+//  - sqlmer.ErrParseParamFailed: 当 SQL 语句中的参数解析失败时返回该类错误。
+//  - sqlmer.ErrGetEffectedRows: 当执行成功，但驱动不支持获取影响行数时候，返回该类型错误。
 func (client *AbstractDbClient) Execute(sqlText string, args ...interface{}) (int64, error) {
 	ctx, cancelFunc := client.getExecTimeoutContext()
 	defer cancelFunc()
@@ -48,22 +48,23 @@ func (client *AbstractDbClient) Execute(sqlText string, args ...interface{}) (in
 }
 
 // ExecuteContext 用于执行非查询 sql 语句，并返回所影响的行数。
-// 	params:
-// 		@ctx context。
-// 		@sqlText SQL 语句，支持 @ 的命名参数占位及 @p1...@pn 这样的索引占位符。
-// 		@args SQL 语句的参数，支持通过 map[string]interface{} 提供命名参数值 或 通过变长参数提供索引参数值。
-// 	returns:
-// 		@effectedRows 语句影响的行数。
-// 		@err 执行语句时遇到的错误。
-//	可以通过 errors.Is 判断的特殊 err：
-// 		@sqlmer.ErrParseParamFailed: 当 SQL 语句中的参数解析失败时返回该类错误。
-// 		@sqlmer.ErrGetEffectedRows: 当执行成功，但驱动不支持获取影响行数时候，返回该类型错误。
+// params:
+//  @ctx context。
+//  @sqlText SQL 语句，支持 @ 的命名参数占位及 @p1...@pn 这样的索引占位符。
+//  @args SQL 语句的参数，支持通过 map[string]interface{} 提供命名参数值 或 通过变长参数提供索引参数值。
+// returns:
+//  @effectedRows 语句影响的行数。
+//  @err 执行语句时遇到的错误。
+// 可以通过 errors.Is 判断的特殊 err：
+//  - sqlmer.ErrParseParamFailed: 当 SQL 语句中的参数解析失败时返回该类错误。
+//  - sqlmer.ErrGetEffectedRows: 当执行成功，但驱动不支持获取影响行数时候，返回该类型错误。
+//  - sqlmer.ErrExecutingSql: 当 SQL 语句执行时遇到错误，返回该类型错误。
 func (client *AbstractDbClient) ExecuteContext(ctx context.Context, sqlText string, args ...interface{}) (int64, error) {
-	sqlText, args, err := client.config.bindArgsFunc(sqlText, args...)
+	fixedSqlText, args, err := client.config.bindArgsFunc(sqlText, args...)
 	if err != nil {
 		return 0, err
 	}
-	sqlResult, err := client.Exer.ExecContext(ctx, sqlText, args...)
+	sqlResult, err := client.Exer.ExecContext(ctx, fixedSqlText, args...)
 	if err != nil {
 		return 0, err
 	}
@@ -76,16 +77,17 @@ func (client *AbstractDbClient) ExecuteContext(ctx context.Context, sqlText stri
 }
 
 // SizedExecute 用于执行非查询SQL语句，并断言所影响的行数。
-// 	params:
-// 		@expectedSize 预期的影响行数，当
-// 		@sqlText SQL 语句，支持 @ 的命名参数占位及 @p1...@pn 这样的索引占位符。
-// 		@args SQL 语句的参数，支持通过 map[string]interface{} 提供命名参数值 或 通过变长参数提供索引参数值。
-// 	returns:
-// 		@err 执行语句时遇到的错误。
-//	可以通过 errors.Is 判断的特殊 err：
-// 		@sqlmer.ErrParseParamFailed: 当 SQL 语句中的参数解析失败时返回该类错误。
-// 		@sqlmer.ErrGetEffectedRows: 当执行成功，但驱动不支持获取影响行数时候，返回该类型错误。
-// 		@sqlmer.ErrExpectedSizeWrong: 当没有影响到预期行数时返回该类错误。
+// params:
+//  @expectedSize 预期的影响行数，当
+//  @sqlText SQL 语句，支持 @ 的命名参数占位及 @p1...@pn 这样的索引占位符。
+//  @args SQL 语句的参数，支持通过 map[string]interface{} 提供命名参数值 或 通过变长参数提供索引参数值。
+// returns:
+//  @err 执行语句时遇到的错误。
+// 可以通过 errors.Is 判断的特殊 err：
+//  - sqlmer.ErrParseParamFailed: 当 SQL 语句中的参数解析失败时返回该类错误。
+//  - sqlmer.ErrGetEffectedRows: 当执行成功，但驱动不支持获取影响行数时候，返回该类型错误。
+//  - sqlmer.ErrExpectedSizeWrong: 当没有影响到预期行数时返回该类错误。
+//  - sqlmer.ErrExecutingSql: 当 SQL 语句执行时遇到错误，返回该类型错误。
 func (client *AbstractDbClient) SizedExecute(expectedSize int64, sqlText string, args ...interface{}) error {
 	ctx, cancelFunc := client.getExecTimeoutContext()
 	defer cancelFunc()
@@ -93,17 +95,18 @@ func (client *AbstractDbClient) SizedExecute(expectedSize int64, sqlText string,
 }
 
 // SizedExecuteContext 用于执行非查询SQL语句，并断言所影响的行数。
-// 	params:
-// 		@ctx context。
-// 		@expectedSize 预期的影响行数，当
-// 		@sqlText SQL 语句，支持 @ 的命名参数占位及 @p1...@pn 这样的索引占位符。
-// 		@args SQL 语句的参数，支持通过 map[string]interface{} 提供命名参数值 或 通过变长参数提供索引参数值。
-// 	returns:
-// 		@err 执行语句时遇到的错误。
-//	可以通过 errors.Is 判断的特殊 err：
-// 		@sqlmer.ErrParseParamFailed: 当 SQL 语句中的参数解析失败时返回该类错误。
-// 		@sqlmer.ErrGetEffectedRows: 当执行成功，但驱动不支持获取影响行数时候，返回该类型错误。
-// 		@sqlmer.ErrExpectedSizeWrong: 当没有影响到预期行数时返回该类错误。
+// params:
+//  @ctx context。
+//  @expectedSize 预期的影响行数，当
+//  @sqlText SQL 语句，支持 @ 的命名参数占位及 @p1...@pn 这样的索引占位符。
+//  @args SQL 语句的参数，支持通过 map[string]interface{} 提供命名参数值 或 通过变长参数提供索引参数值。
+// returns:
+//  @err 执行语句时遇到的错误。
+// 可以通过 errors.Is 判断的特殊 err：
+//  - sqlmer.ErrParseParamFailed: 当 SQL 语句中的参数解析失败时返回该类错误。
+//  - sqlmer.ErrGetEffectedRows: 当执行成功，但驱动不支持获取影响行数时候，返回该类型错误。
+//  - sqlmer.ErrExpectedSizeWrong: 当没有影响到预期行数时返回该类错误。
+//  - sqlmer.ErrExecutingSql: 当 SQL 语句执行时遇到错误，返回该类型错误。
 func (client *AbstractDbClient) SizedExecuteContext(ctx context.Context, expectedSize int64, sqlText string, args ...interface{}) error {
 	effectedRow, err := client.ExecuteContext(ctx, sqlText, args...)
 	if err != nil {
@@ -116,14 +119,15 @@ func (client *AbstractDbClient) SizedExecuteContext(ctx context.Context, expecte
 }
 
 // Exists 用于判断给定的查询的结果是否至少包含 1 行。
-// 	params:
-// 		@sqlText SQL 语句，支持 @ 的命名参数占位及 @p1...@pn 这样的索引占位符。
-// 		@args SQL 语句的参数，支持通过 map[string]interface{} 提供命名参数值 或 通过变长参数提供索引参数值。
-// 	returns:
-//		@ok 结果至少包含一行。
-// 		@err 执行语句时遇到的错误。
-//	可以通过 errors.Is 判断的特殊 err：
-// 		@sqlmer.ErrParseParamFailed: 当 SQL 语句中的参数解析失败时返回该类错误。
+// params:
+//  @sqlText SQL 语句，支持 @ 的命名参数占位及 @p1...@pn 这样的索引占位符。
+//  @args SQL 语句的参数，支持通过 map[string]interface{} 提供命名参数值 或 通过变长参数提供索引参数值。
+// returns:
+// 	@ok 结果至少包含一行。
+//  @err 执行语句时遇到的错误。
+// 可以通过 errors.Is 判断的特殊 err：
+//  - sqlmer.ErrParseParamFailed: 当 SQL 语句中的参数解析失败时返回该类错误。
+//  - sqlmer.ErrExecutingSql: 当 SQL 语句执行时遇到错误，返回该类型错误。
 func (client *AbstractDbClient) Exists(sqlText string, args ...interface{}) (bool, error) {
 	ctx, cancelFunc := client.getExecTimeoutContext()
 	defer cancelFunc()
@@ -131,22 +135,23 @@ func (client *AbstractDbClient) Exists(sqlText string, args ...interface{}) (boo
 }
 
 // ExistsContext 用于判断给定的查询的结果是否至少包含 1 行。
-// 	params:
-// 		@ctx context。
-// 		@sqlText SQL 语句，支持 @ 的命名参数占位及 @p1...@pn 这样的索引占位符。
-// 		@args SQL 语句的参数，支持通过 map[string]interface{} 提供命名参数值 或 通过变长参数提供索引参数值。
-// 	returns:
-//		@ok 结果至少包含一行。
-// 		@err 执行语句时遇到的错误。
-//	可以通过 errors.Is 判断的特殊 err：
-// 		@sqlmer.ErrParseParamFailed: 当 SQL 语句中的参数解析失败时返回该类错误。
+// params:
+//  @ctx context。
+//  @sqlText SQL 语句，支持 @ 的命名参数占位及 @p1...@pn 这样的索引占位符。
+//  @args SQL 语句的参数，支持通过 map[string]interface{} 提供命名参数值 或 通过变长参数提供索引参数值。
+// returns:
+// 	@ok 结果至少包含一行。
+//  @err 执行语句时遇到的错误。
+// 可以通过 errors.Is 判断的特殊 err：
+//  - sqlmer.ErrParseParamFailed: 当 SQL 语句中的参数解析失败时返回该类错误。
+//  - sqlmer.ErrExecutingSql: 当 SQL 语句执行时遇到错误，返回该类型错误。
 func (client *AbstractDbClient) ExistsContext(ctx context.Context, sqlText string, args ...interface{}) (bool, error) {
-	sqlText, args, err := client.config.bindArgsFunc(sqlText, args...)
+	fixedSqlText, args, err := client.config.bindArgsFunc(sqlText, args...)
 	if err != nil {
 		return false, err
 	}
 
-	rows, err := client.Exer.EnhancedQueryContext(ctx, sqlText, args...)
+	rows, err := client.Exer.EnhancedQueryContext(ctx, fixedSqlText, args...)
 	if err != nil {
 		return false, err
 	}
@@ -160,15 +165,16 @@ func (client *AbstractDbClient) ExistsContext(ctx context.Context, sqlText strin
 }
 
 // Scalar 用于获取查询的第一行第一列的值。
-// 	params:
-// 		@sqlText SQL 语句，支持 @ 的命名参数占位及 @p1...@pn 这样的索引占位符。
-// 		@args SQL 语句的参数，支持通过 map[string]interface{} 提供命名参数值 或 通过变长参数提供索引参数值。
-// 	returns:
-//		@cell 目标查询第一行第一列的值。
-//		@hit true 表明有命中数据，false 则为没有命中数据，可通过该值区分是否为数据库空值。
-// 		@err 执行语句时遇到的错误。注意，sql.ErrNoRows 不放 error 中返回，而通过第二个返回值区分。
-//	可以通过 errors.Is 判断的特殊 err：
-// 		@sqlmer.ErrParseParamFailed: 当 SQL 语句中的参数解析失败时返回该类错误。
+// params:
+//  @sqlText SQL 语句，支持 @ 的命名参数占位及 @p1...@pn 这样的索引占位符。
+//  @args SQL 语句的参数，支持通过 map[string]interface{} 提供命名参数值 或 通过变长参数提供索引参数值。
+// returns:
+// 	@cell 目标查询第一行第一列的值。
+// 	@hit true 表明有命中数据，false 则为没有命中数据，可通过该值区分是否为数据库空值。
+//  @err 执行语句时遇到的错误。注意，sql.ErrNoRows 不放 error 中返回，而通过第二个返回值区分。
+// 可以通过 errors.Is 判断的特殊 err：
+//  - sqlmer.ErrParseParamFailed: 当 SQL 语句中的参数解析失败时返回该类错误。
+//  - sqlmer.ErrExecutingSql: 当 SQL 语句执行时遇到错误，返回该类型错误。
 func (client *AbstractDbClient) Scalar(sqlText string, args ...interface{}) (interface{}, bool, error) {
 	ctx, cancelFunc := client.getExecTimeoutContext()
 	defer cancelFunc()
@@ -176,23 +182,24 @@ func (client *AbstractDbClient) Scalar(sqlText string, args ...interface{}) (int
 }
 
 // ScalarContext 用于获取查询的第一行第一列的值。
-// 	params:
-// 		@ctx context。
-// 		@sqlText SQL 语句，支持 @ 的命名参数占位及 @p1...@pn 这样的索引占位符。
-// 		@args SQL 语句的参数，支持通过 map[string]interface{} 提供命名参数值 或 通过变长参数提供索引参数值。
-// 	returns:
-//		@cell 目标查询第一行第一列的值。
-//		@hit true 表明有命中数据，false 则为没有命中数据，可通过该值区分是否为数据库空值。
-// 		@err 执行语句时遇到的错误。注意，sql.ErrNoRows 不放 error 中返回，而通过第二个返回值区分。
-//	可以通过 errors.Is 判断的特殊 err：
-// 		@sqlmer.ErrParseParamFailed: 当 SQL 语句中的参数解析失败时返回该类错误。
+// params:
+//  @ctx context。
+//  @sqlText SQL 语句，支持 @ 的命名参数占位及 @p1...@pn 这样的索引占位符。
+//  @args SQL 语句的参数，支持通过 map[string]interface{} 提供命名参数值 或 通过变长参数提供索引参数值。
+// returns:
+// 	@cell 目标查询第一行第一列的值。
+// 	@hit true 表明有命中数据，false 则为没有命中数据，可通过该值区分是否为数据库空值。
+//  @err 执行语句时遇到的错误。注意，sql.ErrNoRows 不放 error 中返回，而通过第二个返回值区分。
+// 可以通过 errors.Is 判断的特殊 err：
+//  - sqlmer.ErrParseParamFailed: 当 SQL 语句中的参数解析失败时返回该类错误。
+//  - sqlmer.ErrExecutingSql: 当 SQL 语句执行时遇到错误，返回该类型错误。
 func (client *AbstractDbClient) ScalarContext(ctx context.Context, sqlText string, args ...interface{}) (interface{}, bool, error) {
-	sqlText, args, err := client.config.bindArgsFunc(sqlText, args...)
+	fixedSqlText, args, err := client.config.bindArgsFunc(sqlText, args...)
 	if err != nil {
 		return nil, false, err
 	}
 
-	if result, err := client.Exer.EnhancedQueryRowContext(ctx, sqlText, args...).SliceScan(); err != nil {
+	if result, err := client.Exer.EnhancedQueryRowContext(ctx, fixedSqlText, args...).SliceScan(); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, false, nil // 没有命中行时候，不用 error 返回，而是通过第二个参数标识。
 		}
@@ -203,14 +210,15 @@ func (client *AbstractDbClient) ScalarContext(ctx context.Context, sqlText strin
 }
 
 // Get 用于获取查询结果的第一行记录。
-// 	params:
-// 		@sqlText SQL 语句，支持 @ 的命名参数占位及 @p1...@pn 这样的索引占位符。
-// 		@args SQL 语句的参数，支持通过 map[string]interface{} 提供命名参数值 或 通过变长参数提供索引参数值。
-// 	returns:
-//		@mapRow 目标查询第一行的结果。
-// 		@err 执行语句时遇到的错误。注意，sql.ErrNoRows 不放 error 中返回，要知道是否有数据可直接判断第一个返回值是否为 nil。
-//	可以通过 errors.Is 判断的特殊 err：
-// 		@sqlmer.ErrParseParamFailed: 当 SQL 语句中的参数解析失败时返回该类错误。
+// params:
+//  @sqlText SQL 语句，支持 @ 的命名参数占位及 @p1...@pn 这样的索引占位符。
+//  @args SQL 语句的参数，支持通过 map[string]interface{} 提供命名参数值 或 通过变长参数提供索引参数值。
+// returns:
+// 	@mapRow 目标查询第一行的结果。
+//  @err 执行语句时遇到的错误。注意，sql.ErrNoRows 不放 error 中返回，要知道是否有数据可直接判断第一个返回值是否为 nil。
+// 可以通过 errors.Is 判断的特殊 err：
+//  - sqlmer.ErrParseParamFailed: 当 SQL 语句中的参数解析失败时返回该类错误。
+//  - sqlmer.ErrExecutingSql: 当 SQL 语句执行时遇到错误，返回该类型错误。
 func (client *AbstractDbClient) Get(sqlText string, args ...interface{}) (map[string]interface{}, error) {
 	ctx, cancelFunc := client.getExecTimeoutContext()
 	defer cancelFunc()
@@ -218,21 +226,22 @@ func (client *AbstractDbClient) Get(sqlText string, args ...interface{}) (map[st
 }
 
 // GetContext 用于获取查询结果的第一行记录。
-// 	params:
-// 		@ctx context。
-// 		@sqlText SQL 语句，支持 @ 的命名参数占位及 @p1...@pn 这样的索引占位符。
-// 		@args SQL 语句的参数，支持通过 map[string]interface{} 提供命名参数值 或 通过变长参数提供索引参数值。
-// 	returns:
-//		@mapRow 目标查询第一行的结果。
-// 		@err 执行语句时遇到的错误。注意，sql.ErrNoRows 不放 error 中返回，要知道是否有数据可直接判断第一个返回值是否为 nil。
-//	可以通过 errors.Is 判断的特殊 err：
-// 		@sqlmer.ErrParseParamFailed: 当 SQL 语句中的参数解析失败时返回该类错误。
+// params:
+//  @ctx context。
+//  @sqlText SQL 语句，支持 @ 的命名参数占位及 @p1...@pn 这样的索引占位符。
+//  @args SQL 语句的参数，支持通过 map[string]interface{} 提供命名参数值 或 通过变长参数提供索引参数值。
+// returns:
+// 	@mapRow 目标查询第一行的结果。
+//  @err 执行语句时遇到的错误。注意，sql.ErrNoRows 不放 error 中返回，要知道是否有数据可直接判断第一个返回值是否为 nil。
+// 可以通过 errors.Is 判断的特殊 err：
+//  - sqlmer.ErrParseParamFailed: 当 SQL 语句中的参数解析失败时返回该类错误。
+//  - sqlmer.ErrExecutingSql: 当 SQL 语句执行时遇到错误，返回该类型错误。
 func (client *AbstractDbClient) GetContext(ctx context.Context, sqlText string, args ...interface{}) (map[string]interface{}, error) {
-	sqlText, args, err := client.config.bindArgsFunc(sqlText, args...)
+	fixedSqlText, args, err := client.config.bindArgsFunc(sqlText, args...)
 	if err != nil {
 		return nil, err
 	}
-	rows, err := client.Exer.EnhancedQueryContext(ctx, sqlText, args...)
+	rows, err := client.Exer.EnhancedQueryContext(ctx, fixedSqlText, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -247,14 +256,15 @@ func (client *AbstractDbClient) GetContext(ctx context.Context, sqlText string, 
 }
 
 // SliceGet 用于获取查询结果的所有行。
-// 	params:
-// 		@sqlText SQL 语句，支持 @ 的命名参数占位及 @p1...@pn 这样的索引占位符。
-// 		@args SQL 语句的参数，支持通过 map[string]interface{} 提供命名参数值 或 通过变长参数提供索引参数值。
-// 	returns:
-//		@mapRows 目标查询结果的所有行。
-// 		@err 执行语句时遇到的错误。注意，sql.ErrNoRows 不放 error 中返回，要知道是否有数据可直接判断第一个返回值的 len。
-//	可以通过 errors.Is 判断的特殊 err：
-// 		@sqlmer.ErrParseParamFailed: 当 SQL 语句中的参数解析失败时返回该类错误。
+// params:
+//  @sqlText SQL 语句，支持 @ 的命名参数占位及 @p1...@pn 这样的索引占位符。
+//  @args SQL 语句的参数，支持通过 map[string]interface{} 提供命名参数值 或 通过变长参数提供索引参数值。
+// returns:
+// 	@mapRows 目标查询结果的所有行。
+//  @err 执行语句时遇到的错误。注意，sql.ErrNoRows 不放 error 中返回，要知道是否有数据可直接判断第一个返回值的 len。
+// 可以通过 errors.Is 判断的特殊 err：
+//  - sqlmer.ErrParseParamFailed: 当 SQL 语句中的参数解析失败时返回该类错误。
+//  - sqlmer.ErrExecutingSql: 当 SQL 语句执行时遇到错误，返回该类型错误。
 func (client *AbstractDbClient) SliceGet(sqlText string, args ...interface{}) ([]map[string]interface{}, error) {
 	ctx, cancelFunc := client.getExecTimeoutContext()
 	defer cancelFunc()
@@ -262,21 +272,22 @@ func (client *AbstractDbClient) SliceGet(sqlText string, args ...interface{}) ([
 }
 
 // SliceGetContext 用于获取查询结果得行序列。
-// 	params:
-// 		@ctx context。
-// 		@sqlText SQL 语句，支持 @ 的命名参数占位及 @p1...@pn 这样的索引占位符。
-// 		@args SQL 语句的参数，支持通过 map[string]interface{} 提供命名参数值 或 通过变长参数提供索引参数值。
-// 	returns:
-//		@mapRows 目标查询结果的所有行。
-// 		@err 执行语句时遇到的错误。注意，sql.ErrNoRows 不放 error 中返回，要知道是否有数据可直接判断第一个返回值的 len。
-//	可以通过 errors.Is 判断的特殊 err：
-// 		@sqlmer.ErrParseParamFailed: 当 SQL 语句中的参数解析失败时返回该类错误。
+// params:
+//  @ctx context。
+//  @sqlText SQL 语句，支持 @ 的命名参数占位及 @p1...@pn 这样的索引占位符。
+//  @args SQL 语句的参数，支持通过 map[string]interface{} 提供命名参数值 或 通过变长参数提供索引参数值。
+// returns:
+// 	@mapRows 目标查询结果的所有行。
+//  @err 执行语句时遇到的错误。注意，sql.ErrNoRows 不放 error 中返回，要知道是否有数据可直接判断第一个返回值的 len。
+// 可以通过 errors.Is 判断的特殊 err：
+//  - sqlmer.ErrParseParamFailed: 当 SQL 语句中的参数解析失败时返回该类错误。
+//  - sqlmer.ErrExecutingSql: 当 SQL 语句执行时遇到错误，返回该类型错误。
 func (client *AbstractDbClient) SliceGetContext(ctx context.Context, sqlText string, args ...interface{}) ([]map[string]interface{}, error) {
-	sqlText, args, err := client.config.bindArgsFunc(sqlText, args...)
+	fixedSqlText, args, err := client.config.bindArgsFunc(sqlText, args...)
 	if err != nil {
 		return nil, err
 	}
-	rows, err := client.Exer.EnhancedQueryContext(ctx, sqlText, args...)
+	rows, err := client.Exer.EnhancedQueryContext(ctx, fixedSqlText, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -296,69 +307,73 @@ func (client *AbstractDbClient) SliceGetContext(ctx context.Context, sqlText str
 }
 
 // Row 用于获取单个查询结果行。
-// 	params:
-// 		@sqlText SQL 语句，支持 @ 的命名参数占位及 @p1...@pn 这样的索引占位符。
-// 		@args SQL 语句的参数，支持通过 map[string]interface{} 提供命名参数值 或 通过变长参数提供索引参数值。
-// 	returns:
-//		@row 返回目标行的 EnhanceRow 对象（是对 sql.Row 的增强包装对象）。
-// 		@err 执行语句时遇到的错误。
-//	可以通过 errors.Is 判断的特殊 err：
-// 		@sqlmer.ErrParseParamFailed: 当 SQL 语句中的参数解析失败时返回该类错误。
+// params:
+//  @sqlText SQL 语句，支持 @ 的命名参数占位及 @p1...@pn 这样的索引占位符。
+//  @args SQL 语句的参数，支持通过 map[string]interface{} 提供命名参数值 或 通过变长参数提供索引参数值。
+// returns:
+// 	@row 返回目标行的 EnhanceRow 对象（是对 sql.Row 的增强包装对象）。
+//  @err 执行语句时遇到的错误。
+// 可以通过 errors.Is 判断的特殊 err：
+//  - sqlmer.ErrParseParamFailed: 当 SQL 语句中的参数解析失败时返回该类错误。
+//  - sqlmer.ErrExecutingSql: 当 SQL 语句执行时遇到错误，返回该类型错误。
 func (client *AbstractDbClient) Row(sqlText string, args ...interface{}) (*sqlen.EnhanceRow, error) {
 	ctx, _ := client.getExecTimeoutContext()
 	return client.RowContext(ctx, sqlText, args...)
 }
 
 // RowContext 用于获取单个查询结果行。
-// 	params:
-// 		@ctx context。
-// 		@sqlText SQL 语句，支持 @ 的命名参数占位及 @p1...@pn 这样的索引占位符。
-// 		@args SQL 语句的参数，支持通过 map[string]interface{} 提供命名参数值 或 通过变长参数提供索引参数值。
-// 	returns:
-//		@row 返回目标行的 EnhanceRow 对象（是对 sql.Row 的增强包装对象）。
-// 		@err 执行语句时遇到的错误。
-//	可以通过 errors.Is 判断的特殊 err：
-// 		@sqlmer.ErrParseParamFailed: 当 SQL 语句中的参数解析失败时返回该类错误。
+// params:
+//  @ctx context。
+//  @sqlText SQL 语句，支持 @ 的命名参数占位及 @p1...@pn 这样的索引占位符。
+//  @args SQL 语句的参数，支持通过 map[string]interface{} 提供命名参数值 或 通过变长参数提供索引参数值。
+// returns:
+// 	@row 返回目标行的 EnhanceRow 对象（是对 sql.Row 的增强包装对象）。
+//  @err 执行语句时遇到的错误。
+// 可以通过 errors.Is 判断的特殊 err：
+//  - sqlmer.ErrParseParamFailed: 当 SQL 语句中的参数解析失败时返回该类错误。
+//  - sqlmer.ErrExecutingSql: 当 SQL 语句执行时遇到错误，返回该类型错误。
 func (client *AbstractDbClient) RowContext(ctx context.Context, sqlText string, args ...interface{}) (*sqlen.EnhanceRow, error) {
-	sqlText, args, err := client.config.bindArgsFunc(sqlText, args...)
+	fixedSqlText, args, err := client.config.bindArgsFunc(sqlText, args...)
 	if err != nil {
 		return nil, err
 	}
 
-	row := client.Exer.EnhancedQueryRowContext(ctx, sqlText, args...)
+	row := client.Exer.EnhancedQueryRowContext(ctx, fixedSqlText, args...)
 	return row, row.Err()
 }
 
 // Rows 用于获取查询结果行的游标对象。
-// 	params:
-// 		@sqlText SQL 语句，支持 @ 的命名参数占位及 @p1...@pn 这样的索引占位符。
-// 		@args SQL 语句的参数，支持通过 map[string]interface{} 提供命名参数值 或 通过变长参数提供索引参数值。
-// 	returns:
-//		@row 返回目标行的 EnhanceRows 对象（是对 sql.Rows 的增强包装对象）。
-// 		@err 执行语句时遇到的错误。
-//	可以通过 errors.Is 判断的特殊 err：
-// 		@sqlmer.ErrParseParamFailed: 当 SQL 语句中的参数解析失败时返回该类错误。
+// params:
+//  @sqlText SQL 语句，支持 @ 的命名参数占位及 @p1...@pn 这样的索引占位符。
+//  @args SQL 语句的参数，支持通过 map[string]interface{} 提供命名参数值 或 通过变长参数提供索引参数值。
+// returns:
+// 	@row 返回目标行的 EnhanceRows 对象（是对 sql.Rows 的增强包装对象）。
+//  @err 执行语句时遇到的错误。
+// 可以通过 errors.Is 判断的特殊 err：
+//  - sqlmer.ErrParseParamFailed: 当 SQL 语句中的参数解析失败时返回该类错误。
+//  - sqlmer.ErrExecutingSql: 当 SQL 语句执行时遇到错误，返回该类型错误。
 func (client *AbstractDbClient) Rows(sqlText string, args ...interface{}) (*sqlen.EnhanceRows, error) {
 	ctx, _ := client.getExecTimeoutContext()
 	return client.RowsContext(ctx, sqlText, args...)
 }
 
 // RowsContext 用于获取查询结果行的游标对象。
-// 	params:
-// 		@ctx context。
-// 		@sqlText SQL 语句，支持 @ 的命名参数占位及 @p1...@pn 这样的索引占位符。
-// 		@args SQL 语句的参数，支持通过 map[string]interface{} 提供命名参数值 或 通过变长参数提供索引参数值。
-// 	returns:
-//		@row 返回目标行的 EnhanceRows 对象（是对 sql.Rows 的增强包装对象）。
-// 		@err 执行语句时遇到的错误。
-//	可以通过 errors.Is 判断的特殊 err：
-// 		@sqlmer.ErrParseParamFailed: 当 SQL 语句中的参数解析失败时返回该类错误。
+// params:
+//  @ctx context。
+//  @sqlText SQL 语句，支持 @ 的命名参数占位及 @p1...@pn 这样的索引占位符。
+//  @args SQL 语句的参数，支持通过 map[string]interface{} 提供命名参数值 或 通过变长参数提供索引参数值。
+// returns:
+// 	@row 返回目标行的 EnhanceRows 对象（是对 sql.Rows 的增强包装对象）。
+//  @err 执行语句时遇到的错误。
+// 可以通过 errors.Is 判断的特殊 err：
+//  - sqlmer.ErrParseParamFailed: 当 SQL 语句中的参数解析失败时返回该类错误。
+//  - sqlmer.ErrExecutingSql: 当 SQL 语句执行时遇到错误，返回该类型错误。
 func (client *AbstractDbClient) RowsContext(ctx context.Context, sqlText string, args ...interface{}) (*sqlen.EnhanceRows, error) {
-	sqlText, args, err := client.config.bindArgsFunc(sqlText, args...)
+	fixedSqlText, args, err := client.config.bindArgsFunc(sqlText, args...)
 	if err != nil {
 		return nil, err
 	}
-	rows, err := client.Exer.EnhancedQueryContext(ctx, sqlText, args...)
+	rows, err := client.Exer.EnhancedQueryContext(ctx, fixedSqlText, args...)
 	if err != nil {
 		return nil, err
 	}
