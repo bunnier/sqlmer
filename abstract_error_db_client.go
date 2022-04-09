@@ -15,15 +15,15 @@ var _ ErrorDbClient = (*AbstractDbClient)(nil)
 // 		@tran 返回一个实现了 TransactionKeeper（内嵌 DbClient 接口） 接口的对象，在上面执行的语句会在同一个事务中执行。
 //		@err 创建事务时遇到的错误。
 func (client *AbstractDbClient) CreateTransaction() (TransactionKeeper, error) {
-	tx, err := client.SqlDB.Begin()
+	tx, err := client.Db.Begin()
 	if err != nil {
 		return nil, err
 	}
 
 	txDbClient := &AbstractDbClient{
-		client.config,
-		client.SqlDB,
-		sqlen.NewTxEnhance(tx, client.config.unifyDataType), // 新的client中的实际执行对象使用开启的事务。
+		config: client.config,
+		Db:     client.Db,                         // Db 对象。
+		Exer:   sqlen.NewTxEnhance(tx, client.Db), // 新的client中的实际执行对象使用开启的事务。
 	}
 
 	return &abstractTransactionKeeper{

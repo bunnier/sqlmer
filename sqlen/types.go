@@ -94,12 +94,10 @@ var (
 	scanTypeNullByte = reflect.TypeOf(sql.NullByte{})
 )
 
-// 为了统一可空字段和非可空字段的返回值，这里统一将数字类型提升到 nullable 支持的类型。
-func unifyScanType(columnType *sql.ColumnType) reflect.Type {
+// unifyScanType 用于统一处理 nullable 列的行为。
+func unifyScanType(scanType reflect.Type, columnType *sql.ColumnType) reflect.Type {
 	nullable, ok := columnType.Nullable()
 	nullable = nullable && ok
-
-	scanType := columnType.ScanType()
 
 	if !nullable { // 为了 nullable 和 not null 类型一致，这里对 not null 类型统一做个类型转换。
 		switch scanType {

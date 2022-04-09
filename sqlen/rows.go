@@ -8,9 +8,13 @@ import (
 // 用于统一不同驱动在 Go 中的映射类型。
 type UnifyDataTypeFn func(columnType *sql.ColumnType, dest *interface{})
 
+// GetScanTypeFunc 用于根据列的类型信息获取一个能用于 Scan 的 Go 类型。
+type GetScanTypeFunc func(columnType *sql.ColumnType) reflect.Type
+
 // EnhanceRows 用于在 Enhanced 方法中替换元生的 sql.Rows。
 type EnhanceRows struct {
 	*sql.Rows
+	getScanTypeFn GetScanTypeFunc // 用于获取用于 Scan 的数据类型。
 	unifyDataType UnifyDataTypeFn
 
 	err error
@@ -65,9 +69,10 @@ func (rs *EnhanceRows) SliceScan() ([]interface{}, error) {
 	dest := make([]interface{}, len(rs.colTypes))
 	destRefVal := make([]reflect.Value, len(rs.colTypes))
 	for i, cType := range rs.colTypes {
-		refVal := reflect.New(unifyScanType(cType)) // 使用数据库驱动标记的类型来接收数据。
-		dest[i] = refVal.Interface()                // 注意，这里传入的是指定值的指针。
-		destRefVal[i] = refVal                      // 保存这个 Reflect.value 在后面用于解引用。
+		refType := unifyScanType(rs.getScanTypeFn(cType), cType) // TODO: 这里可以做个缓存优化，不需要每次去获取类型。
+		refVal := reflect.New(refType)                           // 使用数据库驱动标记的类型来接收数据。
+		dest[i] = refVal.Interface()                             // 注意，这里传入的是指定值的指针。
+		destRefVal[i] = refVal                                   // 保存这个 Reflect.value 在后面用于解引用。
 	}
 
 	rs.Scan(dest...)

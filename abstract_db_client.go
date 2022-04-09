@@ -13,33 +13,34 @@ var _ DbClient = (*AbstractDbClient)(nil)
 // AbstractDbClient 是一个 DbClient 的抽象实现。
 type AbstractDbClient struct {
 	config *DbClientConfig      // 存储数据库连接配置。
-	SqlDB  *sql.DB              // 内部依赖的连接池。
+	Db     *sqlen.DbEnhance     // 内部依赖的连接池。
 	Exer   sqlen.EnhancedDbExer // 获取方法实际使用的执行对象。
 }
 
-// NewInternalDbClient 用于获取一个 internalDbClient 对象。
-func NewInternalDbClient(config *DbClientConfig) (AbstractDbClient, error) {
+// NewAbstractDbClient 用于获取一个 internalDbClient 对象。
+func NewAbstractDbClient(config *DbClientConfig) (*AbstractDbClient, error) {
 	// 控制连接超时的 context。
 	ctx, cancelFunc := context.WithTimeout(context.Background(), config.connTimeout)
 	defer cancelFunc()
 
 	// db 可能已经由 option 传入了。
-	if config.db == nil {
-		if config.driver == "" || config.connectionString == "" {
-			return AbstractDbClient{}, errors.Wrap(ErrConnect, "driver or connectionString is empty")
+	if config.Db == nil {
+		if config.Driver == "" || config.ConnectionString == "" {
+			return nil, errors.Wrap(ErrConnect, "driver or connectionString is empty")
 		}
 
 		var err error
-		config.db, err = getDb(ctx, config.driver, config.connectionString, config.withPingCheck)
+		config.Db, err = getDb(ctx, config.Driver, config.ConnectionString, config.withPingCheck)
 		if err != nil {
-			return AbstractDbClient{}, err
+			return nil, err
 		}
 	}
 
-	return AbstractDbClient{
-		config,
-		config.db,
-		sqlen.NewDbEnhance(config.db, config.unifyDataType),
+	dbEnhance := sqlen.NewDbEnhance(config.Db, config.getScanTypeFunc, config.unifyDataTypeFunc)
+	return &AbstractDbClient{
+		config: config,
+		Db:     dbEnhance,
+		Exer:   dbEnhance,
 	}, nil
 }
 
@@ -66,5 +67,5 @@ func (client *AbstractDbClient) getExecTimeoutContext() (context.Context, contex
 
 // ConnectionString 用于获取当前实例所使用的数据库连接字符串。
 func (client *AbstractDbClient) ConnectionString() string {
-	return client.config.connectionString
+	return client.config.ConnectionString
 }

@@ -4,6 +4,7 @@ package sqlen
 import (
 	"database/sql"
 	"fmt"
+	"reflect"
 	"testing"
 
 	_ "github.com/denisenkom/go-mssqldb"
@@ -36,20 +37,15 @@ func unifyDataTypeFn(columnType *sql.ColumnType, dest *interface{}) {
 		case nil:
 			*dest = nil
 		}
-	default: // 将 sql.RawBytes 统一转为 []byte。
-		switch v := (*dest).(type) {
-		case sql.RawBytes:
-			if v == nil {
-				*dest = nil
-				break
-			}
-			*dest = []byte(v)
-		}
 	}
 }
 
+func getScanTypeFunc(columnType *sql.ColumnType) reflect.Type {
+	return columnType.ScanType()
+}
+
 func TestEnhanceRows_MapScan(t *testing.T) {
-	db := NewDbEnhance(mustGetMssqlDb(t), unifyDataTypeFn)
+	db := NewDbEnhance(mustGetMssqlDb(t), getScanTypeFunc, unifyDataTypeFn)
 
 	const testNum int64 = 3
 	enhancedRows, err := db.EnhancedQuery("SELECT Id, VarcharTest FROM go_TypeTest WHERE Id<=?", testNum)
@@ -85,7 +81,7 @@ func TestEnhanceRows_MapScan(t *testing.T) {
 }
 
 func TestEnhanceRows_SliceScan(t *testing.T) {
-	db := NewDbEnhance(mustGetMssqlDb(t), unifyDataTypeFn)
+	db := NewDbEnhance(mustGetMssqlDb(t), getScanTypeFunc, unifyDataTypeFn)
 
 	const testNum int64 = 3
 	enhancedRows, err := db.EnhancedQuery("SELECT Id, VarcharTest, DecimalTest FROM go_TypeTest WHERE Id<=?", testNum)
@@ -122,7 +118,7 @@ func TestEnhanceRows_SliceScan(t *testing.T) {
 }
 
 func TestEnhanceRow_MapScan(t *testing.T) {
-	db := NewDbEnhance(mustGetMssqlDb(t), unifyDataTypeFn)
+	db := NewDbEnhance(mustGetMssqlDb(t), getScanTypeFunc, unifyDataTypeFn)
 	enhancedRow := db.EnhancedQueryRow("SELECT Id, VarcharTest, DecimalTest FROM go_TypeTest WHERE Id=1")
 
 	rowMap := make(map[string]interface{})
@@ -139,7 +135,7 @@ func TestEnhanceRow_MapScan(t *testing.T) {
 }
 
 func TestEnhanceRow_SliceScan(t *testing.T) {
-	db := NewDbEnhance(mustGetMssqlDb(t), unifyDataTypeFn)
+	db := NewDbEnhance(mustGetMssqlDb(t), getScanTypeFunc, unifyDataTypeFn)
 	enhancedRow := db.EnhancedQueryRow("SELECT Id, VarcharTest FROM go_TypeTest WHERE Id=1")
 
 	sliceRow, err := enhancedRow.SliceScan()
@@ -157,7 +153,7 @@ func TestEnhanceRow_SliceScan(t *testing.T) {
 }
 
 func TestEnhanceRow_Scan(t *testing.T) {
-	db := NewDbEnhance(mustGetMssqlDb(t), unifyDataTypeFn)
+	db := NewDbEnhance(mustGetMssqlDb(t), getScanTypeFunc, unifyDataTypeFn)
 	enhancedRow := db.EnhancedQueryRow("SELECT Id, VarcharTest FROM go_TypeTest WHERE Id=1")
 
 	var id int64
@@ -177,7 +173,7 @@ func TestEnhanceRow_Scan(t *testing.T) {
 }
 
 func TestEnhanceRow_Err(t *testing.T) {
-	db := NewDbEnhance(mustGetMssqlDb(t), unifyDataTypeFn)
+	db := NewDbEnhance(mustGetMssqlDb(t), getScanTypeFunc, unifyDataTypeFn)
 	sqlText := "SELECT Id, VarcharTest FROM go_TypeTest WHERE Id=100"
 
 	t.Run("SliceScan", func(t *testing.T) {

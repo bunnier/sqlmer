@@ -10,11 +10,11 @@ var _ EnhancedDbExer = (*TxEnhance)(nil)
 // TxEnhance 是对原生 sql.Tx 的包装，除了原本的方法外，另外实现了 EnhancedDbExer 接口定义的额外方法。
 type TxEnhance struct {
 	*sql.Tx
-	unifyDataType UnifyDataTypeFn // 用于统一不同驱动在 Go 中的映射类型。
+	dbEnhance *DbEnhance // 用于统一不同驱动在 Go 中的映射类型。
 }
 
-func NewTxEnhance(tx *sql.Tx, unifyDataTypeFn UnifyDataTypeFn) *TxEnhance {
-	return &TxEnhance{tx, unifyDataTypeFn}
+func NewTxEnhance(tx *sql.Tx, dbEnhance *DbEnhance) *TxEnhance {
+	return &TxEnhance{tx, dbEnhance}
 }
 
 // EnhancedQueryRow executes a query that is expected to return at most one row.
@@ -43,5 +43,9 @@ func (tx *TxEnhance) EnhancedQueryContext(ctx context.Context, query string, arg
 	if err != nil {
 		return nil, err
 	}
-	return &EnhanceRows{rows, tx.unifyDataType, nil, nil, nil}, nil
+	return &EnhanceRows{
+		Rows:          rows,
+		getScanTypeFn: tx.dbEnhance.getScanTypeFn,
+		unifyDataType: tx.dbEnhance.unifyDataType,
+	}, nil
 }

@@ -3,6 +3,7 @@ package sqlmer
 import (
 	"context"
 	"database/sql"
+	"reflect"
 	"time"
 
 	"github.com/bunnier/sqlmer/sqlen"
@@ -14,28 +15,32 @@ type DbClientConfig struct {
 	execTimeout   time.Duration   // 语句执行超时时间。
 	withPingCheck bool            // 用于指定是否在 DbClient 初始化时候进行 ping 操作。
 
-	driver           string  // 数据库驱动名称。
-	connectionString string  // 连接字符串。
-	db               *sql.DB // 数据库对象。
+	Driver           string  // 数据库驱动名称。
+	ConnectionString string  // 连接字符串。
+	Db               *sql.DB // 数据库对象。
 
-	bindArgsFunc  BindSqlArgsFunc       // 用于处理 sql 语句和所给的参数。
-	unifyDataType sqlen.UnifyDataTypeFn // 用于统一不同驱动在 Go 中的映射类型。
+	bindArgsFunc      BindSqlArgsFunc       // 用于处理 sql 语句和所给的参数。
+	getScanTypeFunc   sqlen.GetScanTypeFunc // 用于根据列信息获取用于 Scan 的类型。
+	unifyDataTypeFunc sqlen.UnifyDataTypeFn // 用于统一不同驱动在 Go 中的映射类型。
 }
 
 // NewDbClientConfig 创建一个数据库连接配置。
 func NewDbClientConfig(options ...DbClientOption) (*DbClientConfig, error) {
 	config := &DbClientConfig{
-		context.Background(),
-		time.Second * 30,
-		time.Second * 30,
-		false, // 默认不 ping。
-		"",
-		"",
-		nil,
-		func(s string, i ...interface{}) (string, []interface{}, error) {
+		context:          context.Background(),
+		connTimeout:      time.Second * 30,
+		execTimeout:      time.Second * 30,
+		withPingCheck:    false,
+		Driver:           "",
+		ConnectionString: "",
+		Db:               nil,
+		bindArgsFunc: func(s string, i ...interface{}) (string, []interface{}, error) {
 			return s, i, nil
 		},
-		func(columnType *sql.ColumnType, dest *interface{}) {},
+		getScanTypeFunc: func(columnType *sql.ColumnType) reflect.Type {
+			return columnType.ScanType()
+		},
+		unifyDataTypeFunc: func(columnType *sql.ColumnType, dest *interface{}) {},
 	}
 
 	var err error
@@ -68,9 +73,11 @@ func WithConnTimeout(timeout time.Duration) DbClientOption {
 }
 
 // WithDb 用于用现有的 sql.DB 初始化 DbClientOption。
-func WithDb(db *sql.DB) DbClientOption {
+func WithDb(db *sql.DB, driver string, connectionString string) DbClientOption {
 	return func(config *DbClientConfig) error {
-		config.db = db
+		config.Db = db
+		config.ConnectionString = connectionString
+		config.Driver = driver
 		return nil
 	}
 }
@@ -78,8 +85,8 @@ func WithDb(db *sql.DB) DbClientOption {
 // WithConnectionString 用于用现有的 sql.DB 初始化 DbClientOption。
 func WithConnectionString(driver string, connectionString string) DbClientOption {
 	return func(config *DbClientConfig) error {
-		config.connectionString = connectionString
-		config.driver = driver
+		config.ConnectionString = connectionString
+		config.Driver = driver
 		return nil
 	}
 }
@@ -95,7 +102,7 @@ func WithPingCheck(withPingCheck bool) DbClientOption {
 // WithUnifyDataTypeFunc 用于为 DbClient 注入驱动相关的类型转换逻辑。
 func WithUnifyDataTypeFunc(unifyDataType sqlen.UnifyDataTypeFn) DbClientOption {
 	return func(config *DbClientConfig) error {
-		config.unifyDataType = unifyDataType
+		config.unifyDataTypeFunc = unifyDataType
 		return nil
 	}
 }
@@ -107,6 +114,14 @@ type BindSqlArgsFunc func(string, ...interface{}) (string, []interface{}, error)
 func WithBindArgsFunc(argsFunc BindSqlArgsFunc) DbClientOption {
 	return func(config *DbClientConfig) error {
 		config.bindArgsFunc = argsFunc
+		return nil
+	}
+}
+
+// WithBindArgsFunc 用于为 DbClientConfig 设置根据列信息获取 Scan 类型的函数。
+func WithGetScanTypeFunc(scanFunc sqlen.GetScanTypeFunc) DbClientOption {
+	return func(config *DbClientConfig) error {
+		config.getScanTypeFunc = scanFunc
 		return nil
 	}
 }

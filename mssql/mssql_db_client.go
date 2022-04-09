@@ -16,28 +16,29 @@ var _ sqlmer.DbClient = (*MsSqlDbClient)(nil)
 
 // MsSqlDbClient 是针对 SqlServer 的 DbClient 实现。
 type MsSqlDbClient struct {
-	sqlmer.AbstractDbClient
+	*sqlmer.AbstractDbClient
 }
 
 // NewMsSqlDbClient 用于创建一个 MsSqlDbClient。
 func NewMsSqlDbClient(connectionString string, options ...sqlmer.DbClientOption) (*MsSqlDbClient, error) {
-	options = append(options,
+	fixedOptions := []sqlmer.DbClientOption{
 		sqlmer.WithConnectionString(DriverName, connectionString),
 		sqlmer.WithUnifyDataTypeFunc(unifyDataType),
-		sqlmer.WithBindArgsFunc(bindMsSqlArgs)) // SqlServer 要支持命名参数，需要定制一个参数解析函数。
+		sqlmer.WithBindArgsFunc(bindMsSqlArgs), // SqlServer 要支持命名参数，需要定制一个参数解析函数。
+	}
+	options = append(fixedOptions, options...) // 用户自定义选项放后面，以覆盖默认。
+
 	config, err := sqlmer.NewDbClientConfig(options...)
 	if err != nil {
 		return nil, err
 	}
 
-	internalDbClient, err := sqlmer.NewInternalDbClient(config)
+	internalDbClient, err := sqlmer.NewAbstractDbClient(config)
 	if err != nil {
 		return nil, err
 	}
 
-	return &MsSqlDbClient{
-		internalDbClient,
-	}, nil
+	return &MsSqlDbClient{internalDbClient}, nil
 }
 
 // unifyDataType 用于统一数据类型。
