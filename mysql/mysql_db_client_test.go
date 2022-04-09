@@ -154,7 +154,7 @@ func Test_bindMySqlArgs(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			fixedSql, args, err := bindMySqlArgs(tt.oriSql, tt.args...)
+			fixedSql, args, err := bindArgs(tt.oriSql, tt.args...)
 			if tt.wantErr != nil {
 				if !errors.Is(err, tt.wantErr) {
 					t.Errorf("mysqlDbClient.bindMsSqlArgs() error = %v, wantErr %v", err, tt.wantErr)

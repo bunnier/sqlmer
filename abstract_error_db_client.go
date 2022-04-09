@@ -66,7 +66,7 @@ func (client *AbstractDbClient) ExecuteContext(ctx context.Context, sqlText stri
 	}
 	sqlResult, err := client.Exer.ExecContext(ctx, fixedSqlText, args...)
 	if err != nil {
-		return 0, err
+		return 0, getExecutingSqlError(err, sqlText, fixedSqlText, args)
 	}
 
 	if effectRows, err := sqlResult.RowsAffected(); err != nil {
@@ -153,7 +153,7 @@ func (client *AbstractDbClient) ExistsContext(ctx context.Context, sqlText strin
 
 	rows, err := client.Exer.EnhancedQueryContext(ctx, fixedSqlText, args...)
 	if err != nil {
-		return false, err
+		return false, getExecutingSqlError(err, sqlText, fixedSqlText, args)
 	}
 	defer rows.Close()
 
@@ -203,7 +203,7 @@ func (client *AbstractDbClient) ScalarContext(ctx context.Context, sqlText strin
 		if err == sql.ErrNoRows {
 			return nil, false, nil // 没有命中行时候，不用 error 返回，而是通过第二个参数标识。
 		}
-		return nil, false, err
+		return nil, false, getExecutingSqlError(err, sqlText, fixedSqlText, args)
 	} else {
 		return result[0], true, nil // 只要没有 error，至少有 1 列的。
 	}
@@ -243,7 +243,7 @@ func (client *AbstractDbClient) GetContext(ctx context.Context, sqlText string, 
 	}
 	rows, err := client.Exer.EnhancedQueryContext(ctx, fixedSqlText, args...)
 	if err != nil {
-		return nil, err
+		return nil, getExecutingSqlError(err, sqlText, fixedSqlText, args)
 	}
 	defer rows.Close()
 
@@ -289,7 +289,7 @@ func (client *AbstractDbClient) SliceGetContext(ctx context.Context, sqlText str
 	}
 	rows, err := client.Exer.EnhancedQueryContext(ctx, fixedSqlText, args...)
 	if err != nil {
-		return nil, err
+		return nil, getExecutingSqlError(err, sqlText, fixedSqlText, args)
 	}
 	defer rows.Close()
 
@@ -339,7 +339,10 @@ func (client *AbstractDbClient) RowContext(ctx context.Context, sqlText string, 
 	}
 
 	row := client.Exer.EnhancedQueryRowContext(ctx, fixedSqlText, args...)
-	return row, row.Err()
+	if err := row.Err(); err != nil {
+		return nil, getExecutingSqlError(err, sqlText, fixedSqlText, args)
+	}
+	return row, nil
 }
 
 // Rows 用于获取查询结果行的游标对象。
@@ -375,7 +378,7 @@ func (client *AbstractDbClient) RowsContext(ctx context.Context, sqlText string,
 	}
 	rows, err := client.Exer.EnhancedQueryContext(ctx, fixedSqlText, args...)
 	if err != nil {
-		return nil, err
+		return nil, getExecutingSqlError(err, sqlText, fixedSqlText, args)
 	}
 	return rows, nil
 }

@@ -24,7 +24,7 @@ func NewMsSqlDbClient(dsn string, options ...sqlmer.DbClientOption) (*MsSqlDbCli
 	fixedOptions := []sqlmer.DbClientOption{
 		sqlmer.WithDsn(DriverName, dsn),
 		sqlmer.WithUnifyDataTypeFunc(unifyDataType),
-		sqlmer.WithBindArgsFunc(bindMsSqlArgs), // SqlServer 要支持命名参数，需要定制一个参数解析函数。
+		sqlmer.WithBindArgsFunc(bindArgs), // SqlServer 要支持命名参数，需要定制一个参数解析函数。
 	}
 	options = append(fixedOptions, options...) // 用户自定义选项放后面，以覆盖默认。
 
@@ -67,9 +67,9 @@ func unifyDataType(columnType *sql.ColumnType, dest *interface{}) {
 	}
 }
 
-// bindMsSqlArgs 用于对 sql 语句和参数进行预处理。
+// bindArgs 用于对 sql 语句和参数进行预处理。
 // 第一个参数如果是 map，且仅且只有一个参数的情况下，做命名参数处理；其余情况做位置参数处理。
-func bindMsSqlArgs(sqlText string, args ...interface{}) (string, []interface{}, error) {
+func bindArgs(sqlText string, args ...interface{}) (string, []interface{}, error) {
 	if len(args) != 1 || reflect.ValueOf(args[0]).Kind() != reflect.Map {
 		return sqlText, args, nil
 	}

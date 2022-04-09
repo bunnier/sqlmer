@@ -76,7 +76,7 @@ func Test_bindMsSqlArgs(t *testing.T) {
 
 	for _, tt := range testCases {
 		t.Run(tt.name, func(t *testing.T) {
-			fixedSql, args, err := bindMsSqlArgs(tt.oriSql, tt.args...)
+			fixedSql, args, err := bindArgs(tt.oriSql, tt.args...)
 
 			if tt.wantErr != nil {
 				if !errors.As(err, &tt.wantErr) {

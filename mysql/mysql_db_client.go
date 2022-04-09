@@ -40,7 +40,7 @@ func NewMySqlDbClient(dsn string, options ...sqlmer.DbClientOption) (*MySqlDbCli
 		sqlmer.WithDsn(DriverName, dsn),
 		sqlmer.WithGetScanTypeFunc(getScanTypeFn(dsnConfig)),        // 定制 Scan 类型逻辑。
 		sqlmer.WithUnifyDataTypeFunc(getUnifyDataTypeFn(dsnConfig)), // 定制类型转换逻辑。
-		sqlmer.WithBindArgsFunc(bindMySqlArgs),                      // 定制参数绑定逻辑。
+		sqlmer.WithBindArgsFunc(bindArgs),                           // 定制参数绑定逻辑。
 	}
 	options = append(fixedOptions, options...) // 用户自定义选项放后面，以覆盖默认。
 
@@ -57,9 +57,9 @@ func NewMySqlDbClient(dsn string, options ...sqlmer.DbClientOption) (*MySqlDbCli
 	return &MySqlDbClient{absDbClient, dsnConfig}, nil
 }
 
-// bindMySqlArgs 用于对 sql 语句和参数进行预处理。
+// bindArgs 用于对 sql 语句和参数进行预处理。
 // 第一个参数如果是 map，且仅且只有一个参数的情况下，做命名参数处理，其余情况做位置参数处理。
-func bindMySqlArgs(sqlText string, args ...interface{}) (string, []interface{}, error) {
+func bindArgs(sqlText string, args ...interface{}) (string, []interface{}, error) {
 	namedParsedResult := parseMySqlNamedSql(sqlText)
 	paramNameCount := len(namedParsedResult.Names)
 	argsCount := len(args)
