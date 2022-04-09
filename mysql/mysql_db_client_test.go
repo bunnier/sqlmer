@@ -100,7 +100,7 @@ func Test_bindMySqlArgs(t *testing.T) {
 			},
 			"",
 			nil,
-			sqlmer.ErrSql,
+			sqlmer.ErrParseParamFailed,
 		},
 		{
 			"index",
@@ -116,7 +116,7 @@ func Test_bindMySqlArgs(t *testing.T) {
 			[]interface{}{1},
 			"",
 			nil,
-			sqlmer.ErrSql,
+			sqlmer.ErrParseParamFailed,
 		},
 		{
 			"index_index_err2",
@@ -124,7 +124,7 @@ func Test_bindMySqlArgs(t *testing.T) {
 			[]interface{}{1},
 			"",
 			nil,
-			sqlmer.ErrSql,
+			sqlmer.ErrParseParamFailed,
 		},
 		{
 			"index_index_err3",
@@ -132,7 +132,7 @@ func Test_bindMySqlArgs(t *testing.T) {
 			[]interface{}{1},
 			"",
 			nil,
-			sqlmer.ErrSql,
+			sqlmer.ErrParseParamFailed,
 		},
 		{
 			"index_index_err4",
@@ -140,7 +140,7 @@ func Test_bindMySqlArgs(t *testing.T) {
 			[]interface{}{1},
 			"",
 			nil,
-			sqlmer.ErrSql,
+			sqlmer.ErrParseParamFailed,
 		},
 		{
 			"index_reuse_index",
@@ -296,7 +296,7 @@ func Test_internalDbClient_Execute(t *testing.T) {
 			}
 
 			err = tt.client.SizedExecute(2, tt.args.sqlText, tt.args.args...)
-			if !errors.Is(err, sqlmer.ErrSql) {
+			if !errors.Is(err, sqlmer.ErrExpectedSizeWrong) {
 				t.Errorf("internalDbClient.SizedExecute() error = %v, wantErr DbSqlError", err)
 			}
 		})

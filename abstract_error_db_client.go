@@ -45,7 +45,12 @@ func (client *AbstractDbClient) ExecuteContext(ctx context.Context, sqlText stri
 	if err != nil {
 		return 0, err
 	}
-	return sqlResult.RowsAffected()
+
+	if effectRows, err := sqlResult.RowsAffected(); err != nil {
+		return 0, errors.Wrap(ErrGetEffectedRows, err.Error())
+	} else {
+		return effectRows, nil
+	}
 }
 
 // SizedExecute 用于执行非查询 sql 语句，并断言所影响的行数。若影响的函数不正确，抛出异常。
@@ -57,12 +62,12 @@ func (client *AbstractDbClient) SizedExecute(expectedSize int64, sqlText string,
 
 // SizedExecuteContext 用于执行非查询 sql 语句，并断言所影响的行数。若影响的函数不正确，抛出异常。
 func (client *AbstractDbClient) SizedExecuteContext(ctx context.Context, expectedSize int64, sqlText string, args ...interface{}) error {
-	affectedRow, err := client.ExecuteContext(ctx, sqlText, args...)
+	effectedRow, err := client.ExecuteContext(ctx, sqlText, args...)
 	if err != nil {
 		return err
 	}
-	if affectedRow != expectedSize {
-		return errors.WithMessagef(ErrSql, "affected rows expected: %d, acttually: %d, sql=%s", expectedSize, affectedRow, sqlText)
+	if effectedRow != expectedSize {
+		return errors.Wrapf(ErrExpectedSizeWrong, "expected: %d, actually: %d, sql=%s", expectedSize, effectedRow, sqlText)
 	}
 	return nil
 }

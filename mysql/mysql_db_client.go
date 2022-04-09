@@ -97,7 +97,7 @@ func bindMySqlArgs(sqlText string, args ...interface{}) (string, []interface{}, 
 			if value, ok := mapArgs[paramName]; ok {
 				resultArgs = append(resultArgs, value)
 			} else {
-				return "", nil, errors.Wrap(sqlmer.ErrSql, "lack of parameter:"+namedParsedResult.Sql)
+				return "", nil, errors.Wrap(sqlmer.ErrParseParamFailed, "lack of parameter:"+namedParsedResult.Sql)
 			}
 		}
 		return namedParsedResult.Sql, resultArgs, nil
@@ -107,26 +107,26 @@ func bindMySqlArgs(sqlText string, args ...interface{}) (string, []interface{}, 
 	for _, paramName := range namedParsedResult.Names {
 		// 从参数名称提取索引。
 		if paramName[0] != 'p' {
-			return "", nil, errors.Wrap(sqlmer.ErrSql, "parameter error:"+namedParsedResult.Sql)
+			return "", nil, errors.Wrap(sqlmer.ErrParseParamFailed, "parameter error:"+namedParsedResult.Sql)
 		}
 		index, err := strconv.Atoi(paramName[1:])
 		if err != nil {
-			return "", nil, errors.Wrap(sqlmer.ErrSql, "parameter error:"+namedParsedResult.Sql)
+			return "", nil, errors.Wrap(sqlmer.ErrParseParamFailed, "parameter error:"+namedParsedResult.Sql)
 		}
 		index-- // 占位符从0开始。
 		if index < 0 || index > paramNameCount-1 {
-			return "", nil, errors.Wrap(sqlmer.ErrSql, "lack of parameter:"+namedParsedResult.Sql) // 索引对不上参数。
+			return "", nil, errors.Wrap(sqlmer.ErrParseParamFailed, "lack of parameter:"+namedParsedResult.Sql) // 索引对不上参数。
 		}
 
 		if index >= argsCount {
-			return "", nil, errors.Wrap(sqlmer.ErrSql, "parameter error:"+namedParsedResult.Sql)
+			return "", nil, errors.Wrap(sqlmer.ErrParseParamFailed, "parameter error:"+namedParsedResult.Sql)
 		}
 
 		resultArgs = append(resultArgs, args[index])
 	}
 
 	if paramNameCount > len(resultArgs) {
-		return "", nil, errors.Wrap(sqlmer.ErrSql, "parameter error:"+namedParsedResult.Sql)
+		return "", nil, errors.Wrap(sqlmer.ErrParseParamFailed, "parameter error:"+namedParsedResult.Sql)
 	}
 
 	return namedParsedResult.Sql, resultArgs, nil

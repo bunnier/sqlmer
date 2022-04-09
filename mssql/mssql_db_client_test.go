@@ -185,7 +185,7 @@ func Test_internalDbClient_Execute(t *testing.T) {
 			}
 
 			err = tt.client.SizedExecute(2, tt.args.sqlText, tt.args.args...)
-			if !errors.Is(err, sqlmer.ErrSql) {
+			if !errors.Is(err, sqlmer.ErrExpectedSizeWrong) {
 				t.Errorf("internalDbClient.SizedExecute() error = %v, wantErr DbSqlError", err)
 			}
 		})
