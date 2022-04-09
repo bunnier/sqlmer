@@ -6,7 +6,7 @@ import (
 )
 
 // 用于统一不同驱动在 Go 中的映射类型。
-type UnifyDataTypeFn func(columnType *sql.ColumnType, dest *interface{})
+type UnifyDataTypeFn func(columnType *sql.ColumnType, dest *any)
 
 // GetScanTypeFunc 用于根据列的类型信息获取一个能用于 Scan 的 Go 类型。
 type GetScanTypeFunc func(columnType *sql.ColumnType) reflect.Type
@@ -45,7 +45,7 @@ func (rs *EnhanceRows) initColumns() error {
 }
 
 // MapScan 用于把一行数据填充到 map 中。
-func (rs *EnhanceRows) Scan(dest ...interface{}) error {
+func (rs *EnhanceRows) Scan(dest ...any) error {
 	if rs.err != nil {
 		return rs.err
 	}
@@ -55,7 +55,7 @@ func (rs *EnhanceRows) Scan(dest ...interface{}) error {
 }
 
 // MapScan 用于把一行数据填充到 map 中。
-func (rs *EnhanceRows) MapScan(dest map[string]interface{}) error {
+func (rs *EnhanceRows) MapScan(dest map[string]any) error {
 	values, err := rs.SliceScan()
 	if err != nil {
 		return err
@@ -69,7 +69,7 @@ func (rs *EnhanceRows) MapScan(dest map[string]interface{}) error {
 }
 
 // SliceScan 用 Slice 的方式返回一行数据。
-func (rs *EnhanceRows) SliceScan() ([]interface{}, error) {
+func (rs *EnhanceRows) SliceScan() ([]any, error) {
 	if rs.err != nil {
 		return nil, rs.err
 	}
@@ -77,7 +77,7 @@ func (rs *EnhanceRows) SliceScan() ([]interface{}, error) {
 	rs.initColumns()
 
 	// 用来存放 Scan 后返回的数据，db 库要求和查询的列完全一致，所以需要判断 columns 长度。
-	dest := make([]interface{}, len(rs.columnMetaSlice))
+	dest := make([]any, len(rs.columnMetaSlice))
 	destRefVal := make([]reflect.Value, len(rs.columnMetaSlice))
 
 	for i, colMeta := range rs.columnMetaSlice {

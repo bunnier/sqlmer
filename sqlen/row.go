@@ -12,7 +12,7 @@ type EnhanceRow struct {
 }
 
 // Scan 用于把一行数据填充到 map 中。
-func (r *EnhanceRow) Scan(dest ...interface{}) error {
+func (r *EnhanceRow) Scan(dest ...any) error {
 	if r.err != nil {
 		return r.err
 	}
@@ -36,7 +36,7 @@ func (r *EnhanceRow) Scan(dest ...interface{}) error {
 }
 
 // MapScan 用于把一行数据填充到 map 中。
-func (r *EnhanceRow) MapScan(dest map[string]interface{}) error {
+func (r *EnhanceRow) MapScan(dest map[string]any) error {
 	if r.err != nil {
 		return r.err
 	}
@@ -60,7 +60,7 @@ func (r *EnhanceRow) MapScan(dest map[string]interface{}) error {
 }
 
 // SliceScan 用 Slice 返回一行数据。
-func (r *EnhanceRow) SliceScan() ([]interface{}, error) {
+func (r *EnhanceRow) SliceScan() ([]any, error) {
 	if r.err != nil {
 		return nil, r.err
 	}

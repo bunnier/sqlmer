@@ -59,15 +59,15 @@ func NewMySqlDbClient(dsn string, options ...sqlmer.DbClientOption) (*MySqlDbCli
 
 // bindArgs 用于对 sql 语句和参数进行预处理。
 // 第一个参数如果是 map，且仅且只有一个参数的情况下，做命名参数处理，其余情况做位置参数处理。
-func bindArgs(sqlText string, args ...interface{}) (string, []interface{}, error) {
+func bindArgs(sqlText string, args ...any) (string, []any, error) {
 	namedParsedResult := parseMySqlNamedSql(sqlText)
 	paramNameCount := len(namedParsedResult.Names)
 	argsCount := len(args)
-	resultArgs := make([]interface{}, 0, paramNameCount)
+	resultArgs := make([]any, 0, paramNameCount)
 
 	// map 按返回的paramNames顺序整理一个slice返回。
 	if argsCount == 1 && reflect.ValueOf(args[0]).Kind() == reflect.Map {
-		mapArgs := args[0].(map[string]interface{})
+		mapArgs := args[0].(map[string]any)
 		for _, paramName := range namedParsedResult.Names {
 			if value, ok := mapArgs[paramName]; ok {
 				resultArgs = append(resultArgs, value)
@@ -221,7 +221,7 @@ func isTimeColumn(colTypeName string) bool {
 
 // getUnifyDataTypeFn 根据驱动配置返回一个统一处理数据类型的函数。
 func getUnifyDataTypeFn(cfg *mysqlDriver.Config) sqlen.UnifyDataTypeFn {
-	return func(columnType *sql.ColumnType, dest *interface{}) {
+	return func(columnType *sql.ColumnType, dest *any) {
 		switch columnType.DatabaseTypeName() {
 		case "VARCHAR", "CHAR", "TEXT", "DECIMAL":
 			switch v := (*dest).(type) {

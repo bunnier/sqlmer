@@ -48,53 +48,53 @@ func Test_bindMySqlArgs(t *testing.T) {
 	testCases := []struct {
 		name      string
 		oriSql    string
-		args      []interface{}
+		args      []any
 		wantSql   string
-		wantParam []interface{}
+		wantParam []any
 		wantErr   error
 	}{
 		{
 			"map1",
 			"SELECT * FROM go_TypeTest WHERE id=@id",
-			[]interface{}{
-				map[string]interface{}{
+			[]any{
+				map[string]any{
 					"id": 1,
 				},
 			},
 			"SELECT * FROM go_TypeTest WHERE id=?",
-			[]interface{}{1},
+			[]any{1},
 			nil,
 		},
 		{
 			"map2",
 			"SELECT * FROM go_TypeTest WHERE idv2=@id_id",
-			[]interface{}{
-				map[string]interface{}{
+			[]any{
+				map[string]any{
 					"id_id": 1,
 				},
 			},
 			"SELECT * FROM go_TypeTest WHERE idv2=?",
-			[]interface{}{1},
+			[]any{1},
 			nil,
 		},
 		{
 			"map3",
 			"SELECT * FROM go_TypeTest WHERE idv2=@id_id AND id=@id",
-			[]interface{}{
-				map[string]interface{}{
+			[]any{
+				map[string]any{
 					"id_id": 1,
 					"id":    2,
 				},
 			},
 			"SELECT * FROM go_TypeTest WHERE idv2=? AND id=?",
-			[]interface{}{1, 2},
+			[]any{1, 2},
 			nil,
 		},
 		{
 			"map_name_err",
 			"SELECT * FROM go_TypeTest WHERE id=@id1 OR id=@id2",
-			[]interface{}{
-				map[string]interface{}{
+			[]any{
+				map[string]any{
 					"id": 1,
 				},
 			},
@@ -105,15 +105,15 @@ func Test_bindMySqlArgs(t *testing.T) {
 		{
 			"index",
 			"SELECT * FROM go_TypeTest WHERE id=@p1",
-			[]interface{}{1},
+			[]any{1},
 			"SELECT * FROM go_TypeTest WHERE id=?",
-			[]interface{}{1},
+			[]any{1},
 			nil,
 		},
 		{
 			"index_index_err1",
 			"SELECT * FROM go_TypeTest WHERE id=@p1 AND id=@p2",
-			[]interface{}{1},
+			[]any{1},
 			"",
 			nil,
 			sqlmer.ErrParseParamFailed,
@@ -121,7 +121,7 @@ func Test_bindMySqlArgs(t *testing.T) {
 		{
 			"index_index_err2",
 			"SELECT * FROM go_TypeTest WHERE id=@p3",
-			[]interface{}{1},
+			[]any{1},
 			"",
 			nil,
 			sqlmer.ErrParseParamFailed,
@@ -129,7 +129,7 @@ func Test_bindMySqlArgs(t *testing.T) {
 		{
 			"index_index_err3",
 			"SELECT * FROM go_TypeTest WHERE id=@test",
-			[]interface{}{1},
+			[]any{1},
 			"",
 			nil,
 			sqlmer.ErrParseParamFailed,
@@ -137,7 +137,7 @@ func Test_bindMySqlArgs(t *testing.T) {
 		{
 			"index_index_err4",
 			"SELECT * FROM go_TypeTest WHERE id=@pttt",
-			[]interface{}{1},
+			[]any{1},
 			"",
 			nil,
 			sqlmer.ErrParseParamFailed,
@@ -145,9 +145,9 @@ func Test_bindMySqlArgs(t *testing.T) {
 		{
 			"index_reuse_index",
 			"SELECT * FROM go_TypeTest WHERE id=@p1 AND id=@p1",
-			[]interface{}{1},
+			[]any{1},
 			"SELECT * FROM go_TypeTest WHERE id=? AND id=?",
-			[]interface{}{1, 1},
+			[]any{1, 1},
 			nil,
 		},
 	}
@@ -216,13 +216,13 @@ func Test_internalDbClient_Scalar(t *testing.T) {
 	}
 	type args struct {
 		sqlText string
-		args    []interface{}
+		args    []any
 	}
 	tests := []struct {
 		name    string
 		client  sqlmer.DbClient
 		args    args
-		want    interface{}
+		want    any
 		wantErr bool
 	}{
 		{
@@ -230,7 +230,7 @@ func Test_internalDbClient_Scalar(t *testing.T) {
 			mysqlClient,
 			args{
 				"SELECT Id FROM go_TypeTest WHERE id=@p1",
-				[]interface{}{1},
+				[]any{1},
 			},
 			int64(1),
 			false,
@@ -258,7 +258,7 @@ func Test_internalDbClient_Execute(t *testing.T) {
 	}
 	type args struct {
 		sqlText string
-		args    []interface{}
+		args    []any
 	}
 	tests := []struct {
 		name    string
@@ -272,7 +272,7 @@ func Test_internalDbClient_Execute(t *testing.T) {
 			args{
 				`INSERT INTO go_TypeTest(intTest, tinyintTest, smallIntTest, bigIntTest, unsignedTest, varcharTest, charTest, charTextTest, dateTest, dateTimeTest, timestampTest, floatTest, doubleTest, decimalTest, bitTest)
 				VALUES (5, 5, 5, 5, 5, N'行5', '行5char', '行5text','2021-07-05','2021-07-05 15:38:50.425','2021-07-05 15:38:50.425', 5.456, 5.15678, 5.45678999, 1);`,
-				[]interface{}{now},
+				[]any{now},
 			},
 			false,
 		},
@@ -310,7 +310,7 @@ func Test_internalDbClient_Exists(t *testing.T) {
 	}
 	type args struct {
 		sqlText string
-		args    []interface{}
+		args    []any
 	}
 	tests := []struct {
 		name    string
@@ -324,7 +324,7 @@ func Test_internalDbClient_Exists(t *testing.T) {
 			mysqlClient,
 			args{
 				"SELECT varcharTest,dateTest,dateTimeTest,timestampTest,decimalTest FROM go_TypeTest WHERE id=1",
-				[]interface{}{},
+				[]any{},
 			},
 			true,
 			false,
@@ -334,7 +334,7 @@ func Test_internalDbClient_Exists(t *testing.T) {
 			mysqlClient,
 			args{
 				"SELECT varcharTest,dateTest,dateTimeTest,timestampTest,decimalTest FROM go_TypeTest WHERE id=10000",
-				[]interface{}{},
+				[]any{},
 			},
 			false,
 			false,
@@ -361,13 +361,13 @@ func Test_internalDbClient_Get(t *testing.T) {
 	}
 	type args struct {
 		sqlText string
-		args    []interface{}
+		args    []any
 	}
 	tests := []struct {
 		name    string
 		client  sqlmer.DbClient
 		args    args
-		want    map[string]interface{}
+		want    map[string]any
 		wantErr bool
 	}{
 		{
@@ -377,9 +377,9 @@ func Test_internalDbClient_Get(t *testing.T) {
 				`SELECT intTest, tinyintTest, smallIntTest, bigIntTest, unsignedTest, varcharTest, charTest, charTextTest, dateTest, dateTimeTest, timestampTest, floatTest, doubleTest, decimalTest, bitTest,
 				nullIntTest, nullTinyintTest, nullSmallIntTest, nullBigIntTest, nullUnsignedTest, nullVarcharTest, nullCharTest, nullTextTest, nullDateTest, nullDateTimeTest, nullTimestampTest, nullFloatTest, nullDoubleTest, nullDecimalTest, nullBitTest 
 				FROM go_TypeTest WHERE id=1`,
-				[]interface{}{},
+				[]any{},
 			},
-			map[string]interface{}{
+			map[string]any{
 				"intTest":           int64(1),
 				"tinyintTest":       int64(1),
 				"smallIntTest":      int64(1),
@@ -420,9 +420,9 @@ func Test_internalDbClient_Get(t *testing.T) {
 				`SELECT intTest, tinyintTest, smallIntTest, bigIntTest, unsignedTest, varcharTest, charTest, charTextTest, dateTest, dateTimeTest, timestampTest, floatTest, doubleTest, decimalTest, bitTest,
 				nullIntTest, nullTinyintTest, nullSmallIntTest, nullBigIntTest, nullUnsignedTest, nullVarcharTest, nullCharTest, nullTextTest, nullDateTest, nullDateTimeTest, nullTimestampTest, nullFloatTest, nullDoubleTest, nullDecimalTest, nullBitTest
 				FROM go_TypeTest WHERE id=3`,
-				[]interface{}{},
+				[]any{},
 			},
-			map[string]interface{}{
+			map[string]any{
 				"intTest":           int64(3),
 				"tinyintTest":       int64(3),
 				"smallIntTest":      int64(3),
@@ -488,13 +488,13 @@ func Test_internalDbClient_Rows(t *testing.T) {
 	}
 	type args struct {
 		sqlText string
-		args    []interface{}
+		args    []any
 	}
 	tests := []struct {
 		name    string
 		client  sqlmer.DbClient
 		args    args
-		want    []map[string]interface{}
+		want    []map[string]any
 		wantErr bool
 	}{
 		{
@@ -502,9 +502,9 @@ func Test_internalDbClient_Rows(t *testing.T) {
 			mysqlClient,
 			args{
 				"SELECT varcharTest,dateTest,dateTimeTest,timestampTest,decimalTest FROM go_TypeTest WHERE id IN (1,2)",
-				[]interface{}{},
+				[]any{},
 			},
-			[]map[string]interface{}{
+			[]map[string]any{
 				{
 					"varcharTest":   "行1",
 					"dateTest":      time.Date(2021, 7, 1, 0, 0, 0, 0, time.UTC),
@@ -533,7 +533,7 @@ func Test_internalDbClient_Rows(t *testing.T) {
 			defer rows.Close()
 			index := 0
 			for rows.Next() {
-				got := make(map[string]interface{})
+				got := make(map[string]any)
 				err := rows.MapScan(got)
 				if (err != nil) != tt.wantErr {
 					t.Errorf("internalDbClient.Rows() error = %v, wantErr %v", err, tt.wantErr)

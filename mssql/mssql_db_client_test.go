@@ -47,29 +47,29 @@ func Test_bindMsSqlArgs(t *testing.T) {
 	testCases := []struct {
 		name      string
 		oriSql    string
-		args      []interface{}
+		args      []any
 		wantSql   string
-		wantParam []interface{}
+		wantParam []any
 		wantErr   error
 	}{
 		{
 			"map",
 			"SELECT * FROM go_TypeTest WHERE Id=@id",
-			[]interface{}{
-				map[string]interface{}{
+			[]any{
+				map[string]any{
 					"id": 1,
 				},
 			},
 			"SELECT * FROM go_TypeTest WHERE Id=@id",
-			[]interface{}{sql.Named("id", 1)},
+			[]any{sql.Named("id", 1)},
 			nil,
 		},
 		{
 			"index",
 			"SELECT * FROM go_TypeTest WHERE Id=@p1 OR Id=@p2",
-			[]interface{}{1, 2},
+			[]any{1, 2},
 			"SELECT * FROM go_TypeTest WHERE Id=@p1 OR Id=@p2",
-			[]interface{}{1, 2},
+			[]any{1, 2},
 			nil,
 		},
 	}
@@ -107,13 +107,13 @@ func Test_internalDbClient_Scalar(t *testing.T) {
 	}
 	type args struct {
 		sqlText string
-		args    []interface{}
+		args    []any
 	}
 	tests := []struct {
 		name    string
 		client  sqlmer.DbClient
 		args    args
-		want    interface{}
+		want    any
 		wantErr bool
 	}{
 		{
@@ -121,7 +121,7 @@ func Test_internalDbClient_Scalar(t *testing.T) {
 			mssqlClient,
 			args{
 				"SELECT Id FROM go_TypeTest WHERE Id=@p1",
-				[]interface{}{1},
+				[]any{1},
 			},
 			int64(1),
 			false,
@@ -148,7 +148,7 @@ func Test_internalDbClient_Execute(t *testing.T) {
 	}
 	type args struct {
 		sqlText string
-		args    []interface{}
+		args    []any
 	}
 	tests := []struct {
 		name    string
@@ -162,7 +162,7 @@ func Test_internalDbClient_Execute(t *testing.T) {
 			args{
 				`INSERT INTO go_TypeTest (TinyIntTest, SmallIntTest, IntTest, BitTest, NvarcharTest, VarcharTest, NcharTest, CharTest, DateTimeTest, DateTime2Test, DateTest, TimeTest, MoneyTest, FloatTest, DecimalTest, BinaryTest)
 				VALUES (5, 5, 5, 5, N'行5', 'Row5', N'行5', 'Row5', '2021-07-05 15:38:39.583', '2021-07-05 15:38:50.4257813', '2021-07-05', '12:05:01.345', 5.123, 5.12345, 5.45678999, 1);`,
-				[]interface{}{},
+				[]any{},
 			},
 			false,
 		},
@@ -200,7 +200,7 @@ func Test_internalDbClient_Exists(t *testing.T) {
 	}
 	type args struct {
 		sqlText string
-		args    []interface{}
+		args    []any
 	}
 	tests := []struct {
 		name    string
@@ -214,7 +214,7 @@ func Test_internalDbClient_Exists(t *testing.T) {
 			mssqlClient,
 			args{
 				"SELECT NvarcharTest,VarcharTest,DateTimeTest,DateTime2Test,DateTest,TimeTest,DecimalTest FROM go_TypeTest WHERE Id=1",
-				[]interface{}{},
+				[]any{},
 			},
 			true,
 			false,
@@ -224,7 +224,7 @@ func Test_internalDbClient_Exists(t *testing.T) {
 			mssqlClient,
 			args{
 				"SELECT NvarcharTest,VarcharTest,DateTimeTest,DateTime2Test,DateTest,TimeTest,DecimalTest FROM go_TypeTest WHERE Id=10000",
-				[]interface{}{},
+				[]any{},
 			},
 			false,
 			false,
@@ -251,13 +251,13 @@ func Test_internalDbClient_Get(t *testing.T) {
 	}
 	type args struct {
 		sqlText string
-		args    []interface{}
+		args    []any
 	}
 	tests := []struct {
 		name    string
 		client  sqlmer.DbClient
 		args    args
-		want    map[string]interface{}
+		want    map[string]any
 		wantErr bool
 	}{
 		{
@@ -267,9 +267,9 @@ func Test_internalDbClient_Get(t *testing.T) {
 				`SELECT TinyIntTest, SmallIntTest, IntTest, BitTest, NvarcharTest, VarcharTest, NcharTest, CharTest, DateTimeTest, DateTime2Test, DateTest, TimeTest, MoneyTest, FloatTest, DecimalTest, BinaryTest,
 				NullableTinyIntTest, NullableSmallIntTest, NullableIntTest, NullableBitTest, NullableNvarcharTest, NullableVarcharTest, NullableNcharTest, NullableCharTest, NullableDateTimeTest, NullableDateTime2Test, NullableDateTest, NullableTimeTest, NullableMoneyTest, NullableFloatTest, NullableDecimalTest, NullableBinaryTest
 				FROM go_TypeTest WHERE Id=1`,
-				[]interface{}{},
+				[]any{},
 			},
-			map[string]interface{}{
+			map[string]any{
 				"TinyIntTest":           int64(1),
 				"SmallIntTest":          int64(1),
 				"IntTest":               int64(1),
@@ -312,9 +312,9 @@ func Test_internalDbClient_Get(t *testing.T) {
 				`SELECT TinyIntTest, SmallIntTest, IntTest, BitTest, NvarcharTest, VarcharTest, NcharTest, CharTest, DateTimeTest, DateTime2Test, DateTest, TimeTest, MoneyTest, FloatTest, DecimalTest, BinaryTest,
 				NullableTinyIntTest, NullableSmallIntTest, NullableIntTest, NullableBitTest, NullableNvarcharTest, NullableVarcharTest, NullableNcharTest, NullableCharTest, NullableDateTimeTest, NullableDateTime2Test, NullableDateTest, NullableTimeTest, NullableMoneyTest, NullableFloatTest, NullableDecimalTest, NullableBinaryTest
 				FROM go_TypeTest WHERE Id=3`,
-				[]interface{}{},
+				[]any{},
 			},
-			map[string]interface{}{
+			map[string]any{
 				"TinyIntTest":           int64(3),
 				"SmallIntTest":          int64(3),
 				"IntTest":               int64(3),
@@ -386,13 +386,13 @@ func Test_internalDbClient_Rows(t *testing.T) {
 	}
 	type args struct {
 		sqlText string
-		args    []interface{}
+		args    []any
 	}
 	tests := []struct {
 		name    string
 		client  sqlmer.DbClient
 		args    args
-		want    []map[string]interface{}
+		want    []map[string]any
 		wantErr bool
 	}{
 		{
@@ -400,9 +400,9 @@ func Test_internalDbClient_Rows(t *testing.T) {
 			mssqlClient,
 			args{
 				"SELECT NvarcharTest,VarcharTest,DateTimeTest,DateTime2Test,DateTest,TimeTest,DecimalTest FROM go_TypeTest WHERE Id IN (1,2)",
-				[]interface{}{},
+				[]any{},
 			},
-			[]map[string]interface{}{
+			[]map[string]any{
 				{
 					"NvarcharTest":  "行1",
 					"VarcharTest":   "Row1",
@@ -435,7 +435,7 @@ func Test_internalDbClient_Rows(t *testing.T) {
 			defer rows.Close()
 			index := 0
 			for rows.Next() {
-				got := make(map[string]interface{})
+				got := make(map[string]any)
 				err := rows.MapScan(got)
 				if (err != nil) != tt.wantErr {
 					t.Errorf("internalDbClient.Rows() error = %v, wantErr %v", err, tt.wantErr)

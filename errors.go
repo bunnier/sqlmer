@@ -26,7 +26,7 @@ var ErrExpectedSizeWrong = errors.New("dbClient: effected rows was wrong")
 var ErrExecutingSql = errors.New("dbClient: failed to execute sql")
 
 // getExecutingSqlError 用于生成一个带着完整执行参数、语句的 ErrExecutingSql。
-func getExecutingSqlError(err error, rawSql string, fixedSql string, params []interface{}) error {
+func getExecutingSqlError(err error, rawSql string, fixedSql string, params []any) error {
 	var sb strings.Builder
 	for i, param := range params {
 		if i == 0 {

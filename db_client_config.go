@@ -34,13 +34,13 @@ func NewDbClientConfig(options ...DbClientOption) (*DbClientConfig, error) {
 		Driver:        "",
 		Dsn:           "",
 		Db:            nil,
-		bindArgsFunc: func(s string, i ...interface{}) (string, []interface{}, error) {
+		bindArgsFunc: func(s string, i ...any) (string, []any, error) {
 			return s, i, nil
 		},
 		getScanTypeFunc: func(columnType *sql.ColumnType) reflect.Type {
 			return columnType.ScanType()
 		},
-		unifyDataTypeFunc: func(columnType *sql.ColumnType, dest *interface{}) {},
+		unifyDataTypeFunc: func(columnType *sql.ColumnType, dest *any) {},
 	}
 
 	var err error
@@ -108,7 +108,7 @@ func WithUnifyDataTypeFunc(unifyDataType sqlen.UnifyDataTypeFn) DbClientOption {
 }
 
 // BindSqlArgsFunc 定义用于预处理 sql 语句与参数的函数。
-type BindSqlArgsFunc func(string, ...interface{}) (string, []interface{}, error)
+type BindSqlArgsFunc func(string, ...any) (string, []any, error)
 
 // WithBindArgsFunc 用于为 DbClientConfig 设置处理参数的函数。
 func WithBindArgsFunc(argsFunc BindSqlArgsFunc) DbClientOption {

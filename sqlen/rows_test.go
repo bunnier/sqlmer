@@ -24,7 +24,7 @@ func mustGetMssqlDb(t *testing.T) *sql.DB {
 	return db
 }
 
-func unifyDataTypeFn(columnType *sql.ColumnType, dest *interface{}) {
+func unifyDataTypeFn(columnType *sql.ColumnType, dest *any) {
 	switch columnType.DatabaseTypeName() {
 	case "VARCHAR", "CHAR", "TEXT", "DECIMAL":
 		switch v := (*dest).(type) {
@@ -54,7 +54,7 @@ func TestEnhanceRows_MapScan(t *testing.T) {
 	}
 	defer enhancedRows.Close()
 
-	rowMap := make(map[string]interface{})
+	rowMap := make(map[string]any)
 	count := int64(0)
 	for enhancedRows.Next() {
 		count++
@@ -121,7 +121,7 @@ func TestEnhanceRow_MapScan(t *testing.T) {
 	db := NewDbEnhance(mustGetMssqlDb(t), getScanTypeFunc, unifyDataTypeFn)
 	enhancedRow := db.EnhancedQueryRow("SELECT Id, VarcharTest, DecimalTest FROM go_TypeTest WHERE Id=1")
 
-	rowMap := make(map[string]interface{})
+	rowMap := make(map[string]any)
 	if err := enhancedRow.MapScan(rowMap); err != nil {
 		t.Errorf("enhancedRow.MapScan() error = %v, wantErr nil", err)
 		return
@@ -194,7 +194,7 @@ func TestEnhanceRow_Err(t *testing.T) {
 
 	t.Run("MapScan", func(t *testing.T) {
 		enhancedRow := db.EnhancedQueryRow(sqlText)
-		testMap := make(map[string]interface{})
+		testMap := make(map[string]any)
 		err := enhancedRow.MapScan(testMap)
 		if err != sql.ErrNoRows || err != enhancedRow.Err() || err != sql.ErrNoRows {
 			t.Errorf("enhancedRow.EnhancedQueryRow() error = %v, wantErr ErrNoRows", err)
@@ -203,7 +203,7 @@ func TestEnhanceRow_Err(t *testing.T) {
 
 	t.Run("EmptyMapScan", func(t *testing.T) {
 		enhancedRow := &EnhanceRow{}
-		testMap := make(map[string]interface{})
+		testMap := make(map[string]any)
 		err := enhancedRow.MapScan(testMap)
 		if err != sql.ErrNoRows || err != enhancedRow.Err() || err != sql.ErrNoRows {
 			t.Errorf("enhancedRow.MapScan() error = %v, wantErr ErrNoRows", err)

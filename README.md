@@ -63,7 +63,7 @@ func main() {
 	dbClient.MustExecute("INSERT INTO demo(Name, Age) VALUES(@p1, @p2)", "bao", 2)
 
 	// 命名参数查询数据，命名参数采用 map，key 为 sql 语句 @ 之后的参数名，value 为值。
-	dataMap := dbClient.MustGet("SELECT * FROM demo WHERE Name=@name", map[string]interface{}{"name": "rui"})
+	dataMap := dbClient.MustGet("SELECT * FROM demo WHERE Name=@name", map[string]any{"name": "rui"})
 	fmt.Println(dataMap) // Output: map[Age:1 Id:1 Name:rui]
 
 	// 获取第一行第一列，DBNull 和 未命中都会返回 nil，因此提供了第二返回值 hit（bool 类型）来区分是 DBNull 和无数据，这里不是可空字段因此无需判断。
@@ -73,7 +73,7 @@ func main() {
 	// 获取增强后的 sql.Rows（支持 SliceScan、MapScan）。
 	sliceRows := dbClient.MustRows("SELECT Name, now() FROM demo WHERE Name IN (@p1, @p2)", "rui", "bao")
 	for sliceRows.Next() {
-		// SliceScan 会自动判断列数及列类型，用 []interface{} 方式返回。
+		// SliceScan 会自动判断列数及列类型，用 []any 方式返回。
 		if dataSlice, err := sliceRows.SliceScan(); err != nil {
 			log.Fatal(err)
 			return

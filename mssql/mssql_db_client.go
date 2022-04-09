@@ -42,7 +42,7 @@ func NewMsSqlDbClient(dsn string, options ...sqlmer.DbClientOption) (*MsSqlDbCli
 }
 
 // unifyDataType 用于统一数据类型。
-func unifyDataType(columnType *sql.ColumnType, dest *interface{}) {
+func unifyDataType(columnType *sql.ColumnType, dest *any) {
 	switch columnType.DatabaseTypeName() {
 	case "DECIMAL", "SMALLMONEY", "MONEY":
 		switch v := (*dest).(type) {
@@ -69,13 +69,13 @@ func unifyDataType(columnType *sql.ColumnType, dest *interface{}) {
 
 // bindArgs 用于对 sql 语句和参数进行预处理。
 // 第一个参数如果是 map，且仅且只有一个参数的情况下，做命名参数处理；其余情况做位置参数处理。
-func bindArgs(sqlText string, args ...interface{}) (string, []interface{}, error) {
+func bindArgs(sqlText string, args ...any) (string, []any, error) {
 	if len(args) != 1 || reflect.ValueOf(args[0]).Kind() != reflect.Map {
 		return sqlText, args, nil
 	}
 
-	mapArgs := args[0].(map[string]interface{})
-	namedArgs := make([]interface{}, 0, len(mapArgs))
+	mapArgs := args[0].(map[string]any)
+	namedArgs := make([]any, 0, len(mapArgs))
 	for name, value := range mapArgs {
 		namedArgs = append(namedArgs, sql.Named(name, value))
 	}

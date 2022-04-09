@@ -7,7 +7,7 @@ import (
 )
 
 // extractNullableColumnValue 用于将 nullable 类型提取为实际值。
-func extractNullableColumnValue(columnType *sql.ColumnType, srcP *interface{}) {
+func extractNullableColumnValue(columnType *sql.ColumnType, srcP *any) {
 	switch src := (*srcP).(type) {
 	case sql.NullBool:
 		if !src.Valid {

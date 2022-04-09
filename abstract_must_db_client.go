@@ -23,14 +23,14 @@ func (client *AbstractDbClient) MustCreateTransaction() TransactionKeeper {
 // MustExecute 用于执行非查询 sql 语句，并返回所影响的行数。
 // params:
 //  @sqlText SQL 语句，支持 @ 的命名参数占位及 @p1...@pn 这样的索引占位符。
-//  @args SQL 语句的参数，支持通过 map[string]interface{} 提供命名参数值 或 通过变长参数提供索引参数值。
+//  @args SQL 语句的参数，支持通过 map[string]any 提供命名参数值 或 通过变长参数提供索引参数值。
 // returns:
 //  @effectedRows 语句影响的行数。
 // 可能 panic 出的 error （可以通过 errors.Is 判断）：
 //  - sqlmer.ErrParseParamFailed: 当 SQL 语句中的参数解析失败时返回该类错误。
 //  - sqlmer.ErrGetEffectedRows: 当执行成功，但驱动不支持获取影响行数时候，返回该类型错误。
 //  - sqlmer.ErrExecutingSql: 当 SQL 语句执行时遇到错误，返回该类型错误。
-func (client *AbstractDbClient) MustExecute(sqlText string, args ...interface{}) int64 {
+func (client *AbstractDbClient) MustExecute(sqlText string, args ...any) int64 {
 	ctx, _ := client.getExecTimeoutContext()
 	return client.MustExecuteContext(ctx, sqlText, args...)
 }
@@ -39,14 +39,14 @@ func (client *AbstractDbClient) MustExecute(sqlText string, args ...interface{})
 // params:
 //  @ctx context。
 //  @sqlText SQL 语句，支持 @ 的命名参数占位及 @p1...@pn 这样的索引占位符。
-//  @args SQL 语句的参数，支持通过 map[string]interface{} 提供命名参数值 或 通过变长参数提供索引参数值。
+//  @args SQL 语句的参数，支持通过 map[string]any 提供命名参数值 或 通过变长参数提供索引参数值。
 // returns:
 //  @effectedRows 语句影响的行数。
 // 可能 panic 出的 error （可以通过 errors.Is 判断）：
 //  - sqlmer.ErrParseParamFailed: 当 SQL 语句中的参数解析失败时返回该类错误。
 //  - sqlmer.ErrGetEffectedRows: 当执行成功，但驱动不支持获取影响行数时候，返回该类型错误。
 //  - sqlmer.ErrExecutingSql: 当 SQL 语句执行时遇到错误，返回该类型错误。
-func (client *AbstractDbClient) MustExecuteContext(ctx context.Context, sqlText string, args ...interface{}) int64 {
+func (client *AbstractDbClient) MustExecuteContext(ctx context.Context, sqlText string, args ...any) int64 {
 	if res, err := client.ExecuteContext(ctx, sqlText, args...); err != nil {
 		panic(err)
 	} else {
@@ -58,13 +58,13 @@ func (client *AbstractDbClient) MustExecuteContext(ctx context.Context, sqlText 
 // params:
 //  @expectedSize 预期的影响行数，当
 //  @sqlText SQL 语句，支持 @ 的命名参数占位及 @p1...@pn 这样的索引占位符。
-//  @args SQL 语句的参数，支持通过 map[string]interface{} 提供命名参数值 或 通过变长参数提供索引参数值。
+//  @args SQL 语句的参数，支持通过 map[string]any 提供命名参数值 或 通过变长参数提供索引参数值。
 // 可能 panic 出的 error （可以通过 errors.Is 判断）：
 //  - sqlmer.ErrParseParamFailed: 当 SQL 语句中的参数解析失败时返回该类错误。
 //  - sqlmer.ErrGetEffectedRows: 当执行成功，但驱动不支持获取影响行数时候，返回该类型错误。
 //  - sqlmer.ErrExpectedSizeWrong: 当没有影响到预期行数时返回该类错误。
 //  - sqlmer.ErrExecutingSql: 当 SQL 语句执行时遇到错误，返回该类型错误。
-func (client *AbstractDbClient) MustSizedExecute(expectedSize int64, sqlText string, args ...interface{}) {
+func (client *AbstractDbClient) MustSizedExecute(expectedSize int64, sqlText string, args ...any) {
 	ctx, _ := client.getExecTimeoutContext()
 	client.MustSizedExecuteContext(ctx, expectedSize, sqlText, args...)
 }
@@ -74,13 +74,13 @@ func (client *AbstractDbClient) MustSizedExecute(expectedSize int64, sqlText str
 //  @ctx context。
 //  @expectedSize 预期的影响行数，当
 //  @sqlText SQL 语句，支持 @ 的命名参数占位及 @p1...@pn 这样的索引占位符。
-//  @args SQL 语句的参数，支持通过 map[string]interface{} 提供命名参数值 或 通过变长参数提供索引参数值。
+//  @args SQL 语句的参数，支持通过 map[string]any 提供命名参数值 或 通过变长参数提供索引参数值。
 // 可能 panic 出的 error （可以通过 errors.Is 判断）：
 //  - sqlmer.ErrParseParamFailed: 当 SQL 语句中的参数解析失败时返回该类错误。
 //  - sqlmer.ErrGetEffectedRows: 当执行成功，但驱动不支持获取影响行数时候，返回该类型错误。
 //  - sqlmer.ErrExpectedSizeWrong: 当没有影响到预期行数时返回该类错误。
 //  - sqlmer.ErrExecutingSql: 当 SQL 语句执行时遇到错误，返回该类型错误。
-func (client *AbstractDbClient) MustSizedExecuteContext(ctx context.Context, expectedSize int64, sqlText string, args ...interface{}) {
+func (client *AbstractDbClient) MustSizedExecuteContext(ctx context.Context, expectedSize int64, sqlText string, args ...any) {
 	if err := client.SizedExecuteContext(ctx, expectedSize, sqlText, args...); err != nil {
 		panic(err)
 	}
@@ -89,13 +89,13 @@ func (client *AbstractDbClient) MustSizedExecuteContext(ctx context.Context, exp
 // MustExists 用于判断给定的查询的结果是否至少包含 1 行。
 // params:
 //  @sqlText SQL 语句，支持 @ 的命名参数占位及 @p1...@pn 这样的索引占位符。
-//  @args SQL 语句的参数，支持通过 map[string]interface{} 提供命名参数值 或 通过变长参数提供索引参数值。
+//  @args SQL 语句的参数，支持通过 map[string]any 提供命名参数值 或 通过变长参数提供索引参数值。
 // returns:
 //  @ok 结果至少包含一行。
 // 可能 panic 出的 error （可以通过 errors.Is 判断）：
 //  - sqlmer.ErrParseParamFailed: 当 SQL 语句中的参数解析失败时返回该类错误。
 //  - sqlmer.ErrExecutingSql: 当 SQL 语句执行时遇到错误，返回该类型错误。
-func (client *AbstractDbClient) MustExists(sqlText string, args ...interface{}) bool {
+func (client *AbstractDbClient) MustExists(sqlText string, args ...any) bool {
 	ctx, _ := client.getExecTimeoutContext()
 	return client.MustExistsContext(ctx, sqlText, args...)
 }
@@ -104,13 +104,13 @@ func (client *AbstractDbClient) MustExists(sqlText string, args ...interface{}) 
 // params:
 //  @ctx context。
 //  @sqlText SQL 语句，支持 @ 的命名参数占位及 @p1...@pn 这样的索引占位符。
-//  @args SQL 语句的参数，支持通过 map[string]interface{} 提供命名参数值 或 通过变长参数提供索引参数值。
+//  @args SQL 语句的参数，支持通过 map[string]any 提供命名参数值 或 通过变长参数提供索引参数值。
 // returns:
 //  @ok 结果至少包含一行。
 // 可能 panic 出的 error （可以通过 errors.Is 判断）：
 //  - sqlmer.ErrParseParamFailed: 当 SQL 语句中的参数解析失败时返回该类错误。
 //  - sqlmer.ErrExecutingSql: 当 SQL 语句执行时遇到错误，返回该类型错误。
-func (client *AbstractDbClient) MustExistsContext(ctx context.Context, sqlText string, args ...interface{}) bool {
+func (client *AbstractDbClient) MustExistsContext(ctx context.Context, sqlText string, args ...any) bool {
 	if res, err := client.ExistsContext(ctx, sqlText, args...); err != nil {
 		if err == sql.ErrNoRows { // 找不到行时候，仅返回 nil，不做 panic。
 			return false
@@ -125,14 +125,14 @@ func (client *AbstractDbClient) MustExistsContext(ctx context.Context, sqlText s
 // MustScalar 用于获取查询的第一行第一列的值。
 // params:
 //  @sqlText SQL 语句，支持 @ 的命名参数占位及 @p1...@pn 这样的索引占位符。
-//  @args SQL 语句的参数，支持通过 map[string]interface{} 提供命名参数值 或 通过变长参数提供索引参数值。
+//  @args SQL 语句的参数，支持通过 map[string]any 提供命名参数值 或 通过变长参数提供索引参数值。
 // returns:
 //  @cell 目标查询第一行第一列的值。
 //  @hit true 表明有命中数据，false 则为没有命中数据，可通过该值区分是否为数据库空值。
 // 可能 panic 出的 error（可以通过 errors.Is 判断），注意，sql.ErrNoRows 不会 panic，可以通过第二个返回值区分：
 //  - sqlmer.ErrParseParamFailed: 当 SQL 语句中的参数解析失败时返回该类错误。
 //  - sqlmer.ErrExecutingSql: 当 SQL 语句执行时遇到错误，返回该类型错误。
-func (client *AbstractDbClient) MustScalar(sqlText string, args ...interface{}) (interface{}, bool) {
+func (client *AbstractDbClient) MustScalar(sqlText string, args ...any) (any, bool) {
 	ctx, _ := client.getExecTimeoutContext()
 	return client.MustScalarContext(ctx, sqlText, args...)
 }
@@ -141,14 +141,14 @@ func (client *AbstractDbClient) MustScalar(sqlText string, args ...interface{}) 
 // params:
 //  @ctx context。
 //  @sqlText SQL 语句，支持 @ 的命名参数占位及 @p1...@pn 这样的索引占位符。
-//  @args SQL 语句的参数，支持通过 map[string]interface{} 提供命名参数值 或 通过变长参数提供索引参数值。
+//  @args SQL 语句的参数，支持通过 map[string]any 提供命名参数值 或 通过变长参数提供索引参数值。
 // returns:
 //  @cell 目标查询第一行第一列的值。
 //  @hit true 表明有命中数据，false 则为没有命中数据，可通过该值区分是否为数据库空值。
 // 可能 panic 出的 error（可以通过 errors.Is 判断），注意，sql.ErrNoRows 不会 panic，可以通过第二个返回值区分：
 //  - sqlmer.ErrParseParamFailed: 当 SQL 语句中的参数解析失败时返回该类错误。
 //  - sqlmer.ErrExecutingSql: 当 SQL 语句执行时遇到错误，返回该类型错误。
-func (client *AbstractDbClient) MustScalarContext(ctx context.Context, sqlText string, args ...interface{}) (interface{}, bool) {
+func (client *AbstractDbClient) MustScalarContext(ctx context.Context, sqlText string, args ...any) (any, bool) {
 	if res, hit, err := client.ScalarContext(ctx, sqlText, args...); err != nil {
 		panic(err)
 	} else {
@@ -159,13 +159,13 @@ func (client *AbstractDbClient) MustScalarContext(ctx context.Context, sqlText s
 // MustGet 用于获取查询结果的第一行记录。
 // params:
 //  @sqlText SQL 语句，支持 @ 的命名参数占位及 @p1...@pn 这样的索引占位符。
-//  @args SQL 语句的参数，支持通过 map[string]interface{} 提供命名参数值 或 通过变长参数提供索引参数值。
+//  @args SQL 语句的参数，支持通过 map[string]any 提供命名参数值 或 通过变长参数提供索引参数值。
 // returns:
 //  @mapRow 目标查询第一行的结果。
 // 可能 panic 出的 error （可以通过 errors.Is 判断），注意，sql.ErrNoRows 不会 panic，可以判断返回值是否为 nil：
 //  - sqlmer.ErrParseParamFailed: 当 SQL 语句中的参数解析失败时返回该类错误。
 //  - sqlmer.ErrExecutingSql: 当 SQL 语句执行时遇到错误，返回该类型错误。
-func (client *AbstractDbClient) MustGet(sqlText string, args ...interface{}) map[string]interface{} {
+func (client *AbstractDbClient) MustGet(sqlText string, args ...any) map[string]any {
 	ctx, _ := client.getExecTimeoutContext()
 	return client.MustGetContext(ctx, sqlText, args...)
 }
@@ -174,13 +174,13 @@ func (client *AbstractDbClient) MustGet(sqlText string, args ...interface{}) map
 // params:
 //  @ctx context。
 //  @sqlText SQL 语句，支持 @ 的命名参数占位及 @p1...@pn 这样的索引占位符。
-//  @args SQL 语句的参数，支持通过 map[string]interface{} 提供命名参数值 或 通过变长参数提供索引参数值。
+//  @args SQL 语句的参数，支持通过 map[string]any 提供命名参数值 或 通过变长参数提供索引参数值。
 // returns:
 //  @mapRow 目标查询第一行的结果。
 // 可能 panic 出的 error （可以通过 errors.Is 判断），注意，sql.ErrNoRows 不会 panic，可以判断返回值是否为 nil：
 //  - sqlmer.ErrParseParamFailed: 当 SQL 语句中的参数解析失败时返回该类错误。
 //  - sqlmer.ErrExecutingSql: 当 SQL 语句执行时遇到错误，返回该类型错误。
-func (client *AbstractDbClient) MustGetContext(ctx context.Context, sqlText string, args ...interface{}) map[string]interface{} {
+func (client *AbstractDbClient) MustGetContext(ctx context.Context, sqlText string, args ...any) map[string]any {
 	if res, err := client.GetContext(ctx, sqlText, args...); err != nil {
 		if err == sql.ErrNoRows { // 找不到行时候，仅返回 nil，不做 panic。
 			return nil
@@ -195,13 +195,13 @@ func (client *AbstractDbClient) MustGetContext(ctx context.Context, sqlText stri
 // MustSliceGet 用于获取查询结果的所有行。
 // params:
 //  @sqlText SQL 语句，支持 @ 的命名参数占位及 @p1...@pn 这样的索引占位符。
-//  @args SQL 语句的参数，支持通过 map[string]interface{} 提供命名参数值 或 通过变长参数提供索引参数值。
+//  @args SQL 语句的参数，支持通过 map[string]any 提供命名参数值 或 通过变长参数提供索引参数值。
 // returns:
 //  @mapRows 目标查询结果的所有行。
 // 可能 panic 出的 error （可以通过 errors.Is 判断），注意，sql.ErrNoRows 不会 panic，可以判断返回值是否为 nil：
 //  - sqlmer.ErrParseParamFailed: 当 SQL 语句中的参数解析失败时返回该类错误。
 //  - sqlmer.ErrExecutingSql: 当 SQL 语句执行时遇到错误，返回该类型错误。
-func (client *AbstractDbClient) MustSliceGet(sqlText string, args ...interface{}) []map[string]interface{} {
+func (client *AbstractDbClient) MustSliceGet(sqlText string, args ...any) []map[string]any {
 	ctx, _ := client.getExecTimeoutContext()
 	return client.MustSliceGetContext(ctx, sqlText, args...)
 }
@@ -210,13 +210,13 @@ func (client *AbstractDbClient) MustSliceGet(sqlText string, args ...interface{}
 // params:
 //  @ctx context。
 //  @sqlText SQL 语句，支持 @ 的命名参数占位及 @p1...@pn 这样的索引占位符。
-//  @args SQL 语句的参数，支持通过 map[string]interface{} 提供命名参数值 或 通过变长参数提供索引参数值。
+//  @args SQL 语句的参数，支持通过 map[string]any 提供命名参数值 或 通过变长参数提供索引参数值。
 // returns:
 //  @mapRows 目标查询结果的所有行。
 // 可能 panic 出的 error （可以通过 errors.Is 判断），注意，sql.ErrNoRows 不会 panic，要知道是否有数据可直接判断返回值的 len。
 //  - sqlmer.ErrParseParamFailed: 当 SQL 语句中的参数解析失败时返回该类错误。
 //  - sqlmer.ErrExecutingSql: 当 SQL 语句执行时遇到错误，返回该类型错误。
-func (client *AbstractDbClient) MustSliceGetContext(ctx context.Context, sqlText string, args ...interface{}) []map[string]interface{} {
+func (client *AbstractDbClient) MustSliceGetContext(ctx context.Context, sqlText string, args ...any) []map[string]any {
 	if res, err := client.SliceGetContext(ctx, sqlText, args...); err != nil {
 		if err == sql.ErrNoRows { // 找不到行时候，仅返回 nil，不做 panic。
 			return nil
@@ -231,13 +231,13 @@ func (client *AbstractDbClient) MustSliceGetContext(ctx context.Context, sqlText
 // MustRow 用于获取单个查询结果行。
 // params:
 //  @sqlText SQL 语句，支持 @ 的命名参数占位及 @p1...@pn 这样的索引占位符。
-//  @args SQL 语句的参数，支持通过 map[string]interface{} 提供命名参数值 或 通过变长参数提供索引参数值。
+//  @args SQL 语句的参数，支持通过 map[string]any 提供命名参数值 或 通过变长参数提供索引参数值。
 // returns:
 //  @row 返回目标行的 EnhanceRow 对象（是对 sql.Row 的增强包装对象）。
 // 可能 panic 出的 error （可以通过 errors.Is 判断），注意，sql.ErrNoRows 不会 panic，要知道是否有数据可直接判断返回值的 len。
 //  - sqlmer.ErrParseParamFailed: 当 SQL 语句中的参数解析失败时返回该类错误。
 //  - sqlmer.ErrExecutingSql: 当 SQL 语句执行时遇到错误，返回该类型错误。
-func (client *AbstractDbClient) MustRow(sqlText string, args ...interface{}) *sqlen.EnhanceRow {
+func (client *AbstractDbClient) MustRow(sqlText string, args ...any) *sqlen.EnhanceRow {
 	ctx, _ := client.getExecTimeoutContext()
 	return client.MustRowContext(ctx, sqlText, args...)
 }
@@ -246,13 +246,13 @@ func (client *AbstractDbClient) MustRow(sqlText string, args ...interface{}) *sq
 // params:
 //  @ctx context。
 //  @sqlText SQL 语句，支持 @ 的命名参数占位及 @p1...@pn 这样的索引占位符。
-//  @args SQL 语句的参数，支持通过 map[string]interface{} 提供命名参数值 或 通过变长参数提供索引参数值。
+//  @args SQL 语句的参数，支持通过 map[string]any 提供命名参数值 或 通过变长参数提供索引参数值。
 // returns:
 //  @row 返回目标行的 EnhanceRow 对象（是对 sql.Row 的增强包装对象）。
 // 可能 panic 出的 error （可以通过 errors.Is 判断）：
 //  - sqlmer.ErrParseParamFailed: 当 SQL 语句中的参数解析失败时返回该类错误。
 //  - sqlmer.ErrExecutingSql: 当 SQL 语句执行时遇到错误，返回该类型错误。
-func (client *AbstractDbClient) MustRowContext(ctx context.Context, sqlText string, args ...interface{}) *sqlen.EnhanceRow {
+func (client *AbstractDbClient) MustRowContext(ctx context.Context, sqlText string, args ...any) *sqlen.EnhanceRow {
 	if res, err := client.RowContext(ctx, sqlText, args...); err != nil {
 		panic(err)
 	} else {
@@ -263,13 +263,13 @@ func (client *AbstractDbClient) MustRowContext(ctx context.Context, sqlText stri
 // MustRows 用于获取查询结果行的游标对象。
 // params:
 //  @sqlText SQL 语句，支持 @ 的命名参数占位及 @p1...@pn 这样的索引占位符。
-//  @args SQL 语句的参数，支持通过 map[string]interface{} 提供命名参数值 或 通过变长参数提供索引参数值。
+//  @args SQL 语句的参数，支持通过 map[string]any 提供命名参数值 或 通过变长参数提供索引参数值。
 // returns:
 //  @row 返回目标行的 EnhanceRows 对象（是对 sql.Rows 的增强包装对象）。
 // 可能 panic 出的 error （可以通过 errors.Is 判断）：
 //  - sqlmer.ErrParseParamFailed: 当 SQL 语句中的参数解析失败时返回该类错误。
 //  - sqlmer.ErrExecutingSql: 当 SQL 语句执行时遇到错误，返回该类型错误。
-func (client *AbstractDbClient) MustRows(sqlText string, args ...interface{}) *sqlen.EnhanceRows {
+func (client *AbstractDbClient) MustRows(sqlText string, args ...any) *sqlen.EnhanceRows {
 	ctx, _ := client.getExecTimeoutContext()
 	return client.MustRowsContext(ctx, sqlText, args...)
 }
@@ -278,13 +278,13 @@ func (client *AbstractDbClient) MustRows(sqlText string, args ...interface{}) *s
 // params:
 //  @ctx context。
 //  @sqlText SQL 语句，支持 @ 的命名参数占位及 @p1...@pn 这样的索引占位符。
-//  @args SQL 语句的参数，支持通过 map[string]interface{} 提供命名参数值 或 通过变长参数提供索引参数值。
+//  @args SQL 语句的参数，支持通过 map[string]any 提供命名参数值 或 通过变长参数提供索引参数值。
 // returns:
 //  @row 返回目标行的 EnhanceRows 对象（是对 sql.Rows 的增强包装对象）。
 // 可能 panic 出的 error （可以通过 errors.Is 判断）：
 //  - sqlmer.ErrParseParamFailed: 当 SQL 语句中的参数解析失败时返回该类错误。
 //  - sqlmer.ErrExecutingSql: 当 SQL 语句执行时遇到错误，返回该类型错误。
-func (client *AbstractDbClient) MustRowsContext(ctx context.Context, sqlText string, args ...interface{}) *sqlen.EnhanceRows {
+func (client *AbstractDbClient) MustRowsContext(ctx context.Context, sqlText string, args ...any) *sqlen.EnhanceRows {
 	if res, err := client.RowsContext(ctx, sqlText, args...); err != nil {
 		panic(err)
 	} else {
