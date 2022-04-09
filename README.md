@@ -9,11 +9,13 @@
 
 数据库访问库，目前支持 MySQL 和 SQL Server。
 
-- SQL语句提供了统一的 `命名参数`、`索引参数` 语法，可直观的使用 map 作为 SQL 语句参数，并以 map 或 slice 方式返回；
-- 提供了面向map的 `参数`、`结果集` 交互接口，事务和非事务访问均可通过相同接口完成；
-- 扩展了原生 sql.Rows / sql.Row，使其支持 MapScan 以及 SliceScan；
+- 增强了 SQL 参数解析逻辑，提供了统一的 `命名参数`、`索引参数` 语法，且可直观的使用 map 作为 SQL 语句参数；
+- 提供了 `面向 map` 的交互接口，事务和非事务访问均可通过相同接口完成；
+- 增强了原生 sql.Rows / sql.Row 的能力，使其支持自动检测列的类型及数量，自动 Scan 到合适的类型里，并装载到 Map 或 Slice 中；
+- 支持 全局/单独 指定 SQL 语句的连接和读写超时；
+- 提供了支持 `嵌套事务` 的事务 API；
 
-## 简单样例
+## 来个 Demo
 
 ```go
 package main
@@ -112,7 +114,7 @@ func main() {
 
 ## 类型映射
 
-> nullable 的字段，如果值为 null，默认均以 nil 返回。
+> nullable 的列，如果值为 NULL，均以 nil 返回。
 
 ### MySql
 
