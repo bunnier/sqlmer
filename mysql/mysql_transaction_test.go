@@ -62,7 +62,10 @@ func TransactionFuncTest(t *testing.T, dbClient sqlmer.DbClient) {
 		defer tx.MustClose()
 
 		TransactionEmbeddedCommit(t, 3, 0, tx)
-		tx.Commit()
+		if err := tx.Commit(); err != nil {
+			t.Errorf("dbClient.Commit() Embeddedly error = %v, wantErr nil", err)
+			return
+		}
 	})
 
 	// 测试嵌套事务回滚。
@@ -75,7 +78,10 @@ func TransactionFuncTest(t *testing.T, dbClient sqlmer.DbClient) {
 		defer tx.MustClose()
 
 		TransactionEmbeddedRollback(t, 3, 0, tx)
-		tx.Commit()
+		if err := tx.Commit(); err != nil {
+			t.Errorf("dbClient.Commit() Embeddedly error = %v, wantErr nil", err)
+			return
+		}
 	})
 }
 
