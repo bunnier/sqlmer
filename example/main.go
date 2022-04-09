@@ -1,21 +1,3 @@
-# sqlmer
-
-[![License](https://img.shields.io/badge/license-MIT-brightgreen.svg?style=flat)](https://opensource.org/licenses/MIT)
-[![Go](https://github.com/bunnier/sqlmer/actions/workflows/go.yml/badge.svg)](https://github.com/bunnier/sqlmer/actions/workflows/go.yml)
-[![Go Report Card](https://goreportcard.com/badge/github.com/bunnier/sqlmer)](https://goreportcard.com/report/github.com/bunnier/sqlmer)
-[![Go Reference](https://pkg.go.dev/badge/github.com/bunnier/sqlmer.svg)](https://pkg.go.dev/github.com/bunnier/sqlmer)
-
-## 功能简介
-
-数据库访问库，目前支持 MySQL 和 SQL Server。
-
-- SQL语句提供了统一的 `命名参数`、`索引参数` 语法，可直观的使用 map 作为 SQL 语句参数，并以 map 或 slice 方式返回；
-- 提供了面向map的 `参数`、`结果集` 交互接口，事务和非事务访问均可通过相同接口完成；
-- 扩展了原生 sql.Rows / sql.Row，使其支持 MapScan 以及 SliceScan；
-
-## 简单样例
-
-```go
 package main
 
 import (
@@ -108,41 +90,3 @@ func main() {
 	rowNum, _ = dbClient.MustScalar("SELECT count(1) FROM demo")
 	fmt.Println(rowNum) // Output: 0
 }
-```
-
-## 类型映射
-
-> nullable 的字段，如果值为 null，默认均以 nil 返回。
-
-### MySql
-
-| DB datatype                                        | Go datatype |
-|----------------------------------------------------|-------------|
-| varchar / char / text                              | string      |
-| tiny int / small int / int / unsigned int / bigint | int64       |
-| float / double                                     | float64     |
-| decimal                                            | string      |
-| date / datetime / timestamp                        | time.Time   |
-| bit                                                | []byte      |
-
-### SQL Server
-
-| DB datatype                              | Go datatype |
-|------------------------------------------|-------------|
-| nvarchar / nchar / varchar / char / text | string      |
-| small int / tiny int / int / bigint      | int64       |
-| float / real                             | float64     |
-| small money / money / decimal            | string      |
-| date / datetime / datetime2 / time       | time.Time   |
-| binary / varbinary                       | []byte      |
-| bit                                      | bool        |
-
-## 测试用例
-
-测试用例 Schema：
-
-1. 编辑 `test_conf.yml` 文件，相应数据库的连接字符串；
-2. 如果第 1 步配置的连接字符串有 DDL 权限，可通过调用 `go run ./internal/testcmd/main.go -a PREPARE -c test_conf.yml` 来同时准备 MySQL / SQL Server 环境，如果没有 DDL 权限可自行直接执行 `internal/testenv/*_prepare.sql` 准备环境；
-3. 如果第 1 步配置的连接字符串有 DDL 权限，测试结束后可以通过 `go run ./internal/testcmd/main.go -a CLEAN -c test_conf.yml` 销毁测试表，如果没有 DDL 权限可自行直接执行 `internal/testenv/*_clean.sql` 销毁测试表；
-
-另外，如果你和我一样使用 VSCode 作为开发工具，可在配置好 `test_conf.yml` 之后，直接使用 .vscode 中编写好的 Task 来准备环境。
