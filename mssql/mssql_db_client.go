@@ -54,8 +54,6 @@ func unifyDataType(columnType *sql.ColumnType, dest *interface{}) {
 			*dest = string(v)
 		case *string:
 			*dest = v
-		case nil:
-			*dest = nil
 		}
 
 	case "VARBINARY", "BINARY":

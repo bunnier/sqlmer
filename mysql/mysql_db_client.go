@@ -231,10 +231,12 @@ func getUnifyDataTypeFn(cfg *mysqlDriver.Config) sqlen.UnifyDataTypeFn {
 					break
 				}
 				*dest = string(v)
-			case nil:
-				*dest = nil
 			}
+
 		case "TIMESTAMP", "TIME", "DATETIME", "DATE":
+			if cfg.ParseTime {
+				break // 如果驱动开启了 ParseTime，就不需要再进行转换了。
+			}
 			switch v := (*dest).(type) {
 			case sql.RawBytes:
 				if v == nil {
@@ -249,9 +251,8 @@ func getUnifyDataTypeFn(cfg *mysqlDriver.Config) sqlen.UnifyDataTypeFn {
 				} else {
 					*dest = time
 				}
-			case nil:
-				*dest = nil
 			}
+
 		default: // 将 sql.RawBytes 统一转为 []byte。
 			switch v := (*dest).(type) {
 			case sql.RawBytes:
