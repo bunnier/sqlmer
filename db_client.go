@@ -9,14 +9,17 @@ import (
 // DbClient 定义了数据库访问客户端。
 type DbClient interface {
 	ConnectionString() string // ConnectionString 用于获取当前实例所使用的数据库连接字符串。
-	errorDbClient             // error 版本 API。
-	mustDbClient              // panic 版本 API。
+	ErrorDbClient             // error 版本 API。
+	MustDbClient              // panic 版本 API。
 }
 
-// errorDbClient 为 error 版本 API。
-type errorDbClient interface {
+// ErrorDbClient 为 error 版本 API。
+type ErrorDbClient interface {
 	// CreateTransaction 用于开始一个事务。
-	CreateTransaction() (TransactionKeeper, error)
+	// 	returns:
+	// 		@tran 返回一个实现了 TransactionKeeper（内嵌 DbClient 接口） 接口的对象，在上面执行的语句会在同一个事务中执行。
+	//		@err 创建事务时遇到的错误。
+	CreateTransaction() (tran TransactionKeeper, err error)
 
 	// Execute 用于执行非查询SQL语句，并返回所影响的行数。
 	// 	params:
@@ -43,7 +46,7 @@ type errorDbClient interface {
 	// 		@sqlmer.ErrGetEffectedRows: 当执行成功，但驱动不支持获取影响行数时候，返回该类型错误。
 	ExecuteContext(ctx context.Context, sqlText string, args ...interface{}) (rowsEffected int64, err error)
 
-	// SizedExecute 用于执行非查询SQL语句，并断言所影响的行数。若影响的函数不正确，抛出异常。
+	// SizedExecute 用于执行非查询SQL语句，并断言所影响的行数。
 	// 	params:
 	// 		@expectedSize 预期的影响行数，当
 	// 		@sqlText SQL 语句，支持 @ 的命名参数占位及 @p1...@pn 这样的索引占位符。
@@ -56,7 +59,7 @@ type errorDbClient interface {
 	// 		@sqlmer.ErrExpectedSizeWrong: 当没有影响到预期行数时返回该类错误。
 	SizedExecute(expectedSize int64, sqlText string, args ...interface{}) error
 
-	// SizedExecuteContext 用于执行非查询SQL语句，并断言所影响的行数。若影响的函数不正确，抛出异常。
+	// SizedExecuteContext 用于执行非查询SQL语句，并断言所影响的行数。
 	// 	params:
 	// 		@ctx context。
 	// 		@expectedSize 预期的影响行数，当
@@ -211,10 +214,12 @@ type errorDbClient interface {
 	RowsContext(context context.Context, sqlText string, args ...interface{}) (rows *sqlen.EnhanceRows, err error)
 }
 
-// mustDbClient 为 panic 版本 API
-type mustDbClient interface {
+// MustDbClient 为 panic 版本 API
+type MustDbClient interface {
 	// MustCreateTransaction 用于开始一个事务。
-	MustCreateTransaction() TransactionKeeper
+	// 	returns:
+	// 		@tran 返回一个实现了 TransactionKeeper（内嵌 DbClient 接口） 接口的对象，在上面执行的语句会在同一个事务中执行。
+	MustCreateTransaction() (tran TransactionKeeper)
 
 	// MustExecute 用于执行非查询 sql 语句，并返回所影响的行数。
 	// 	params:
@@ -395,12 +400,12 @@ type mustDbClient interface {
 // TransactionKeeper 是一个定义数据库事务容器。
 type TransactionKeeper interface {
 	DbClient               // DbClient 实现了数据库访问客户端的功能。
-	errorTransactionKeeper // error 版本 API。
-	mustTransactionKeeper  // panic 版本 API。
+	ErrorTransactionKeeper // error 版本 API。
+	MustTransactionKeeper  // panic 版本 API。
 }
 
-// errorTransactionKeeper 为 error 版本 API。
-type errorTransactionKeeper interface {
+// ErrorTransactionKeeper 为 error 版本 API。
+type ErrorTransactionKeeper interface {
 	// Commit 用于提交事务。
 	Commit() error
 
@@ -411,8 +416,8 @@ type errorTransactionKeeper interface {
 	Close() error
 }
 
-// mustTransactionKeeper 为 panic 版本 API。
-type mustTransactionKeeper interface {
+// MustTransactionKeeper 为 panic 版本 API。
+type MustTransactionKeeper interface {
 	// MustClose 用于提交事务。
 	MustCommit()
 

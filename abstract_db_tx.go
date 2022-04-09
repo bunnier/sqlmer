@@ -8,8 +8,8 @@ import (
 
 var _ DbClient = (*abstractTransactionKeeper)(nil)
 var _ TransactionKeeper = (*abstractTransactionKeeper)(nil)
-var _ errorTransactionKeeper = (*abstractTransactionKeeper)(nil)
-var _ mustTransactionKeeper = (*abstractTransactionKeeper)(nil)
+var _ ErrorTransactionKeeper = (*abstractTransactionKeeper)(nil)
+var _ MustTransactionKeeper = (*abstractTransactionKeeper)(nil)
 
 // abstractTransactionKeeper 是通过 TransactionKeeper 结构。
 type abstractTransactionKeeper struct {
