@@ -18,7 +18,7 @@ type abstractTransactionKeeper struct {
 	// 当前事务是否已经完结，若完结则不允许再执行数据库操作。
 	transactionCompleted bool
 
-	// 事务的嵌套层级。TransactionKeeper 接口继承了 DbClient，所以具有 CreateTransaction 方法。
+	// 事务的嵌套层级。TransactionKeeper 接口内嵌了 DbClient，也具有 CreateTransaction 方法。
 	// 刚创建的事务嵌套层级为 0，事务内再次创建事务时 +1，并返回（复用）当前实例。
 	embeddedLevel int
 }
@@ -53,10 +53,10 @@ func (transKeeper *abstractTransactionKeeper) Rollback() error {
 	return transKeeper.Tx.Rollback()
 }
 
-// Close 用于优雅关闭事务，创建事务后应 defer 执行本方法。
+// Close 用于优雅关闭事务，创建事务后可 defer 执行本方法。
 func (transKeeper *abstractTransactionKeeper) Close() error {
 	transKeeper.embeddedLevel--
-	if transKeeper.embeddedLevel != 0 || transKeeper.transactionCompleted {
+	if transKeeper.embeddedLevel != -1 || transKeeper.transactionCompleted {
 		return nil
 	}
 	return transKeeper.Rollback()
@@ -82,7 +82,7 @@ func (transKeeper *abstractTransactionKeeper) MustRollback() {
 	}
 }
 
-// MustClose 用于优雅关闭事务，创建事务后应 defer 执行本方法。
+// MustClose 用于优雅关闭事务，创建事务后可 defer 执行本方法。
 func (transKeeper *abstractTransactionKeeper) MustClose() {
 	if err := transKeeper.Close(); err != nil {
 		panic(err)

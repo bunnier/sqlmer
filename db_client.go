@@ -446,7 +446,7 @@ type ErrorTransactionKeeper interface {
 	// Rollback 用于回滚事务。
 	Rollback() error
 
-	// Close 用于优雅关闭事务，创建事务后应 defer 执行本方法。
+	// Close 用于优雅关闭事务，创建事务后可 defer 执行本方法。
 	Close() error
 }
 
@@ -458,6 +458,6 @@ type MustTransactionKeeper interface {
 	// MustClose 用于回滚事务。
 	MustRollback()
 
-	// MustClose 用于优雅关闭事务，创建事务后应 defer 执行本方法。
+	// MustClose 用于优雅关闭事务，创建事务后可 defer 执行本方法。
 	MustClose()
 }
