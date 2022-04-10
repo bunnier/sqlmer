@@ -2,16 +2,18 @@ package mysql
 
 import (
 	"database/sql"
+	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 	"unicode/utf8"
 
 	"github.com/bunnier/sqlmer"
-	"github.com/pkg/errors"
+	"github.com/bunnier/sqlmer/sqlen"
 
-	_ "github.com/go-sql-driver/mysql"
+	mysqlDriver "github.com/go-sql-driver/mysql"
 )
 
 // DriverName 是 MySql 驱动名称。
@@ -21,83 +23,56 @@ var _ sqlmer.DbClient = (*MySqlDbClient)(nil)
 
 // MySqlDbClient 是针对 MySql 的 DbClient 实现。
 type MySqlDbClient struct {
-	sqlmer.AbstractDbClient
+	*sqlmer.AbstractDbClient
+	dsnConfig *mysqlDriver.Config
 }
 
 // NewMySqlDbClient 用于创建一个 MySqlDbClient。
-func NewMySqlDbClient(connectionString string, options ...sqlmer.DbClientOption) (*MySqlDbClient, error) {
-	// 依赖的驱动中，只有连接字符串中设置了 parseTime=true 才会转换 Date / Datetime 类型到 time.Time，
-	// 本库为了不同库中的类型一致，这里强制开启该设置。
-	if !strings.Contains(connectionString, "parseTime") {
-		if !strings.Contains(connectionString, "?") {
-			connectionString += "?"
-		} else {
-			connectionString += "&"
-		}
-		connectionString += "parseTime=true"
+func NewMySqlDbClient(dsn string, options ...sqlmer.DbClientOption) (*MySqlDbClient, error) {
+	var dsnConfig *mysqlDriver.Config
+	var err error
+
+	if dsnConfig, err = mysqlDriver.ParseDSN(dsn); err != nil {
+		return nil, err
 	}
 
-	options = append(options,
-		sqlmer.WithConnectionString(DriverName, connectionString),
-		sqlmer.WithUnifyDataTypeFunc(unifyDataType),
-		sqlmer.WithBindArgsFunc(bindMySqlArgs)) // mysql 的驱动不支持命名参数，这里需要进行处理。
+	fixedOptions := []sqlmer.DbClientOption{
+		sqlmer.WithDsn(DriverName, dsn),
+		sqlmer.WithGetScanTypeFunc(getScanTypeFn(dsnConfig)),        // 定制 Scan 类型逻辑。
+		sqlmer.WithUnifyDataTypeFunc(getUnifyDataTypeFn(dsnConfig)), // 定制类型转换逻辑。
+		sqlmer.WithBindArgsFunc(bindArgs),                           // 定制参数绑定逻辑。
+	}
+	options = append(fixedOptions, options...) // 用户自定义选项放后面，以覆盖默认。
+
 	config, err := sqlmer.NewDbClientConfig(options...)
 	if err != nil {
 		return nil, err
 	}
 
-	internalDbClient, err := sqlmer.NewInternalDbClient(config)
+	absDbClient, err := sqlmer.NewAbstractDbClient(config)
 	if err != nil {
 		return nil, err
 	}
 
-	return &MySqlDbClient{
-		internalDbClient,
-	}, nil
+	return &MySqlDbClient{absDbClient, dsnConfig}, nil
 }
 
-// unifyDataType 用于统一数据类型。
-func unifyDataType(columnType *sql.ColumnType, dest *interface{}) {
-	switch columnType.DatabaseTypeName() {
-	case "VARCHAR", "CHAR", "TEXT", "DECIMAL":
-		switch v := (*dest).(type) {
-		case sql.RawBytes:
-			if v == nil {
-				*dest = nil
-				break
-			}
-			*dest = string(v)
-		case nil:
-			*dest = nil
-		}
-	default: // 将 sql.RawBytes 统一转为 []byte。
-		switch v := (*dest).(type) {
-		case sql.RawBytes:
-			if v == nil {
-				*dest = nil
-				break
-			}
-			*dest = []byte(v)
-		}
-	}
-}
-
-// bindMySqlArgs 用于对 sql 语句和参数进行预处理。
+// bindArgs 用于对 sql 语句和参数进行预处理。
 // 第一个参数如果是 map，且仅且只有一个参数的情况下，做命名参数处理，其余情况做位置参数处理。
-func bindMySqlArgs(sqlText string, args ...interface{}) (string, []interface{}, error) {
+func bindArgs(sqlText string, args ...any) (string, []any, error) {
 	namedParsedResult := parseMySqlNamedSql(sqlText)
 	paramNameCount := len(namedParsedResult.Names)
 	argsCount := len(args)
-	resultArgs := make([]interface{}, 0, paramNameCount)
+	resultArgs := make([]any, 0, paramNameCount)
 
 	// map 按返回的paramNames顺序整理一个slice返回。
 	if argsCount == 1 && reflect.ValueOf(args[0]).Kind() == reflect.Map {
-		mapArgs := args[0].(map[string]interface{})
+		mapArgs := args[0].(map[string]any)
 		for _, paramName := range namedParsedResult.Names {
 			if value, ok := mapArgs[paramName]; ok {
 				resultArgs = append(resultArgs, value)
 			} else {
-				return "", nil, errors.Wrap(sqlmer.ErrSql, "lack of parameter:"+namedParsedResult.Sql)
+				return "", nil, fmt.Errorf("%w:\nlack of parameter\nsql = %s", sqlmer.ErrParseParamFailed, namedParsedResult.Sql)
 			}
 		}
 		return namedParsedResult.Sql, resultArgs, nil
@@ -107,26 +82,26 @@ func bindMySqlArgs(sqlText string, args ...interface{}) (string, []interface{}, 
 	for _, paramName := range namedParsedResult.Names {
 		// 从参数名称提取索引。
 		if paramName[0] != 'p' {
-			return "", nil, errors.Wrap(sqlmer.ErrSql, "parameter error:"+namedParsedResult.Sql)
+			return "", nil, fmt.Errorf("%w: parsing parameter failed\nsql = %s", sqlmer.ErrParseParamFailed, namedParsedResult.Sql)
 		}
 		index, err := strconv.Atoi(paramName[1:])
 		if err != nil {
-			return "", nil, errors.Wrap(sqlmer.ErrSql, "parameter error:"+namedParsedResult.Sql)
+			return "", nil, fmt.Errorf("%w: parsing parameter failed\nsql = %s", sqlmer.ErrParseParamFailed, namedParsedResult.Sql)
 		}
 		index-- // 占位符从0开始。
 		if index < 0 || index > paramNameCount-1 {
-			return "", nil, errors.Wrap(sqlmer.ErrSql, "lack of parameter:"+namedParsedResult.Sql) // 索引对不上参数。
+			return "", nil, fmt.Errorf("%w: lack of parameter\nsql = %s", sqlmer.ErrParseParamFailed, namedParsedResult.Sql) // 索引对不上参数。
 		}
 
 		if index >= argsCount {
-			return "", nil, errors.Wrap(sqlmer.ErrSql, "parameter error:"+namedParsedResult.Sql)
+			return "", nil, fmt.Errorf("%w: parsing parameter failed\nsql = %s", sqlmer.ErrParseParamFailed, namedParsedResult.Sql)
 		}
 
 		resultArgs = append(resultArgs, args[index])
 	}
 
 	if paramNameCount > len(resultArgs) {
-		return "", nil, errors.Wrap(sqlmer.ErrSql, "parameter error:"+namedParsedResult.Sql)
+		return "", nil, fmt.Errorf("%w: parsing parameter failed\nsql = %s", sqlmer.ErrParseParamFailed, namedParsedResult.Sql)
 	}
 
 	return namedParsedResult.Sql, resultArgs, nil
@@ -223,4 +198,70 @@ func parseMySqlNamedSql(sqlText string) *mysqlNamedParsedResult {
 	parsedResult := &mysqlNamedParsedResult{fixedSqlTextBuilder.String(), names}
 	mysqlNamedSqlParsedResult.Store(sqlText, parsedResult) // 缓存结果。
 	return parsedResult
+}
+
+// getScanTypeFn 根据驱动配置返回一个可以正确获取 Scan 类型的函数。
+func getScanTypeFn(cfg *mysqlDriver.Config) sqlen.GetScanTypeFunc {
+	var scanTypeRawBytes = reflect.TypeOf(sql.RawBytes{})
+	return func(columnType *sql.ColumnType) reflect.Type {
+		if !cfg.ParseTime && isTimeColumn(columnType.DatabaseTypeName()) {
+			return scanTypeRawBytes // MySql 的驱动，如果没有开启 ParseTime，只能通过 sql.RawBytes 进行 Scan，否则会失败。
+		}
+		return columnType.ScanType()
+	}
+}
+
+// isTimeColumn 判断某个列是否是时间类型。
+func isTimeColumn(colTypeName string) bool {
+	return colTypeName == "TIMESTAMP" ||
+		colTypeName == "TIME" ||
+		colTypeName == "DATETIME" ||
+		colTypeName == "DATE"
+}
+
+// getUnifyDataTypeFn 根据驱动配置返回一个统一处理数据类型的函数。
+func getUnifyDataTypeFn(cfg *mysqlDriver.Config) sqlen.UnifyDataTypeFn {
+	return func(columnType *sql.ColumnType, dest *any) {
+		switch columnType.DatabaseTypeName() {
+		case "VARCHAR", "CHAR", "TEXT", "DECIMAL":
+			switch v := (*dest).(type) {
+			case sql.RawBytes:
+				if v == nil {
+					*dest = nil
+					break
+				}
+				*dest = string(v)
+			}
+
+		case "TIMESTAMP", "TIME", "DATETIME", "DATE":
+			if cfg.ParseTime {
+				break // 如果驱动开启了 ParseTime，就不需要再进行转换了。
+			}
+			switch v := (*dest).(type) {
+			case sql.RawBytes:
+				if v == nil {
+					*dest = nil
+					break
+				}
+				// 用 RawBytes 接收的 Time 系列类型，需要转为 time.Time{}，下面这个时间格式是从 MySQL 驱动里拷来的。
+				const timeFormat = "2006-01-02 15:04:05.999999"
+				timeStr := string(v)
+				if time, err := time.ParseInLocation(timeFormat[:len(timeStr)], timeStr, cfg.Loc); err != nil {
+					panic(err)
+				} else {
+					*dest = time
+				}
+			}
+
+		default: // 将 sql.RawBytes 统一转为 []byte。
+			switch v := (*dest).(type) {
+			case sql.RawBytes:
+				if v == nil {
+					*dest = nil
+					break
+				}
+				*dest = []byte(v)
+			}
+		}
+	}
 }
