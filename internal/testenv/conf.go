@@ -1,39 +1,82 @@
 package testenv
 
 import (
+	"encoding/json"
+	"fmt"
 	"io/ioutil"
+	"strings"
+	"time"
 
-	"gopkg.in/yaml.v3"
+	"github.com/bunnier/sqlmer"
+	"github.com/bunnier/sqlmer/mssql"
+	"github.com/bunnier/sqlmer/mysql"
 )
-
-// TestConf 为测试用例配置文件的结构。
-type TestConf struct {
-	MySql     string `yaml:"mysql"`     // 测试用例使用的 MySql 连接字符串。
-	SqlServer string `yaml:"sqlserver"` // 测试用例使用的 SqlServer 连接字符串。
-}
-
-// LoadTestConfig 用于读取yaml定义的配置文件，并转换为相应的结构。
-func LoadTestConfig(confPath string) (TestConf, error) {
-	yamlBytes, err := ioutil.ReadFile(confPath)
-	if err != nil {
-		return TestConf{}, err
-	}
-
-	var testConf TestConf
-	err = yaml.Unmarshal(yamlBytes, &testConf)
-	return testConf, err
-}
-
-// MustLoadTestConfig 用于读取 yaml 定义的配置文件，并转换为相应的结构。
-func MustLoadTestConfig(confPath string) TestConf {
-	if conf, err := LoadTestConfig(confPath); err != nil {
-		panic(err)
-	} else {
-		return conf
-	}
-}
 
 type Schema struct {
 	Create string
 	Drop   string
+}
+
+const (
+	DefaultMysqlConnection = "testuser:testuser@tcp(127.0.0.1:3306)/test"
+	DefaultMssqlConnection = "server=127.0.0.1.124; database=test; user id=testuser;password=testuser;"
+	DefaultTimeout         = 15 * time.Second
+)
+
+type Conf struct {
+	Mysql     string
+	SqlServer string
+	custom    bool
+}
+
+var TestConf Conf = Conf{
+	Mysql:     DefaultMysqlConnection,
+	SqlServer: DefaultMssqlConnection,
+}
+
+// 加载自定义配置。若给定一个 .json 文件，则读取该文件；否则认为给定的是一个目录，读取该目录下的 .db.json 文件。
+func TryInitConfig(path string) {
+	if TestConf.custom {
+		return
+	}
+
+	if !strings.HasSuffix(strings.ToLower(path), ".json") {
+		path += "/.db.json"
+	}
+
+	content, err := ioutil.ReadFile(path)
+	if err != nil {
+		fmt.Println("cannot read .db.json, use the default database: " + err.Error())
+		return
+	}
+
+	var conf struct {
+		Mysql     string `json:"mysql"`
+		SqlServer string `json:"sqlserver"`
+	}
+	err = json.Unmarshal(content, &conf)
+	if err != nil {
+		fmt.Println(".db.json format error, use the default database: " + err.Error())
+		return
+	}
+
+	TestConf.Mysql = conf.Mysql
+	TestConf.SqlServer = conf.SqlServer
+	TestConf.custom = true
+}
+
+func NewMysqlClient() (sqlmer.DbClient, error) {
+	return mysql.NewMySqlDbClient(
+		TestConf.Mysql,
+		sqlmer.WithConnTimeout(DefaultTimeout),
+		sqlmer.WithExecTimeout(DefaultTimeout),
+	)
+}
+
+func NewSqlServerClient() (sqlmer.DbClient, error) {
+	return mssql.NewMsSqlDbClient(
+		TestConf.SqlServer,
+		sqlmer.WithConnTimeout(DefaultTimeout),
+		sqlmer.WithExecTimeout(DefaultTimeout),
+	)
 }

@@ -1,4 +1,4 @@
-package mssql
+package mssql_test
 
 import (
 	"testing"
@@ -6,10 +6,11 @@ import (
 	"errors"
 
 	"github.com/bunnier/sqlmer"
+	"github.com/bunnier/sqlmer/internal/testenv"
 )
 
 func Test_MssqlTransaction(t *testing.T) {
-	mssqlClient, err := getMsSqlDbClient()
+	mssqlClient, err := testenv.NewSqlServerClient()
 	if err != nil {
 		t.Fatal(err)
 	}
