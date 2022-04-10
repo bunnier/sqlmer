@@ -13,6 +13,10 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
+func init() {
+	testenv.TryInitConfig("..")
+}
+
 func mustGetMssqlDb(t *testing.T) *sql.DB {
 	db, err := sql.Open("mysql", testenv.TestConf.Mysql)
 	if err != nil {
