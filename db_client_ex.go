@@ -330,7 +330,7 @@ func (c *DbClientEx) MustScalarFloat64(query string, args ...any) (value *float6
 //
 func (c *DbClientEx) ScalarType(typ reflect.Type, query string, args ...any) (value any, ok bool, err error) {
 	v, ok, err := c.Scalar(query, args...)
-	if !ok || err != nil || v == nil {
+	if !ok || err != nil {
 		return
 	}
 
