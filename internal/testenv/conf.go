@@ -12,7 +12,7 @@ import (
 	"github.com/bunnier/sqlmer/mysql"
 )
 
-type Schema struct {
+type schema struct {
 	Create string
 	Drop   string
 }

@@ -2,7 +2,7 @@ package testenv
 
 import "database/sql"
 
-var mysqlSchemas []Schema = []Schema{
+var mysqlSchemas []schema = []schema{
 	{
 		Create: `
 CREATE TABLE go_TypeTest (
