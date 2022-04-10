@@ -311,19 +311,26 @@ func (c *DbClientEx) MustScalarFloat64(query string, args ...any) (value *float6
 }
 
 // ScalarType 查询第一行第一列，并返回目标类型的值。
-// 若查询没有命中行，返回空指针和 ok=false ；若有结果但值是 null ，则返回空指针和 ok=true 。
+// 若查询没有命中行，返回 nil 和 ok=false ；若有结果但值是 null ，则返回 nil 和 ok=true 。
 // 若值不是目标类型，则尝试转换类型。
 //
-// 例：
+// 例1，获取可空字段：
+//   var s *string
+//   v, ok, err := client.ScalarType(reflect.TypeOf(s), querySomeNullable)
+//   if err != nil && ok {
+//     s = v.(*string)
+//   }
+//
+// 例2，获取非空字段：
 //   var s string
-//   v, ok, err := client.ScalarType(reflect.TypeOf(""), query)
+//   v, ok, err := client.ScalarType(reflect.TypeOf(s), querySomeNonNullable)
 //   if err != nil && ok {
 //     s = v.(string)
 //   }
 //
 func (c *DbClientEx) ScalarType(typ reflect.Type, query string, args ...any) (value any, ok bool, err error) {
 	v, ok, err := c.Scalar(query, args...)
-	if !ok && err != nil {
+	if !ok || err != nil || v == nil {
 		return
 	}
 
