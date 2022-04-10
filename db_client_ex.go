@@ -387,8 +387,7 @@ func (c *DbClientEx) ListType(elemTyp reflect.Type, query string, args ...any) (
 		// 非复杂类型（就是数字、字符串这些），则从每一行的第一列的值转换。
 		// 未来， conv 库应该支持类似字段迭代器的功能，就可以不走 map 了，节省一层转换开销。
 		if complex {
-			m := make(map[string]any)
-			err = rows.MapScan(m)
+			m, err := rows.MapScan()
 			if err != nil {
 				return nil, err
 			}
