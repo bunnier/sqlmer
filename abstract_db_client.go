@@ -69,12 +69,3 @@ func (client *AbstractDbClient) getExecTimeoutContext() (context.Context, contex
 func (client *AbstractDbClient) Dsn() string {
 	return client.config.Dsn
 }
-
-// wrapperSqlError 用于包装一个易于定位问题的 sql 错误。
-func (client *AbstractDbClient) wrapperSqlError(err error, rawSql string, executedSql string, args ...interface{}) error {
-	return fmt.Errorf(`sqlmer: executing sql error
-raw sql: %s
-executed sql: %s
-sql params: %v
-raw error: %w`, rawSql, executedSql, args, err) // TODO: args 需要在细化。
-}
