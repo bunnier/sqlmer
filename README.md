@@ -84,7 +84,7 @@ func main() {
 			// bao 2022-04-09 22:35:33 +0000 UTC
 		}
 	}
-	// 标准库的 Err 和 Close 返回的错误记得要处理哦～
+	// 和标准库一样，Rows 的 Err 和 Close 返回的错误记得要处理哦～
 	if err = sliceRows.Err(); err != nil {
 		log.Fatal(err)
 	}
