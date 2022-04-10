@@ -6,6 +6,8 @@ import (
 	"github.com/bunnier/sqlmer/sqlen"
 )
 
+type any = interface{} // 空接口的别名，同时兼容 Go 1.18 。
+
 // DbClient 定义了数据库访问客户端。
 type DbClient interface {
 	Dsn() string  // Dsn 用于获取当前实例所使用的数据库连接字符串。

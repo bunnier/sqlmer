@@ -14,8 +14,8 @@
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
-.idea
+# Hidden objects
+.*
 
-.VSCodeCounter
-/.vscode/launch.json
-/.vscode/settings.json
+# Temporary folder
+/tmp

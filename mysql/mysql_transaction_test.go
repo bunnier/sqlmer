@@ -1,4 +1,4 @@
-package mysql
+package mysql_test
 
 import (
 	"testing"
@@ -6,10 +6,11 @@ import (
 	"errors"
 
 	"github.com/bunnier/sqlmer"
+	"github.com/bunnier/sqlmer/internal/testenv"
 )
 
 func Test_MysqlTransaction(t *testing.T) {
-	mysqlClient, err := getMySqlDbClient()
+	mysqlClient, err := testenv.NewMysqlClient()
 	if err != nil {
 		t.Fatal(err)
 	}

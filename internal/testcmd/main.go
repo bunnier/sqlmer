@@ -12,15 +12,18 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-var action string // 行为。
+var action string     // 行为。
+var configFile string // 配置文件路径。
 
 func init() {
 	flag.StringVar(&action, "a", "", "execute action.")
+	flag.StringVar(&configFile, "c", ".", "conf file path")
 	flag.Parse()
 }
 
 // 这个 cmd 用于准备或销毁测试环境数据。
 func main() {
+	testenv.TryInitConfig(configFile)
 
 	switch action {
 	// 准备测试表。
@@ -41,7 +44,7 @@ func Prepare() {
 
 	// 初始化SqlServer测试表。
 	errgroup.Go(func() error {
-		db, err := getDb(mssql.DriverName, testenv.SqlServerDsn)
+		db, err := getDb(mssql.DriverName, testenv.TestConf.SqlServer)
 		if err != nil {
 			return err
 		}
@@ -50,7 +53,7 @@ func Prepare() {
 
 	// 初始化 MySql 测试表。
 	errgroup.Go(func() error {
-		db, err := getDb(mysql.DriverName, testenv.MySqlDsn)
+		db, err := getDb(mysql.DriverName, testenv.TestConf.Mysql)
 		if err != nil {
 			return err
 		}
@@ -68,7 +71,7 @@ func Clean() {
 
 	// 销毁 SqlServer 测试表。
 	errgroup.Go(func() error {
-		db, err := getDb(mssql.DriverName, testenv.SqlServerDsn)
+		db, err := getDb(mssql.DriverName, testenv.TestConf.SqlServer)
 		if err != nil {
 			return err
 		}
@@ -77,7 +80,7 @@ func Clean() {
 
 	// 销毁 MySql 测试表。
 	errgroup.Go(func() error {
-		db, err := getDb(mysql.DriverName, testenv.MySqlDsn)
+		db, err := getDb(mysql.DriverName, testenv.TestConf.Mysql)
 		if err != nil {
 			return err
 		}

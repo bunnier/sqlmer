@@ -142,8 +142,18 @@ func main() {
 
 测试用例 Schema：
 
-1. 编辑 `internal/testenv/conf.go` 文件，填写数据库的连接字符串；
-2. 如果第 1 步配置的连接字符串有 DDL 权限，可通过调用 `go run ./internal/testcmd/main.go -a PREPARE -c test_conf.yml` 来同时准备 MySQL / SQL Server 环境，如果没有 DDL 权限可自行直接执行 `internal/testenv/*_prepare.sql` 准备环境；
-3. 如果第 1 步配置的连接字符串有 DDL 权限，测试结束后可以通过 `go run ./internal/testcmd/main.go -a CLEAN -c test_conf.yml` 销毁测试表，如果没有 DDL 权限可自行直接执行 `internal/testenv/*_clean.sql` 销毁测试表；
+1. 默认的数据库连接字符串定义在 `internal/testenv/conf.go` 里，默认使用本机的测试库。当需要自定义测试库连接字符串时，可在项目的根（和当前 README 同级）下新建 `.db.json`，当此文件存在时，会自动加载此文件。文件格式为：
 
-另外，如果你和我一样使用 VSCode 作为开发工具，可在调整好 `internal/testenv/conf.go` 之后，直接使用 .vscode 中编写好的 Task 来准备环境。
+		{
+			"mysql": "testuser:testuser@tcp(127.0.0.1:3306)/test",
+			"sqlserver": "server=127.0.0.1; database=test; user id=testuser;password=testuser;"
+		}
+
+2. 如果第 1 步配置的连接字符串有 DDL 权限，可通过调用 `go run ./internal/testcmd/main.go -a PREPARE` 来同时准备 MySQL / SQL Server 环境，如果没有 DDL 权限可自行直接执行 `internal/testenv/*_prepare.sql` 准备环境；
+3. 如果第 1 步配置的连接字符串有 DDL 权限，测试结束后可以通过 `go run ./internal/testcmd/main.go -a CLEAN` 销毁测试表，如果没有 DDL 权限可自行直接执行 `internal/testenv/*_clean.sql` 销毁测试表。
+
+另外，如果你和我一样使用 VSCode 作为开发工具，可直接使用 .vscode 中编写好的 Task 来准备环境。
+
+## 其他语言的版本
+
+.net 版： [cmstar/Data](https://github.com/cmstar/Data)
