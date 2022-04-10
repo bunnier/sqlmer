@@ -28,7 +28,7 @@ func (db *DbEnhance) EnhancedQueryRow(query string, args ...any) *EnhanceRow {
 // 返回增强后的 EnhanceRow 对象，相比原生 sql.Row 提供了更强的数据读取能力。
 func (db *DbEnhance) EnhancedQueryRowContext(ctx context.Context, query string, args ...any) *EnhanceRow {
 	rows, err := db.EnhancedQueryContext(ctx, query, args...)
-	return &EnhanceRow{rows: rows, err: err}
+	return &EnhanceRow{rows, err}
 }
 
 // EnhancedQuery executes a query that returns rows.
@@ -44,6 +44,7 @@ func (db *DbEnhance) EnhancedQueryContext(ctx context.Context, query string, arg
 	if err != nil {
 		return nil, err
 	}
+
 	return &EnhanceRows{
 		Rows:          rows,
 		getScanTypeFn: db.getScanTypeFn,

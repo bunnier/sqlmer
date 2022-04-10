@@ -435,8 +435,7 @@ func Test_internalDbClient_Rows(t *testing.T) {
 			defer rows.Close()
 			index := 0
 			for rows.Next() {
-				got := make(map[string]any)
-				err := rows.MapScan(got)
+				got, err := rows.MapScan()
 				if (err != nil) != tt.wantErr {
 					t.Errorf("internalDbClient.Rows() error = %v, wantErr %v", err, tt.wantErr)
 					return

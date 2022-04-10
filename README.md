@@ -36,12 +36,11 @@ func main() {
 
 	// 这里使用 MySQL 做示范，SQL Server 也提供了一致的 API 和相应的参数解析逻辑。
 	if dbClient, err = mysql.NewMySqlDbClient(
-		"test:test@tcp(127.0.0.1:1433)/test?parseTime=true",
+		"test:test@tcp(127.0.0.1:1433)/test",
 		sqlmer.WithConnTimeout(time.Second*30), // 连接超时。
 		sqlmer.WithExecTimeout(time.Second*30), // 读写超时(执行语句时候，如果没有指定超时时间，默认用这个)。
 	); err != nil {
-		fmt.Println(err)
-		return
+		log.Fatal(err)
 	}
 
 	// 创建/删除 测试表。
@@ -72,13 +71,12 @@ func main() {
 	name, _ := dbClient.MustScalar("SELECT Name FROM demo WHERE Name=@p1", "rui")
 	fmt.Println(name.(string)) // Output: rui
 
-	// 获取增强后的 sql.Rows（支持 SliceScan、MapScan）。
+	// 如果喜欢标准库风格，这里也提供了增强版本的 sql.Rows，支持 SliceScan、MapScan。
 	sliceRows := dbClient.MustRows("SELECT Name, now() FROM demo WHERE Name IN (@p1, @p2)", "rui", "bao")
 	for sliceRows.Next() {
 		// SliceScan 会自动判断列数及列类型，用 []any 方式返回。
 		if dataSlice, err := sliceRows.SliceScan(); err != nil {
 			log.Fatal(err)
-			return
 		} else {
 			fmt.Println(dataSlice...)
 			// Output:
@@ -86,11 +84,12 @@ func main() {
 			// bao 2022-04-09 22:35:33 +0000 UTC
 		}
 	}
-	sliceRows.Close()
-
-	if sliceRows.Err() != nil {
+	// 标准库的 Err 和 Close 返回的错误记得要处理哦～
+	if err = sliceRows.Err(); err != nil {
 		log.Fatal(err)
-		return
+	}
+	if err = sliceRows.Close(); err != nil {
+		log.Fatal(err)
 	}
 
 	rowNum, _ := dbClient.MustScalar("SELECT count(1) FROM demo")

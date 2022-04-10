@@ -161,7 +161,8 @@ func (client *AbstractDbClient) ExistsContext(ctx context.Context, sqlText strin
 	if err = rows.Err(); err != nil {
 		return false, err
 	}
-	return hasData, nil
+
+	return hasData, rows.Close()
 }
 
 // Scalar 用于获取查询的第一行第一列的值。
@@ -247,12 +248,16 @@ func (client *AbstractDbClient) GetContext(ctx context.Context, sqlText string, 
 	}
 	defer rows.Close()
 
-	if rows.Next() { // 这个地方不直接 EnhancedQueryRowContext.MapScan 主要是可以在没有行时候省略一次 make map。
-		result := make(map[string]any)
-		err = rows.MapScan(result)
-		return result, err
+	// 这个地方不直接 EnhancedQueryRowContext.MapScan 主要是可以在没有行时候省略一次 make map。
+	if !rows.Next() {
+		if rows.Err() != nil {
+			return nil, rows.Err()
+		} else {
+			return nil, rows.Close()
+		}
 	}
-	return nil, rows.Err()
+
+	return rows.MapScan()
 }
 
 // SliceGet 用于获取查询结果的所有行。
@@ -295,15 +300,18 @@ func (client *AbstractDbClient) SliceGetContext(ctx context.Context, sqlText str
 
 	results := make([]map[string]any, 0, 5)
 	for rows.Next() { // 这个地方不直接 EnhancedQueryRowContext.MapScan 主要是可以在没有行时候省略一次 make map。
-		result := make(map[string]any)
-		err = rows.MapScan(result)
-		if err != nil {
+		if result, err := rows.MapScan(); err != nil {
 			return nil, err
+		} else {
+			results = append(results, result)
 		}
-		results = append(results, result)
 	}
 
-	return results, rows.Err()
+	if rows.Err() != nil {
+		return nil, rows.Err()
+	}
+
+	return results, rows.Close()
 }
 
 // Row 用于获取单个查询结果行。

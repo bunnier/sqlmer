@@ -55,17 +55,16 @@ func (rs *EnhanceRows) Scan(dest ...any) error {
 }
 
 // MapScan 用于把一行数据填充到 map 中。
-func (rs *EnhanceRows) MapScan(dest map[string]any) error {
-	values, err := rs.SliceScan()
-	if err != nil {
-		return err
+func (rs *EnhanceRows) MapScan() (map[string]any, error) {
+	if sliceRes, err := rs.SliceScan(); err != nil {
+		return nil, err
+	} else {
+		res := make(map[string]any, len(sliceRes))
+		for i, columnMeta := range rs.columnMetaSlice {
+			res[columnMeta.colType.Name()] = sliceRes[i]
+		}
+		return res, nil
 	}
-
-	for i, columnMeta := range rs.columnMetaSlice {
-		dest[columnMeta.colType.Name()] = values[i]
-	}
-
-	return nil
 }
 
 // SliceScan 用 Slice 的方式返回一行数据。
@@ -91,7 +90,9 @@ func (rs *EnhanceRows) SliceScan() ([]any, error) {
 		destRefVal[i] = refVal                  // 保存这个 Reflect.value 在后面用于解引用。
 	}
 
-	rs.Scan(dest...)
+	if rs.err = rs.Scan(dest...); rs.err != nil {
+		return nil, rs.err
+	}
 
 	for i := 0; i < len(rs.columnMetaSlice); i++ {
 		// 之前为了能让 Scan 修改数据，保存的是指针，而返回上层时候只需要实际数据，因此进行解引用。

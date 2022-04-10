@@ -53,7 +53,7 @@ func (transKeeper *abstractTransactionKeeper) Rollback() error {
 	return transKeeper.Tx.Rollback()
 }
 
-// Close 用于优雅关闭事务，创建事务后可 defer 执行本方法。
+// Close 用于优雅关闭事务，创建事务后务必执行本方法或 MustClose 方法。
 func (transKeeper *abstractTransactionKeeper) Close() error {
 	transKeeper.embeddedLevel--
 	if transKeeper.embeddedLevel != -1 || transKeeper.transactionCompleted {
@@ -82,7 +82,7 @@ func (transKeeper *abstractTransactionKeeper) MustRollback() {
 	}
 }
 
-// MustClose 用于优雅关闭事务，创建事务后可 defer 执行本方法。
+// MustClose 用于优雅关闭事务，创建事务后务必执行本方法或 Close 方法。
 func (transKeeper *abstractTransactionKeeper) MustClose() {
 	if err := transKeeper.Close(); err != nil {
 		panic(err)

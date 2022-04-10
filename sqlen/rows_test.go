@@ -54,11 +54,14 @@ func TestEnhanceRows_MapScan(t *testing.T) {
 	}
 	defer enhancedRows.Close()
 
-	rowMap := make(map[string]any)
 	count := int64(0)
 	for enhancedRows.Next() {
 		count++
-		if enhancedRows.MapScan(rowMap) != nil {
+
+		var rowMap map[string]any
+		var err error
+
+		if rowMap, err = enhancedRows.MapScan(); err != nil {
 			t.Errorf("enhancedRows.MapScan() error = %v, wantErr nil", err)
 			return
 		}
@@ -121,8 +124,9 @@ func TestEnhanceRow_MapScan(t *testing.T) {
 	db := NewDbEnhance(mustGetMssqlDb(t), getScanTypeFunc, unifyDataTypeFn)
 	enhancedRow := db.EnhancedQueryRow("SELECT Id, VarcharTest, DecimalTest FROM go_TypeTest WHERE Id=1")
 
-	rowMap := make(map[string]any)
-	if err := enhancedRow.MapScan(rowMap); err != nil {
+	var rowMap map[string]any
+	var err error
+	if rowMap, err = enhancedRow.MapScan(); err != nil {
 		t.Errorf("enhancedRow.MapScan() error = %v, wantErr nil", err)
 		return
 	}
@@ -174,7 +178,7 @@ func TestEnhanceRow_Scan(t *testing.T) {
 
 func TestEnhanceRow_Err(t *testing.T) {
 	db := NewDbEnhance(mustGetMssqlDb(t), getScanTypeFunc, unifyDataTypeFn)
-	sqlText := "SELECT Id, VarcharTest FROM go_TypeTest WHERE Id=100"
+	sqlText := "SELECT Id, VarcharTest FROM go_TypeTest WHERE Id=10000" // 没数据。
 
 	t.Run("SliceScan", func(t *testing.T) {
 		enhancedRow := db.EnhancedQueryRow(sqlText)
@@ -194,8 +198,7 @@ func TestEnhanceRow_Err(t *testing.T) {
 
 	t.Run("MapScan", func(t *testing.T) {
 		enhancedRow := db.EnhancedQueryRow(sqlText)
-		testMap := make(map[string]any)
-		err := enhancedRow.MapScan(testMap)
+		_, err := enhancedRow.MapScan()
 		if err != sql.ErrNoRows || err != enhancedRow.Err() || err != sql.ErrNoRows {
 			t.Errorf("enhancedRow.EnhancedQueryRow() error = %v, wantErr ErrNoRows", err)
 		}
@@ -203,8 +206,7 @@ func TestEnhanceRow_Err(t *testing.T) {
 
 	t.Run("EmptyMapScan", func(t *testing.T) {
 		enhancedRow := &EnhanceRow{}
-		testMap := make(map[string]any)
-		err := enhancedRow.MapScan(testMap)
+		_, err := enhancedRow.MapScan()
 		if err != sql.ErrNoRows || err != enhancedRow.Err() || err != sql.ErrNoRows {
 			t.Errorf("enhancedRow.MapScan() error = %v, wantErr ErrNoRows", err)
 		}
