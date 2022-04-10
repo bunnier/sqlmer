@@ -16,5 +16,6 @@
 
 .idea
 
+.VSCodeCounter
 /.vscode/launch.json
 /.vscode/settings.json
