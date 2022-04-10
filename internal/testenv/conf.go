@@ -26,7 +26,6 @@ const (
 type Conf struct {
 	Mysql     string
 	SqlServer string
-	custom    bool
 }
 
 var TestConf Conf = Conf{
@@ -36,10 +35,6 @@ var TestConf Conf = Conf{
 
 // 加载自定义配置。若给定一个 .json 文件，则读取该文件；否则认为给定的是一个目录，读取该目录下的 .db.json 文件。
 func TryInitConfig(path string) {
-	if TestConf.custom {
-		return
-	}
-
 	if !strings.HasSuffix(strings.ToLower(path), ".json") {
 		path += "/.db.json"
 	}
@@ -62,7 +57,6 @@ func TryInitConfig(path string) {
 
 	TestConf.Mysql = conf.Mysql
 	TestConf.SqlServer = conf.SqlServer
-	TestConf.custom = true
 }
 
 func NewMysqlClient() (sqlmer.DbClient, error) {
