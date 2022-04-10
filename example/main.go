@@ -52,10 +52,10 @@ func main() {
 	fmt.Println(name.(string)) // Output: rui
 
 	// 如果喜欢标准库风格，这里也提供了增强版本的 sql.Rows，支持 SliceScan、MapScan。
-	sliceRows := dbClient.MustRows("SELECT Name, now() FROM demo WHERE Name IN (@p1, @p2)", "rui", "bao")
-	for sliceRows.Next() {
+	rows := dbClient.MustRows("SELECT Name, now() FROM demo WHERE Name IN (@p1, @p2)", "rui", "bao")
+	for rows.Next() {
 		// SliceScan 会自动判断列数及列类型，用 []any 方式返回。
-		if dataSlice, err := sliceRows.SliceScan(); err != nil {
+		if dataSlice, err := rows.SliceScan(); err != nil {
 			log.Fatal(err)
 		} else {
 			fmt.Println(dataSlice...)
@@ -65,10 +65,10 @@ func main() {
 		}
 	}
 	// 和标准库一样，Rows 的 Err 和 Close 返回的错误记得要处理哦～
-	if err = sliceRows.Err(); err != nil {
+	if err = rows.Err(); err != nil {
 		log.Fatal(err)
 	}
-	if err = sliceRows.Close(); err != nil {
+	if err = rows.Close(); err != nil {
 		log.Fatal(err)
 	}
 
