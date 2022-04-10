@@ -30,26 +30,32 @@ func Extend(raw DbClient) *DbClientEx {
 }
 
 // GetStruct 获取一行的查询结果，转化并填充到 ptr 。 ptr 必须是 struct 类型的指针。
-func (c *DbClientEx) GetStruct(ptr any, query string, args ...any) error {
+// 若查询没有命中行，返回 ok=false ， ptr 不会被赋值。
+func (c *DbClientEx) GetStruct(ptr any, query string, args ...any) (ok bool, err error) {
 	m, err := c.Get(query, args...)
 	if err != nil {
-		return err
+		return false, err
+	}
+
+	if m == nil {
+		return false, nil
 	}
 
 	err = c.Conv.Convert(m, ptr)
 	if err != nil {
-		return err
+		return false, err
 	}
 
-	return nil
+	return true, nil
 }
 
 // MustGetStruct 类似 GetStruct ，但出现错误时不返回 error ，而是 panic 。
-func (c *DbClientEx) MustGetStruct(ptr any, query string, args ...any) {
-	err := c.GetStruct(ptr, query, args...)
+func (c *DbClientEx) MustGetStruct(ptr any, query string, args ...any) (ok bool) {
+	ok, err := c.GetStruct(ptr, query, args...)
 	if err != nil {
 		panic(err)
 	}
+	return ok
 }
 
 // ScalarString 查询第一行第一列，并返回目标类型的值。
