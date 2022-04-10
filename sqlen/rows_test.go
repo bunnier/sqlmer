@@ -7,12 +7,13 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/bunnier/sqlmer/internal/testenv"
 	_ "github.com/denisenkom/go-mssqldb"
 	_ "github.com/go-sql-driver/mysql"
 )
 
 func mustGetMssqlDb(t *testing.T) *sql.DB {
-	db, err := sql.Open("mysql", testConf.MySql)
+	db, err := sql.Open("mysql", testenv.MySqlDsn)
 	if err != nil {
 		t.Errorf("sql.Open() error = %v, wantErr nil", err)
 	}

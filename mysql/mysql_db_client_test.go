@@ -13,13 +13,10 @@ import (
 	"golang.org/x/sync/errgroup"
 )
 
-// 初始化测试配置。
-var testConf testenv.TestConf = testenv.MustLoadTestConfig("../test_conf.yml")
-
 // 用于获取一个 MySql 测试库的 DbClient 对象。
 func getMySqlDbClient() (sqlmer.DbClient, error) {
 	return NewMySqlDbClient(
-		testConf.MySql,
+		testenv.MySqlDsn,
 		sqlmer.WithConnTimeout(time.Second*15),
 		sqlmer.WithExecTimeout(time.Second*15),
 	)
@@ -31,8 +28,8 @@ func Test_NewMySqlDbClient(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if !strings.Contains(dbClient.Dsn(), testConf.MySql) {
-		t.Errorf("mysqlDbClient.Dsn() connString = %v, want contains  %v", dbClient.Dsn(), testConf.MySql)
+	if !strings.Contains(dbClient.Dsn(), testenv.MySqlDsn) {
+		t.Errorf("mysqlDbClient.Dsn() connString = %v, want contains  %v", dbClient.Dsn(), testenv.MySqlDsn)
 	}
 
 	_, err = NewMySqlDbClient("test",

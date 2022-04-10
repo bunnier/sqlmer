@@ -4,7 +4,7 @@ import (
 	"database/sql"
 )
 
-var mssqlSchemas []Schema = []Schema{
+var mssqlSchemas []schema = []schema{
 	{
 		Create: `
 CREATE TABLE go_TypeTest

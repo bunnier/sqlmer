@@ -1,39 +1,14 @@
 package testenv
 
-import (
-	"io/ioutil"
+const (
+	// MySqlDsn 是测试用例里使用的 MySQL DSN。
+	MySqlDsn = "dev:dev@tcp(127.0.0.1:3306)/test"
 
-	"gopkg.in/yaml.v3"
+	// SqlServerDsn 是测试用例里使用的 SQL Server DSN。
+	SqlServerDsn = "server=127.0.0.1; database=test; user id=dev;password=dev;"
 )
 
-// TestConf 为测试用例配置文件的结构。
-type TestConf struct {
-	MySql     string `yaml:"mysql"`     // 测试用例使用的 MySql 连接字符串。
-	SqlServer string `yaml:"sqlserver"` // 测试用例使用的 SqlServer 连接字符串。
-}
-
-// LoadTestConfig 用于读取yaml定义的配置文件，并转换为相应的结构。
-func LoadTestConfig(confPath string) (TestConf, error) {
-	yamlBytes, err := ioutil.ReadFile(confPath)
-	if err != nil {
-		return TestConf{}, err
-	}
-
-	var testConf TestConf
-	err = yaml.Unmarshal(yamlBytes, &testConf)
-	return testConf, err
-}
-
-// MustLoadTestConfig 用于读取 yaml 定义的配置文件，并转换为相应的结构。
-func MustLoadTestConfig(confPath string) TestConf {
-	if conf, err := LoadTestConfig(confPath); err != nil {
-		panic(err)
-	} else {
-		return conf
-	}
-}
-
-type Schema struct {
+type schema struct {
 	Create string
 	Drop   string
 }

@@ -13,13 +13,10 @@ import (
 	"github.com/bunnier/sqlmer/internal/testenv"
 )
 
-// 初始化测试配置。
-var testConf testenv.TestConf = testenv.MustLoadTestConfig("../test_conf.yml")
-
 // 用于获取一个 SqlServer 数据库的 DbClient 对象。
 func getMsSqlDbClient() (sqlmer.DbClient, error) {
 	return NewMsSqlDbClient(
-		testConf.SqlServer,
+		testenv.SqlServerDsn,
 		sqlmer.WithConnTimeout(time.Second*15),
 		sqlmer.WithExecTimeout(time.Second*15),
 	)
@@ -31,8 +28,8 @@ func Test_NewMsSqlDbClient(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if dbClient.Dsn() != testConf.SqlServer {
-		t.Errorf("mssqlDbClient.Dsn() connString = %v, wantConnString %v", dbClient.Dsn(), testConf.SqlServer)
+	if dbClient.Dsn() != testenv.SqlServerDsn {
+		t.Errorf("mssqlDbClient.Dsn() connString = %v, wantConnString %v", dbClient.Dsn(), testenv.SqlServerDsn)
 	}
 
 	if dbClient, err = NewMsSqlDbClient("test",

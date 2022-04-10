@@ -142,8 +142,8 @@ func main() {
 
 测试用例 Schema：
 
-1. 编辑 `test_conf.yml` 文件，相应数据库的连接字符串；
+1. 编辑 `internal/testenv/conf.go` 文件，填写数据库的连接字符串；
 2. 如果第 1 步配置的连接字符串有 DDL 权限，可通过调用 `go run ./internal/testcmd/main.go -a PREPARE -c test_conf.yml` 来同时准备 MySQL / SQL Server 环境，如果没有 DDL 权限可自行直接执行 `internal/testenv/*_prepare.sql` 准备环境；
 3. 如果第 1 步配置的连接字符串有 DDL 权限，测试结束后可以通过 `go run ./internal/testcmd/main.go -a CLEAN -c test_conf.yml` 销毁测试表，如果没有 DDL 权限可自行直接执行 `internal/testenv/*_clean.sql` 销毁测试表；
 
-另外，如果你和我一样使用 VSCode 作为开发工具，可在配置好 `test_conf.yml` 之后，直接使用 .vscode 中编写好的 Task 来准备环境。
+另外，如果你和我一样使用 VSCode 作为开发工具，可在调整好 `internal/testenv/conf.go` 之后，直接使用 .vscode 中编写好的 Task 来准备环境。
