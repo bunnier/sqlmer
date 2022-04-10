@@ -201,7 +201,8 @@ func Test_internalDbClient_Get(t *testing.T) {
 			mysqlClient,
 			args{
 				`SELECT intTest, tinyintTest, smallIntTest, bigIntTest, unsignedTest, varcharTest, charTest, charTextTest, dateTest, dateTimeTest, timestampTest, floatTest, doubleTest, decimalTest, bitTest,
-				nullIntTest, nullTinyintTest, nullSmallIntTest, nullBigIntTest, nullUnsignedTest, nullVarcharTest, nullCharTest, nullTextTest, nullDateTest, nullDateTimeTest, nullTimestampTest, nullFloatTest, nullDoubleTest, nullDecimalTest, nullBitTest 
+				nullIntTest, nullTinyintTest, nullSmallIntTest, nullBigIntTest, nullUnsignedTest, nullVarcharTest, nullCharTest, nullTextTest, nullDateTest, nullDateTimeTest, nullTimestampTest, nullFloatTest, nullDoubleTest, nullDecimalTest, nullBitTest,
+				null colNull 
 				FROM go_TypeTest WHERE id=1`,
 				[]any{},
 			},
@@ -236,6 +237,7 @@ func Test_internalDbClient_Get(t *testing.T) {
 				"nullDoubleTest":    nil,
 				"nullDecimalTest":   nil,
 				"nullBitTest":       nil,
+				"colNull":           nil,
 			},
 			false,
 		},
@@ -244,7 +246,8 @@ func Test_internalDbClient_Get(t *testing.T) {
 			mysqlClient,
 			args{
 				`SELECT intTest, tinyintTest, smallIntTest, bigIntTest, unsignedTest, varcharTest, charTest, charTextTest, dateTest, dateTimeTest, timestampTest, floatTest, doubleTest, decimalTest, bitTest,
-				nullIntTest, nullTinyintTest, nullSmallIntTest, nullBigIntTest, nullUnsignedTest, nullVarcharTest, nullCharTest, nullTextTest, nullDateTest, nullDateTimeTest, nullTimestampTest, nullFloatTest, nullDoubleTest, nullDecimalTest, nullBitTest
+				nullIntTest, nullTinyintTest, nullSmallIntTest, nullBigIntTest, nullUnsignedTest, nullVarcharTest, nullCharTest, nullTextTest, nullDateTest, nullDateTimeTest, nullTimestampTest, nullFloatTest, nullDoubleTest, nullDecimalTest, nullBitTest,
+				null colNull 
 				FROM go_TypeTest WHERE id=3`,
 				[]any{},
 			},
@@ -279,6 +282,7 @@ func Test_internalDbClient_Get(t *testing.T) {
 				"nullDoubleTest":    float64(3.15678),
 				"nullDecimalTest":   "3.4567899900",
 				"nullBitTest":       []byte{1},
+				"colNull":           nil,
 			},
 			false,
 		},
