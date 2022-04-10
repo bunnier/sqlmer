@@ -200,7 +200,8 @@ func Test_internalDbClient_Get(t *testing.T) {
 			mssqlClient,
 			args{
 				`SELECT TinyIntTest, SmallIntTest, IntTest, BitTest, NvarcharTest, VarcharTest, NcharTest, CharTest, DateTimeTest, DateTime2Test, DateTest, TimeTest, MoneyTest, FloatTest, DecimalTest, BinaryTest,
-				NullableTinyIntTest, NullableSmallIntTest, NullableIntTest, NullableBitTest, NullableNvarcharTest, NullableVarcharTest, NullableNcharTest, NullableCharTest, NullableDateTimeTest, NullableDateTime2Test, NullableDateTest, NullableTimeTest, NullableMoneyTest, NullableFloatTest, NullableDecimalTest, NullableBinaryTest
+				NullableTinyIntTest, NullableSmallIntTest, NullableIntTest, NullableBitTest, NullableNvarcharTest, NullableVarcharTest, NullableNcharTest, NullableCharTest, NullableDateTimeTest, NullableDateTime2Test, NullableDateTest, NullableTimeTest, NullableMoneyTest, NullableFloatTest, NullableDecimalTest, NullableBinaryTest,
+				null colNull
 				FROM go_TypeTest WHERE Id=1`,
 				[]any{},
 			},
@@ -237,6 +238,7 @@ func Test_internalDbClient_Get(t *testing.T) {
 				"NullableFloatTest":     nil,
 				"NullableDecimalTest":   nil,
 				"NullableBinaryTest":    nil,
+				"colNull":               nil,
 			},
 			false,
 		},
@@ -245,7 +247,8 @@ func Test_internalDbClient_Get(t *testing.T) {
 			mssqlClient,
 			args{
 				`SELECT TinyIntTest, SmallIntTest, IntTest, BitTest, NvarcharTest, VarcharTest, NcharTest, CharTest, DateTimeTest, DateTime2Test, DateTest, TimeTest, MoneyTest, FloatTest, DecimalTest, BinaryTest,
-				NullableTinyIntTest, NullableSmallIntTest, NullableIntTest, NullableBitTest, NullableNvarcharTest, NullableVarcharTest, NullableNcharTest, NullableCharTest, NullableDateTimeTest, NullableDateTime2Test, NullableDateTest, NullableTimeTest, NullableMoneyTest, NullableFloatTest, NullableDecimalTest, NullableBinaryTest
+				NullableTinyIntTest, NullableSmallIntTest, NullableIntTest, NullableBitTest, NullableNvarcharTest, NullableVarcharTest, NullableNcharTest, NullableCharTest, NullableDateTimeTest, NullableDateTime2Test, NullableDateTest, NullableTimeTest, NullableMoneyTest, NullableFloatTest, NullableDecimalTest, NullableBinaryTest,
+				null colNull
 				FROM go_TypeTest WHERE Id=3`,
 				[]any{},
 			},
@@ -282,6 +285,7 @@ func Test_internalDbClient_Get(t *testing.T) {
 				"NullableFloatTest":     float64(3.12345),
 				"NullableDecimalTest":   "3.4567899900",
 				"NullableBinaryTest":    []byte{1},
+				"colNull":               nil,
 			},
 			false,
 		},

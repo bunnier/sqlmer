@@ -261,7 +261,14 @@ func getUnifyDataTypeFn(cfg *mysqlDriver.Config) sqlen.UnifyDataTypeFn {
 					break
 				}
 				*dest = []byte(v)
+			case *any:
+				if v == nil { // 直接 SELECT null 时候会使用 *any 进行 Scan 并在最后返回一个指向 nil 的值，这里将其统一到无类型 nil。
+					*dest = nil
+					break
+				}
+				*dest = v
 			}
+
 		}
 	}
 }
