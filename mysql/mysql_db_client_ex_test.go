@@ -881,7 +881,7 @@ func TestDbClientEx_ListType(t *testing.T) {
 
 		list, ok := res.([]*rowType)
 		if !ok {
-			t.Fatalf("expect []*rowType, got %t", res)
+			t.Fatalf("expect []*rowType, got %T", res)
 		}
 
 		if len(list) != 1 {
@@ -919,7 +919,7 @@ func TestDbClientEx_ListType(t *testing.T) {
 
 		list, ok := res.([]*rowType)
 		if !ok {
-			t.Fatalf("expect []*rowType, got %t", res)
+			t.Fatalf("expect []*rowType, got %T", res)
 		}
 
 		if len(list) != 0 {
@@ -951,7 +951,7 @@ func TestDbClientEx_ListOf(t *testing.T) {
 
 		list, ok := res.([]int)
 		if !ok {
-			t.Fatalf("expect []*rowType, got %t", res)
+			t.Fatalf("expect []*rowType, got %T", res)
 		}
 
 		expect := []int{1, 2, 3, 4}
