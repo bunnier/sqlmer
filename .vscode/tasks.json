@@ -23,6 +23,5 @@
             "dependsOrder": "sequence",
             "dependsOn":["Prepare", "Test", "Clean"]
         },
-
     ]
 }

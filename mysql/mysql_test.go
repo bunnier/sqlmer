@@ -149,6 +149,14 @@ func Test_bindMySqlArgs(t *testing.T) {
 			[]any{1, 1},
 			nil,
 		},
+		{
+			"params_more_than_names",
+			"SELECT * FROM go_TypeTest WHERE id=@p3 AND id=@p3",
+			[]any{1, 2, 3, 4, 5, 6, 7},
+			"SELECT * FROM go_TypeTest WHERE id=? AND id=?",
+			[]any{3, 3},
+			nil,
+		},
 	}
 
 	for _, tt := range testCases {

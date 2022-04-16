@@ -57,18 +57,18 @@ func NewMySqlDbClient(dsn string, options ...sqlmer.DbClientOption) (*MySqlDbCli
 	return &MySqlDbClient{absDbClient, dsnConfig}, nil
 }
 
-// bindArgs 用于对 sql 语句和参数进行预处理。
+// bindArgs 用于对 SQL 语句和参数进行预处理。
 // 第一个参数如果是 map，且仅且只有一个参数的情况下，做命名参数处理，其余情况做位置参数处理。
 func bindArgs(sqlText string, args ...any) (string, []any, error) {
 	namedParsedResult := parseMySqlNamedSql(sqlText)
-	paramNameCount := len(namedParsedResult.Names)
+	parsedNames := len(namedParsedResult.Names)
 	argsCount := len(args)
-	resultArgs := make([]any, 0, paramNameCount)
+	resultArgs := make([]any, 0, parsedNames)
 
-	// map 按返回的paramNames顺序整理一个slice返回。
+	// map 按返回的 paramNames 顺序整理一个 slice 返回。
 	if argsCount == 1 && reflect.ValueOf(args[0]).Kind() == reflect.Map {
 		mapArgs := args[0].(map[string]any)
-		for _, paramName := range namedParsedResult.Names {
+		for _, paramName := range namedParsedResult.Names { // 这里通过从 SQL 解析出来的参数名去取参数，刚好也解决了参数重复使用的问题。
 			if value, ok := mapArgs[paramName]; ok {
 				resultArgs = append(resultArgs, value)
 			} else {
@@ -78,30 +78,29 @@ func bindArgs(sqlText string, args ...any) (string, []any, error) {
 		return namedParsedResult.Sql, resultArgs, nil
 	}
 
-	// slice 语句中使用的顺序未必是递增的，所以这里也需要整理顺序。
+	// slice 语句中使用的顺序未必是递增的，切可能重复引用同一个索引，所以这里也需要整理顺序。
 	for _, paramName := range namedParsedResult.Names {
-		// 从参数名称提取索引。
-		if paramName[0] != 'p' {
+
+		if paramName[0] != 'p' { // 要求数字参数的格式为 @p1....@pN
 			return "", nil, fmt.Errorf("%w: parsing parameter failed\nsql = %s", sqlmer.ErrParseParamFailed, namedParsedResult.Sql)
 		}
-		index, err := strconv.Atoi(paramName[1:])
+
+		index, err := strconv.Atoi(paramName[1:]) // 取出索引值。
 		if err != nil {
 			return "", nil, fmt.Errorf("%w: parsing parameter failed\nsql = %s", sqlmer.ErrParseParamFailed, namedParsedResult.Sql)
 		}
-		index-- // 占位符从0开始。
-		if index < 0 || index > paramNameCount-1 {
-			return "", nil, fmt.Errorf("%w: lack of parameter\nsql = %s", sqlmer.ErrParseParamFailed, namedParsedResult.Sql) // 索引对不上参数。
+
+		index-- // 占位符从 1 开始，转成索引，需要 -1。
+
+		if index < 0 { // 数字参数的数值从 1 开始，而不是 0，因此不会是负数。
+			return "", nil, fmt.Errorf("%w: index must start at 1\nsql = %s", sqlmer.ErrParseParamFailed, namedParsedResult.Sql) // 索引对不上参数。
 		}
 
-		if index >= argsCount {
-			return "", nil, fmt.Errorf("%w: parsing parameter failed\nsql = %s", sqlmer.ErrParseParamFailed, namedParsedResult.Sql)
+		if index >= argsCount { // 索引值超过参数数量了。
+			return "", nil, fmt.Errorf("%w: parameter index out of args range\nsql = %s", sqlmer.ErrParseParamFailed, namedParsedResult.Sql)
 		}
 
 		resultArgs = append(resultArgs, args[index])
-	}
-
-	if paramNameCount > len(resultArgs) {
-		return "", nil, fmt.Errorf("%w: parsing parameter failed\nsql = %s", sqlmer.ErrParseParamFailed, namedParsedResult.Sql)
 	}
 
 	return namedParsedResult.Sql, resultArgs, nil
@@ -112,7 +111,7 @@ var mysqlNamedSqlParsedResult sync.Map
 
 type mysqlNamedParsedResult struct {
 	Sql   string   // 处理后的sql语句。
-	Names []string // 原语句中用到的命名参数。
+	Names []string // 原语句中用到的命名参数集合 (没有去重逻辑如果有同名参数，会有多项)。
 }
 
 // 用于初始化合法字符集合 map，用于快速筛选合法字符。
