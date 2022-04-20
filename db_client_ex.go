@@ -29,6 +29,19 @@ func Extend(raw DbClient) *DbClientEx {
 	return &DbClientEx{raw, dbConv}
 }
 
+type TransactionKeeperEx struct {
+	*DbClientEx
+	TransactionKeeper
+}
+
+// CreateTransaction 用于开始一个事务。
+// returns:
+//  @tran 返回一个实现了 TransactionKeeper（内嵌 DbClient 接口） 接口的对象，在上面执行的语句会在同一个事务中执行。
+//  @err 创建事务时遇到的错误。
+func (c *DbClientEx) CreateTransaction() (tran TransactionKeeper, err error) {
+	panic("not implemented") // TODO not implemented
+}
+
 // GetStruct 获取一行的查询结果，转化并填充到 ptr 。 ptr 必须是 struct 类型的指针。
 // 若查询没有命中行，返回 ok=false ， ptr 不会被赋值。
 func (c *DbClientEx) GetStruct(ptr any, query string, args ...any) (ok bool, err error) {

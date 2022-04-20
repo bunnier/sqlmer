@@ -3,6 +3,7 @@ package mysql_test
 import (
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/bunnier/sqlmer"
 	"github.com/bunnier/sqlmer/internal/testenv"
@@ -56,10 +57,21 @@ func TestDbClientEx_ScalarString(t *testing.T) {
 		}
 	})
 
-	t.Run("conv", func(t *testing.T) {
-		v, _, _ := c.ScalarString("SELECT @v", map[string]any{"v": 123456})
-		if *v != "123456" {
-			t.Fatalf("expect value=%v, got %v", "123456", *v)
+	t.Run("conv-int", func(t *testing.T) {
+		s, _, _ := c.ScalarString("SELECT @v", map[string]any{"v": 123456})
+		if *s != "123456" {
+			t.Fatalf("expect string value=%v, got %v", "123456", *s)
+		}
+
+		i, _, _ := c.ScalarInt("SELECT '123'")
+		if *i != 123 {
+			t.Fatalf("expect int value=%v, got %v", 123, *i)
+		}
+
+		// UTC: 2021-07-01 15:38:50 -> 1625153930
+		i, _, _ = c.ScalarInt("SELECT timestampTest FROM go_typetest WHERE id=1")
+		if *i != 1625153930 {
+			t.Fatalf("expect timestamp value=%v, got %v", 1625153930, *i)
 		}
 	})
 
@@ -848,6 +860,19 @@ func TestDbClientEx_ScalarOf(t *testing.T) {
 			t.Fatalf("expect 1122, got %v", s)
 		}
 	})
+
+	t.Run("time", func(t *testing.T) {
+		// UTC: 2021-07-01 15:38:50 -> 1625153930
+		v, _, _ := c.ScalarOf(time.Time{}, "SELECT timestampTest FROM go_typetest WHERE id=1")
+		tm := v.(time.Time)
+		if tm.Unix() != 1625153930 {
+			t.Fatalf("expect timestamp value=%v, got %v", 1625153930, tm.Unix())
+		}
+
+		if tm.Location().String() != "UTC" {
+			t.Fatalf("expect location UTC, got %v", tm.Location().String())
+		}
+	})
 }
 
 func TestDbClientEx_MustScalarOf(t *testing.T) {
@@ -870,10 +895,11 @@ func TestDbClientEx_ListType(t *testing.T) {
 		V            string `conv:"varcharTest"`
 		CharTest     *string
 		NullTextTest *string
+		DateTimeTest time.Time
 	}
 
 	t.Run("hit", func(t *testing.T) {
-		query := `SELECT id, intTest, varcharTest, charTest, nullTextTest FROM go_TypeTest WHERE id IN (@p1)`
+		query := `SELECT id, intTest, varcharTest, charTest, nullTextTest, dateTimeTest FROM go_TypeTest WHERE id IN (@p1)`
 		res, err := c.ListType(reflect.TypeOf(new(rowType)), query, 1)
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
@@ -902,11 +928,15 @@ func TestDbClientEx_ListType(t *testing.T) {
 		}
 
 		if *v.CharTest != "行1char" {
-			t.Fatalf("expect CharTest=行1char, got %v", v.CharTest)
+			t.Fatalf("expect CharTest=行1char, got %v", *v.CharTest)
 		}
 
 		if v.NullTextTest != nil {
 			t.Fatalf("expect NullTextTest=nil, got %v", v.NullTextTest)
+		}
+
+		if v.DateTimeTest != time.Date(2021, 7, 1, 15, 38, 50, 0, time.UTC) {
+			t.Fatalf("expect DateTimeTest=2021-07-01 15:38:50, got %v", v.DateTimeTest)
 		}
 	})
 
