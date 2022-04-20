@@ -1001,3 +1001,49 @@ func TestDbClientEx_MustListOf(t *testing.T) {
 	c := getClientEx(t)
 	c.MustListOf(0, "error-sql")
 }
+
+func TestTransactionKeeperEx(t *testing.T) {
+	c := getClientEx(t)
+
+	t.Run("rollback", func(t *testing.T) {
+		tran, err := c.CreateTransaction()
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		defer tran.Close() // Rollback data here.
+
+		tran.MustExecute("UPDATE go_typetest SET intTest=2 WHERE id=1")
+
+		v, _ := tran.MustScalarInt("SELECT intTest FROM go_typetest WHERE id=1")
+		if *v != 2 {
+			t.Fatalf("want 2, got %v", *v)
+		}
+
+		// No commit, the data will be rolled-back.
+	})
+
+	t.Run("check1", func(t *testing.T) {
+		v, _ := c.MustScalarInt("SELECT intTest FROM go_typetest WHERE id=1")
+		if *v != 1 {
+			t.Fatalf("want 1, got %v", *v)
+		}
+	})
+
+	t.Run("commit", func(t *testing.T) {
+		tran := c.MustCreateTransaction()
+		defer tran.Close()
+
+		tran.MustExecute("UPDATE go_typetest SET intTest=2 WHERE id=1")
+		tran.MustCommit()
+	})
+
+	t.Run("check2-and-repare", func(t *testing.T) {
+		v, _ := c.MustScalarInt("SELECT intTest FROM go_typetest WHERE id=1")
+		if *v != 2 {
+			t.Errorf("want 2, got %v", *v)
+		}
+
+		// Restore the data.
+		c.MustExecute("UPDATE go_typetest SET intTest=1 WHERE id=1")
+	})
+}

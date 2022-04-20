@@ -29,6 +29,7 @@ func Extend(raw DbClient) *DbClientEx {
 	return &DbClientEx{raw, dbConv}
 }
 
+// TransactionKeeperEx 扩展 TransactionKeeper ，增加 DbClientEx 的功能。
 type TransactionKeeperEx struct {
 	*DbClientEx
 	TransactionKeeper
@@ -38,8 +39,27 @@ type TransactionKeeperEx struct {
 // returns:
 //  @tran 返回一个实现了 TransactionKeeper（内嵌 DbClient 接口） 接口的对象，在上面执行的语句会在同一个事务中执行。
 //  @err 创建事务时遇到的错误。
-func (c *DbClientEx) CreateTransaction() (tran TransactionKeeper, err error) {
-	panic("not implemented") // TODO not implemented
+func (c *DbClientEx) CreateTransaction() (tran *TransactionKeeperEx, err error) {
+	t, err := c.DbClient.CreateTransaction()
+	if err != nil {
+		return nil, err
+	}
+
+	return &TransactionKeeperEx{
+		DbClientEx:        Extend(t),
+		TransactionKeeper: t,
+	}, nil
+}
+
+// MustCreateTransaction 用于开始一个事务。
+// returns:
+//  @tran 返回一个实现了 TransactionKeeper（内嵌 DbClient 接口） 接口的对象，在上面执行的语句会在同一个事务中执行。
+func (c *DbClientEx) MustCreateTransaction() (tran *TransactionKeeperEx) {
+	t := c.DbClient.MustCreateTransaction()
+	return &TransactionKeeperEx{
+		DbClientEx:        Extend(t),
+		TransactionKeeper: t,
+	}
 }
 
 // GetStruct 获取一行的查询结果，转化并填充到 ptr 。 ptr 必须是 struct 类型的指针。
