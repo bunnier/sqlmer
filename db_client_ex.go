@@ -13,6 +13,8 @@ type DbClientEx struct {
 	Conv     conv.Conv // 为当前实例提供类型转换的 conv.Conv 实例。
 }
 
+var _ DbClient = (*DbClientEx)(nil)
+
 // Extend 加强 DbClient ，提供强类型的转化方法。
 func Extend(raw DbClient) *DbClientEx {
 	// 提供 mysql 的 snake_case 名称的字段到 Go 的 CamelCase 字段的匹配。
@@ -35,11 +37,10 @@ type TransactionKeeperEx struct {
 	TransactionKeeper
 }
 
-// CreateTransaction 用于开始一个事务。
-// returns:
-//  @tran 返回一个实现了 TransactionKeeper（内嵌 DbClient 接口） 接口的对象，在上面执行的语句会在同一个事务中执行。
-//  @err 创建事务时遇到的错误。
-func (c *DbClientEx) CreateTransaction() (tran *TransactionKeeperEx, err error) {
+var _ TransactionKeeper = (*TransactionKeeperEx)(nil)
+
+// CreateTransactionEx 基于 DbClient.CreateTransaction 创建一个 TransactionKeeperEx 实例。
+func (c *DbClientEx) CreateTransactionEx() (tran *TransactionKeeperEx, err error) {
 	t, err := c.DbClient.CreateTransaction()
 	if err != nil {
 		return nil, err
@@ -51,10 +52,8 @@ func (c *DbClientEx) CreateTransaction() (tran *TransactionKeeperEx, err error) 
 	}, nil
 }
 
-// MustCreateTransaction 用于开始一个事务。
-// returns:
-//  @tran 返回一个实现了 TransactionKeeper（内嵌 DbClient 接口） 接口的对象，在上面执行的语句会在同一个事务中执行。
-func (c *DbClientEx) MustCreateTransaction() (tran *TransactionKeeperEx) {
+// MustCreateTransactionEx 基于 DbClient.MustCreateTransaction 创建一个 TransactionKeeperEx 实例。
+func (c *DbClientEx) MustCreateTransactionEx() (tran *TransactionKeeperEx) {
 	t := c.DbClient.MustCreateTransaction()
 	return &TransactionKeeperEx{
 		DbClientEx:        Extend(t),

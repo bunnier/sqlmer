@@ -1006,7 +1006,7 @@ func TestTransactionKeeperEx(t *testing.T) {
 	c := getClientEx(t)
 
 	t.Run("rollback", func(t *testing.T) {
-		tran, err := c.CreateTransaction()
+		tran, err := c.CreateTransactionEx()
 		if err != nil {
 			t.Fatalf("unexpected error: %v", err)
 		}
