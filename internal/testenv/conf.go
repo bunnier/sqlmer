@@ -3,7 +3,7 @@ package testenv
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strings"
 	"time"
 
@@ -39,7 +39,7 @@ func TryInitConfig(path string) {
 		path += "/.db.json"
 	}
 
-	content, err := ioutil.ReadFile(path)
+	content, err := os.ReadFile(path)
 	if err != nil {
 		fmt.Println("cannot read .db.json, use the default database: " + err.Error())
 		return
