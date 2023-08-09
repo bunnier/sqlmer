@@ -166,7 +166,7 @@ func ormWithFieldConvert() {
 		Row
 		Scores string
 	}{}
-	sqlmer.Extend(dbClient).MustGetStruct(&wrapper, "SELECT * FROM demo WHERE Id=1")
+	sqlmer.Extend(dbClient).MustGetStruct(wrapper, "SELECT * FROM demo WHERE Id=1")
 
 	// 在已经取到值的基础上，用一段代码，将处理后的值赋值给最终的目标。
 	// 这里 Scores 字段的格式是 SCORES: N1,N2,N3,... ，我们的目标格式是将数字部分转换为 []int 。
