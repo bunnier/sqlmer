@@ -36,6 +36,11 @@ func NewMySqlDbClient(dsn string, options ...sqlmer.DbClientOption) (*MySqlDbCli
 		return nil, err
 	}
 
+	// 影响行数的处理，采用和 SQL Server 一样的逻辑，即：
+	// UPDATE 时，只要找到行，即使原值和目标值一致，也作为影响到行处理。
+	dsnConfig.ClientFoundRows = true
+	dsn = dsnConfig.FormatDSN()
+
 	fixedOptions := []sqlmer.DbClientOption{
 		sqlmer.WithDsn(DriverName, dsn),
 		sqlmer.WithGetScanTypeFunc(getScanTypeFn(dsnConfig)),        // 定制 Scan 类型逻辑。
