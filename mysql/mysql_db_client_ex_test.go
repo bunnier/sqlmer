@@ -956,6 +956,27 @@ func TestDbClientEx_ListType(t *testing.T) {
 			t.Fatalf("expect length=0, got %v", len(list))
 		}
 	})
+
+	t.Run("time", func(t *testing.T) {
+		query := `SELECT dateTimeTest FROM go_TypeTest WHERE id IN (@p1)`
+		res, err := c.ListType(reflect.TypeOf(time.Time{}), query, 1)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		v, ok := res.([]time.Time)
+		if !ok {
+			t.Fatalf("expect []time.Time, got %T", res)
+		}
+
+		if len(v) != 1 {
+			t.Fatalf("expect length=1, got %v", len(v))
+		}
+
+		if v[0] != time.Date(2021, 7, 1, 15, 38, 50, 0, time.UTC) {
+			t.Fatalf("expect DateTimeTest=2021-07-01 15:38:50, got %v", v)
+		}
+	})
 }
 
 func TestDbClientEx_MustListType(t *testing.T) {

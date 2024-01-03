@@ -347,19 +347,20 @@ func (c *DbClientEx) MustScalarFloat64(query string, args ...any) (value *float6
 // 若值不是目标类型，则尝试转换类型。
 //
 // 例1，获取可空字段：
-//   var s *string
-//   v, ok, err := client.ScalarType(reflect.TypeOf(s), querySomeNullable)
-//   if err != nil && ok {
-//     s = v.(*string)
-//   }
+//
+//	var s *string
+//	v, ok, err := client.ScalarType(reflect.TypeOf(s), querySomeNullable)
+//	if err != nil && ok {
+//	  s = v.(*string)
+//	}
 //
 // 例2，获取非空字段：
-//   var s string
-//   v, ok, err := client.ScalarType(reflect.TypeOf(s), querySomeNonNullable)
-//   if err != nil && ok {
-//     s = v.(string)
-//   }
 //
+//	var s string
+//	v, ok, err := client.ScalarType(reflect.TypeOf(s), querySomeNonNullable)
+//	if err != nil && ok {
+//	  s = v.(string)
+//	}
 func (c *DbClientEx) ScalarType(typ reflect.Type, query string, args ...any) (value any, ok bool, err error) {
 	v, ok, err := c.Scalar(query, args...)
 	if !ok || err != nil {
@@ -384,9 +385,9 @@ func (c *DbClientEx) MustScalarType(typ reflect.Type, query string, args ...any)
 // 若值不是目标类型，则尝试转换类型。
 //
 // 下面两行代码等价：
-//   client.ScalarOf("", query)
-//   client.ScalarType(reflect.TypeOf(""), query)
 //
+//	client.ScalarOf("", query)
+//	client.ScalarType(reflect.TypeOf(""), query)
 func (c *DbClientEx) ScalarOf(example any, query string, args ...any) (value any, ok bool, err error) {
 	exampleTyp := reflect.TypeOf(example)
 	return c.ScalarType(exampleTyp, query, args...)
@@ -405,12 +406,12 @@ func (c *DbClientEx) MustScalarOf(example any, query string, args ...any) (value
 // ListOf 将查询结果的每一行转换到指定类型。返回转换后的元素的列表，需给定列表中的元素的类型。若查询没有命中行，返回空集。
 //
 // 注意，给定的 elemTyp 是元素的类型，返回的则是该元素的 slice ：
-//   list, err := ListType(reflect.TypeOf(0), query)
-//   if err != nil {
-//     return err
-//   }
-//   infos := list.([]int)
 //
+//	list, err := ListType(reflect.TypeOf(0), query)
+//	if err != nil {
+//	  return err
+//	}
+//	infos := list.([]int)
 func (c *DbClientEx) ListType(elemTyp reflect.Type, query string, args ...any) (any, error) {
 	rows, err := c.Rows(query, args...)
 	if err != nil {
@@ -422,7 +423,7 @@ func (c *DbClientEx) ListType(elemTyp reflect.Type, query string, args ...any) (
 	for underTyp.Kind() == reflect.Ptr {
 		underTyp = underTyp.Elem()
 	}
-	complex := underTyp.Kind() == reflect.Struct || underTyp.Kind() == reflect.Map
+	complex := !conv.IsSimpleType(underTyp)
 	vList := reflect.MakeSlice(reflect.SliceOf(elemTyp), 0, 0)
 
 	for rows.Next() {
@@ -463,8 +464,8 @@ func (c *DbClientEx) ListType(elemTyp reflect.Type, query string, args ...any) (
 // MustListType 类似 ListType ，但出现错误时不返回 error ，而是 panic 。
 //
 // 注意，给定的 elemTyp 是元素的类型，返回的则是该元素的 slice ：
-//   list := MustListType(reflect.TypeOf(0), query).([]int)
 //
+//	list := MustListType(reflect.TypeOf(0), query).([]int)
 func (c *DbClientEx) MustListType(elemTyp reflect.Type, query string, args ...any) any {
 	v, err := c.ListType(elemTyp, query, args...)
 	if err != nil {
@@ -476,22 +477,22 @@ func (c *DbClientEx) MustListType(elemTyp reflect.Type, query string, args ...an
 // ListOf 将查询结果的每一行转换到指定类型。返回转换后的元素的列表，需给定列表中的元素的类型。若查询没有命中行，返回空集。
 //
 // 注意，给定的 elemTyp 是元素的类型，返回的则是该元素的 slice ：
-//   type Info struct { /* fields */ }
-//   list, err := ListOf(new(Info), query)
-//   if err != nil {
-//     return err
-//   }
-//   infos := list.([]*Info)
 //
+//	type Info struct { /* fields */ }
+//	list, err := ListOf(new(Info), query)
+//	if err != nil {
+//	  return err
+//	}
+//	infos := list.([]*Info)
 func (c *DbClientEx) ListOf(elemExample any, query string, args ...any) (any, error) {
 	elemTyp := reflect.TypeOf(elemExample)
 	return c.ListType(elemTyp, query, args...)
 }
 
 // MustListOf 类似 ListOf ，但出现错误时不返回 error ，而是 panic 。
-//   type Info struct { /* fields */ }
-//   list := MustListOf(new(Info), query).([]*Info)
 //
+//	type Info struct { /* fields */ }
+//	list := MustListOf(new(Info), query).([]*Info)
 func (c *DbClientEx) MustListOf(elemExample any, query string, args ...any) any {
 	elemTyp := reflect.TypeOf(elemExample)
 	v, err := c.ListType(elemTyp, query, args...)
