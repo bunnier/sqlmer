@@ -30,8 +30,21 @@ var (
 // MaxLengthErrorValue 用于限制错误中 Value 值的长度，超过该大小将会进行截断。
 var MaxLengthErrorValue = 64 * 1024
 
-// getExecutingSqlError 用于生成一个带着完整执行参数、语句的 ErrExecutingSql。
+// getExecutingSqlError 用于生成一个带着 SQL 和参数列表的 ErrExecutingSql。
+// 错误内容中包含了：原始传入的 SQL，解析后的 SQL，参数列表。
 func getExecutingSqlError(err error, rawSql string, fixedSql string, params []any) error {
+	sb := printSqlParams(params)
+	return fmt.Errorf("%w\nraw error: %s\nsql:\ninput sql=%s\nexecuting sql=%s\n%s", ErrExecutingSql, err.Error(), rawSql, fixedSql, sb)
+}
+
+// getSqlError 用于生成一个带着 SQL 和参数列表的指定错误。
+func getSqlError(err error, rawSql string, params []any) error {
+	sb := printSqlParams(params)
+	return fmt.Errorf("%w\nsql:\ninput sql=%s\n%s", err, rawSql, sb)
+}
+
+// printSqlParams 用于打印 SQL 参数列表。
+func printSqlParams(params []interface{}) string {
 	var sb strings.Builder
 	for i, param := range params {
 		if i == 0 {
@@ -41,12 +54,14 @@ func getExecutingSqlError(err error, rawSql string, fixedSql string, params []an
 		}
 
 		switch v := param.(type) {
-		case sql.NamedArg: // 如果是命名参数，打印出 name/value 对。
+		// 如果是命名参数，打印出 name/value 对。
+		case sql.NamedArg:
 			logVal := v.Value
-			// string 类型的日志，参考 MaxLengthErrorValue 的值，对输出长度进行截取，以避免 Value 长度过长时候，输出过大的日志。
+
 			stringVal, ok := v.Value.(fmt.Stringer)
 			if ok {
 				logStringValue := stringVal.String()
+				// string 类型的日志，参考 MaxLengthErrorValue 的值，对输出长度进行截取，以避免 Value 长度过长时候，输出过大的日志。
 				if len(logStringValue) > MaxLengthErrorValue {
 					logStringValue = logStringValue[:MaxLengthErrorValue]
 				}
@@ -54,9 +69,11 @@ func getExecutingSqlError(err error, rawSql string, fixedSql string, params []an
 			}
 
 			sb.WriteString(fmt.Sprintf("@%s=%v", v.Name, logVal))
+
+		// 非命名参数，索引按顺序打印。
 		default:
 			sb.WriteString(fmt.Sprintf("@p%d=%v", i+1, v))
 		}
 	}
-	return fmt.Errorf("%w\nraw error: %s\nsql:\ninput sql=%s\nexecuting sql=%s\n%s", ErrExecutingSql, err.Error(), rawSql, fixedSql, sb.String())
+	return sb.String()
 }
