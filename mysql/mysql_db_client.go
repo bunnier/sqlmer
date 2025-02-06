@@ -59,7 +59,48 @@ func NewMySqlDbClient(dsn string, options ...sqlmer.DbClientOption) (*MySqlDbCli
 		return nil, err
 	}
 
+	// 自动设置连接池的超时时间，
+	err = autoSetConnMaxLifetime(absDbClient.Db)
+	if err != nil {
+		return nil, err
+	}
+
 	return &MySqlDbClient{absDbClient, dsnConfig}, nil
+}
+
+// autoSetConnMaxLifetime 用于从数据库读取 wait_timeout 设置，并自动设置连接最大生命周期。
+// 当数据库的超时时间有容错时间时，连接的使用时间短一些，，以尽量在数据库掐断连接之前主动放弃连接。
+func autoSetConnMaxLifetime(db *sqlen.DbEnhance) error {
+	timeSettingRows := db.EnhancedQueryRow(`SHOW VARIABLES WHERE Variable_name IN ('wait_timeout')`) // 连接测试。
+	if timeSettingRows.Err() != nil {
+		return timeSettingRows.Err()
+	}
+
+	var waitTimeoutName string
+	var waitTimeout int
+	err := timeSettingRows.Scan(&waitTimeoutName, &waitTimeout)
+	if err != nil {
+		return err
+	}
+
+	// 根据 wait_timeout 设置连接最大生命周期。
+	// SetConnMaxLifetime 小于 wait_timeout 应该是最佳实践，可以避免数据库强制关闭连接导致的错误（database/sql: invalid connection）。
+	// 参考：
+	// https://go.dev/doc/database/manage-connections
+	// https://github.com/go-sql-driver/mysql?tab=readme-ov-file#important-settings
+	switch {
+	case waitTimeout == 0:
+		return nil
+
+	case waitTimeout > 60:
+		waitTimeout = waitTimeout - 5
+
+	case waitTimeout > 1:
+		waitTimeout = waitTimeout - 1
+	}
+
+	db.SetConnMaxLifetime(time.Duration(waitTimeout) * time.Second)
+	return nil
 }
 
 // bindArgs 用于对 SQL 语句和参数进行预处理。
