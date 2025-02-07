@@ -73,18 +73,18 @@ func NewMySqlDbClient(dsn string, options ...sqlmer.DbClientOption) (*MySqlDbCli
 func autoSetConnMaxLifetime(db *sqlen.DbEnhance) error {
 	timeSettingRows := db.EnhancedQueryRow(`SHOW VARIABLES WHERE Variable_name IN ('wait_timeout')`) // 连接测试。
 	if timeSettingRows.Err() != nil {
-		return timeSettingRows.Err()
+		return fmt.Errorf("%w: get 'wait_timeout' variable error: %w", sqlmer.ErrConnect, timeSettingRows.Err())
 	}
 
 	var waitTimeoutName string
 	var waitTimeout int
 	err := timeSettingRows.Scan(&waitTimeoutName, &waitTimeout)
 	if err != nil {
-		return err
+		return fmt.Errorf("%w: get 'wait_timeout' variable error: %w", sqlmer.ErrConnect, err)
 	}
 
 	// 根据 wait_timeout 设置连接最大生命周期。
-	// SetConnMaxLifetime 小于 wait_timeout 应该是最佳实践，可以避免数据库强制关闭连接导致的错误（database/sql: invalid connection）。
+	// SetConnMaxLifetime 小于 wait_timeout 应该是最佳实践，可以避免数据库强制关闭连接导致的错误（driver: bad connection）。
 	// 参考：
 	// https://go.dev/doc/database/manage-connections
 	// https://github.com/go-sql-driver/mysql?tab=readme-ov-file#important-settings
