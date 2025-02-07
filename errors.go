@@ -27,9 +27,6 @@ var (
 	ErrExecutingSql = errors.New("dbClient: failed to execute sql")
 )
 
-// MaxLengthErrorValue 用于限制错误中 Value 值的长度，超过该大小将会进行截断。
-var MaxLengthErrorValue = 64 * 1024
-
 // getExecutingSqlError 用于生成一个带着 SQL 和参数列表的 ErrExecutingSql。
 // 错误内容中包含了：原始传入的 SQL，解析后的 SQL，参数列表。
 func getExecutingSqlError(err error, rawSql string, fixedSql string, params []any) error {
@@ -56,24 +53,42 @@ func printSqlParams(params []interface{}) string {
 		switch v := param.(type) {
 		// 如果是命名参数，打印出 name/value 对。
 		case sql.NamedArg:
-			logVal := v.Value
-
-			stringVal, ok := v.Value.(fmt.Stringer)
-			if ok {
-				logStringValue := stringVal.String()
-				// string 类型的日志，参考 MaxLengthErrorValue 的值，对输出长度进行截取，以避免 Value 长度过长时候，输出过大的日志。
-				if len(logStringValue) > MaxLengthErrorValue {
-					logStringValue = logStringValue[:MaxLengthErrorValue]
-				}
-				logVal = logStringValue
-			}
-
-			sb.WriteString(fmt.Sprintf("@%s=%v", v.Name, logVal))
+			sb.WriteString(fmt.Sprintf("@%s=%v", v.Name, cutLongStringParams(v.Value)))
 
 		// 非命名参数，索引按顺序打印。
 		default:
-			sb.WriteString(fmt.Sprintf("@p%d=%v", i+1, v))
+			sb.WriteString(fmt.Sprintf("@p%d=%v", i+1, cutLongStringParams(v)))
 		}
 	}
 	return sb.String()
+}
+
+// MaxLengthErrorValue 用于限制错误输出中参数的长度，超过该大小将会进行截断。
+// NOTE: 可自行调整该值。
+var MaxLengthErrorValue = 64 * 1024
+
+// 本方法用于对参数进行处理，以避免在 error 中输出过大的字符串。
+func cutLongStringParams(paramVal any) any {
+	var paramValString string
+	switch v := paramVal.(type) {
+	case string:
+		paramValString = v
+	case fmt.Stringer:
+		paramValString = v.String()
+	default:
+		return paramVal
+	}
+
+	if len(paramValString) <= MaxLengthErrorValue {
+		return paramValString
+	}
+
+	// 超过长度的字符串，截取前 MaxLengthErrorValue 个字符，后面用 ... 填充，并注明参数大小。
+	var paramStringBuilder strings.Builder
+	paramStringBuilder.Grow(MaxLengthErrorValue + 24)
+	paramStringBuilder.WriteString(paramValString[:MaxLengthErrorValue])
+	paramStringBuilder.WriteString("...")
+	paramStringBuilder.WriteString(fmt.Sprintf("(length=%d)", len(paramValString)))
+
+	return paramStringBuilder.String()
 }
