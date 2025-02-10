@@ -52,13 +52,33 @@ func Test_internalDbClient_Scalar(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			"mysql",
+			"mysql1",
 			mysqlClient,
 			args{
 				"SELECT Id FROM go_TypeTest WHERE id=@p1",
 				[]any{1},
 			},
 			int64(1),
+			false,
+		},
+		{
+			"mysql2",
+			mysqlClient,
+			args{
+				"SELECT Id FROM go_TypeTest WHERE id in (@p1)",
+				[]any{[]int{1}},
+			},
+			int64(1),
+			false,
+		},
+		{
+			"mysql3",
+			mysqlClient,
+			args{
+				"SELECT COUNT(1) FROM go_TypeTest WHERE id in (@p1)",
+				[]any{[]int{1, 2, 3}},
+			},
+			int64(3),
 			false,
 		},
 	}

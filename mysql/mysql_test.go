@@ -43,6 +43,64 @@ func Test_parseMySqlNamedSql(t *testing.T) {
 	}
 }
 
+func TestExtendInParams(t *testing.T) {
+	tests := []struct {
+		name      string
+		sql       string
+		params    []any
+		expSQL    string
+		expParams []any
+	}{
+		{
+			"single",
+			"select 1 from t where id = ?",
+			[]any{1},
+			"select 1 from t where id = ?",
+			[]any{1},
+		},
+		{
+			"slice1",
+			"select 1 from t where id in (?)",
+			[]any{[]int{1, 2, 3}},
+			"select 1 from t where id in (?,?,?)",
+			[]any{1, 2, 3},
+		},
+		{
+			"singleWithSlice",
+			"select 1 from t where id!=? AND id in (?)",
+			[]any{5, []int{1, 2, 3}},
+			"select 1 from t where id!=? AND id in (?,?,?)",
+			[]any{5, 1, 2, 3},
+		},
+		{
+			"empty",
+			"select 1 from t where id in (?)",
+			[]any{[]int{}},
+			"select 1 from t where id in (NULL)",
+			[]any{},
+		},
+		{
+			"regular",
+			"select 1 from t where name = ? and age = ?",
+			[]any{"Alice", 30},
+			"select 1 from t where name = ? and age = ?",
+			[]any{"Alice", 30},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotSQL, gotParams := extendInParams(tt.sql, tt.params)
+			if gotSQL != tt.expSQL {
+				t.Errorf("Expected SQL: %s, got: %s", tt.expSQL, gotSQL)
+			}
+			if !reflect.DeepEqual(gotParams, tt.expParams) {
+				t.Errorf("Expected Params: %v, got: %v", tt.expParams, gotParams)
+			}
+		})
+	}
+}
+
 func Test_bindMySqlArgs(t *testing.T) {
 	testCases := []struct {
 		name      string
@@ -155,6 +213,31 @@ func Test_bindMySqlArgs(t *testing.T) {
 			[]any{1, 2, 3, 4, 5, 6, 7},
 			"SELECT * FROM go_TypeTest WHERE id=? AND id=?",
 			[]any{3, 3},
+			nil,
+		},
+		{
+			"inwhere1",
+			"SELECT * FROM go_TypeTest WHERE id IN (@ids)",
+			[]any{
+				map[string]any{
+					"ids": []int{1, 2, 3},
+				},
+			},
+			"SELECT * FROM go_TypeTest WHERE id IN (?,?,?)",
+			[]any{1, 2, 3},
+			nil,
+		},
+		{
+			"inwhere2",
+			"SELECT * FROM go_TypeTest WHERE id!=@noid AND id IN (@ids)",
+			[]any{
+				map[string]any{
+					"noid": 4,
+					"ids":  []int{1, 2, 3},
+				},
+			},
+			"SELECT * FROM go_TypeTest WHERE id!=? AND id IN (?,?,?)",
+			[]any{4, 1, 2, 3},
 			nil,
 		},
 	}

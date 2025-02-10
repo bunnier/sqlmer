@@ -121,12 +121,12 @@ func bindArgs(sqlText string, args ...any) (string, []any, error) {
 				return "", nil, fmt.Errorf("%w:\nlack of parameter\nsql = %s", sqlmer.ErrParseParamFailed, namedParsedResult.Sql)
 			}
 		}
+		namedParsedResult.Sql, resultArgs = extendInParams(namedParsedResult.Sql, resultArgs)
 		return namedParsedResult.Sql, resultArgs, nil
 	}
 
 	// slice 语句中使用的顺序未必是递增的，切可能重复引用同一个索引，所以这里也需要整理顺序。
 	for _, paramName := range namedParsedResult.Names {
-
 		if paramName[0] != 'p' { // 要求数字参数的格式为 @p1....@pN
 			return "", nil, fmt.Errorf("%w: parsing parameter failed\nsql = %s", sqlmer.ErrParseParamFailed, namedParsedResult.Sql)
 		}
@@ -149,6 +149,7 @@ func bindArgs(sqlText string, args ...any) (string, []any, error) {
 		resultArgs = append(resultArgs, args[index])
 	}
 
+	namedParsedResult.Sql, resultArgs = extendInParams(namedParsedResult.Sql, resultArgs)
 	return namedParsedResult.Sql, resultArgs, nil
 }
 
@@ -243,6 +244,67 @@ func parseMySqlNamedSql(sqlText string) *mysqlNamedParsedResult {
 	parsedResult := &mysqlNamedParsedResult{fixedSqlTextBuilder.String(), names}
 	mysqlNamedSqlParsedResult.Store(sqlText, parsedResult) // 缓存结果。
 	return parsedResult
+}
+
+// extendInParams 用于处理 SQL IN 子句的参数展开
+// 将切片类型的参数展开为多个问号占位符
+func extendInParams(sqlText string, params []any) (string, []any) {
+	var newParams []any = make([]any, 0, len(params))
+	var newSqlBuilder strings.Builder
+
+	paramIndex := 0
+	inString := false
+	for _, r := range sqlText {
+		if r == '\'' {
+			inString = !inString
+			newSqlBuilder.WriteRune(r)
+			continue
+		}
+
+		if inString {
+			newSqlBuilder.WriteRune(r)
+			continue
+		}
+
+		if r != '?' {
+			newSqlBuilder.WriteRune(r)
+			continue
+		}
+
+		if paramIndex >= len(params) { // 后面没参数了，无需判断了。
+			newSqlBuilder.WriteRune(r)
+			continue
+		}
+
+		param := params[paramIndex]
+		paramValue := reflect.ValueOf(param)
+		paramIndex++
+
+		// 处理切片类型。
+		// 排除 []byte，因为虽然 []byte 也是切片类型，但是它是二进制数据，不应该被展开。
+		if paramValue.Kind() == reflect.Slice && paramValue.Type() != reflect.TypeOf([]byte{}) {
+			paramLen := paramValue.Len()
+			if paramLen == 0 {
+				// 空切片替换为 SQL 不可能条件。
+				newSqlBuilder.WriteString("NULL")
+				continue
+			}
+
+			// 生成占位符。
+			placeholders := strings.Repeat(",?", paramLen)
+			newSqlBuilder.WriteString(placeholders[1:])
+
+			// 展开参数。
+			for i := 0; i < paramLen; i++ {
+				newParams = append(newParams, paramValue.Index(i).Interface())
+			}
+		} else {
+			newSqlBuilder.WriteRune('?')
+			newParams = append(newParams, param)
+		}
+	}
+
+	return newSqlBuilder.String(), newParams
 }
 
 // getScanTypeFn 根据驱动配置返回一个可以正确获取 Scan 类型的函数。
