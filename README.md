@@ -15,6 +15,7 @@
 - 支持 全局/单独 指定 SQL 语句的连接和读写超时；
 - 提供了支持 `嵌套事务` 的事务 API；
 - 能根据目标数据库的配置，自动配置 `SetConnMaxLifetime` (目前仅支持 MySQL)；
+- 支持传递为 `in 子句` 传递 `slice` 类型的参数 (目前仅支持 MySQL)；
 
 ## 来个 Demo
 
@@ -53,7 +54,7 @@ func main() {
 
 	selectionDemo()
 	ormDemo()
-	ormWithTypeChange()
+	ormWithFieldConvert()
 	transactionDemo()
 	timeoutDemo()
 }
@@ -90,7 +91,10 @@ func selectionDemo() {
 	fmt.Println(name.(string)) // Output: rui
 
 	// 如果喜欢标准库风格，这里也提供了增强版本的 sql.Rows，支持 SliceScan、MapScan。
-	rows := dbClient.MustRows("SELECT Name, now() FROM demo WHERE Name IN (@p1, @p2)", "rui", "bao")
+	// 注意：
+	//    - 这里 in 的参数适用了 slice 的方式，这个特性目前仅支持 MySQL，针对 SQL Server 暂时需要自行展开；
+	//    - 如果 slice 为空，会被解析为 NULL ，这会导致 in/not in 语句均为 false；
+	rows := dbClient.MustRows("SELECT Name, now() FROM demo WHERE Name IN (@p1)", []any{"rui", "bao"})
 	for rows.Next() {
 		// SliceScan 会自动判断列数及列类型，用 []any 方式返回。
 		if dataSlice, err := rows.SliceScan(); err != nil {
