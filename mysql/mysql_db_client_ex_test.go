@@ -69,7 +69,7 @@ func TestDbClientEx_ScalarString(t *testing.T) {
 		}
 
 		// UTC: 2021-07-01 15:38:50 -> 1625153930
-		i, _, _ = c.ScalarInt("SELECT timestampTest FROM go_typetest WHERE id=1")
+		i, _, _ = c.ScalarInt("SELECT timestampTest FROM go_TypeTest WHERE id=1")
 		if *i != 1625153930 {
 			t.Fatalf("expect timestamp value=%v, got %v", 1625153930, *i)
 		}
@@ -863,7 +863,7 @@ func TestDbClientEx_ScalarOf(t *testing.T) {
 
 	t.Run("time", func(t *testing.T) {
 		// UTC: 2021-07-01 15:38:50 -> 1625153930
-		v, _, _ := c.ScalarOf(time.Time{}, "SELECT timestampTest FROM go_typetest WHERE id=1")
+		v, _, _ := c.ScalarOf(time.Time{}, "SELECT timestampTest FROM go_TypeTest WHERE id=1")
 		tm := v.(time.Time)
 		if tm.Unix() != 1625153930 {
 			t.Fatalf("expect timestamp value=%v, got %v", 1625153930, tm.Unix())
@@ -1033,9 +1033,9 @@ func TestTransactionKeeperEx(t *testing.T) {
 		}
 		defer tran.Close() // Rollback data here.
 
-		tran.MustExecute("UPDATE go_typetest SET intTest=2 WHERE id=1")
+		tran.MustExecute("UPDATE go_TypeTest SET intTest=2 WHERE id=1")
 
-		v, _ := tran.MustScalarInt("SELECT intTest FROM go_typetest WHERE id=1")
+		v, _ := tran.MustScalarInt("SELECT intTest FROM go_TypeTest WHERE id=1")
 		if *v != 2 {
 			t.Fatalf("want 2, got %v", *v)
 		}
@@ -1044,7 +1044,7 @@ func TestTransactionKeeperEx(t *testing.T) {
 	})
 
 	t.Run("check1", func(t *testing.T) {
-		v, _ := c.MustScalarInt("SELECT intTest FROM go_typetest WHERE id=1")
+		v, _ := c.MustScalarInt("SELECT intTest FROM go_TypeTest WHERE id=1")
 		if *v != 1 {
 			t.Fatalf("want 1, got %v", *v)
 		}
@@ -1054,17 +1054,17 @@ func TestTransactionKeeperEx(t *testing.T) {
 		tran := c.MustCreateTransaction()
 		defer tran.Close()
 
-		tran.MustExecute("UPDATE go_typetest SET intTest=2 WHERE id=1")
+		tran.MustExecute("UPDATE go_TypeTest SET intTest=2 WHERE id=1")
 		tran.MustCommit()
 	})
 
 	t.Run("check2-and-repare", func(t *testing.T) {
-		v, _ := c.MustScalarInt("SELECT intTest FROM go_typetest WHERE id=1")
+		v, _ := c.MustScalarInt("SELECT intTest FROM go_TypeTest WHERE id=1")
 		if *v != 2 {
 			t.Errorf("want 2, got %v", *v)
 		}
 
 		// Restore the data.
-		c.MustExecute("UPDATE go_typetest SET intTest=1 WHERE id=1")
+		c.MustExecute("UPDATE go_TypeTest SET intTest=1 WHERE id=1")
 	})
 }

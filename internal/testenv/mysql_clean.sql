@@ -1,1 +1,1 @@
-DROP TABLE go_TypeTest`;
+DROP TABLE go_TypeTest;

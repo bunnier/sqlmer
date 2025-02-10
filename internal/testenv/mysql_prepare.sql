@@ -10,12 +10,12 @@ CREATE TABLE go_TypeTest (
 	charTextTest text NOT NULL,
 	dateTest date NOT NULL,
 	dateTimeTest datetime NOT NULL,
-	timestampTest timestamp NOT NULL,
+	timestampTest TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	floatTest float(5, 3) NOT NULL,
 	doubleTest double(10, 5) NOT NULL,
 	decimalTest DECIMAL(15, 10) NOT NULL,
 	bitTest bit(1) NOT NULL,
-	
+
 	nullIntTest int NULL,
 	nullTinyintTest tinyint NULL,
 	nullSmallIntTest smallint NULL,
@@ -35,7 +35,7 @@ CREATE TABLE go_TypeTest (
 
 	PRIMARY KEY (id),
 	KEY idx_go_TypeTest (id)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
 
 INSERT INTO go_TypeTest(intTest, tinyintTest, smallIntTest, bigIntTest, unsignedTest, varcharTest, charTest, charTextTest, dateTest, dateTimeTest, timestampTest, floatTest, doubleTest, decimalTest, bitTest)
 VALUES (1, 1, 1, 1, 1, N'行1', '行1char', '行1text','2021-07-01','2021-07-01 15:38:50.425','2021-07-01 15:38:50.425', 1.456, 1.15678, 1.45678999, 1);
@@ -52,3 +52,4 @@ INSERT INTO go_TypeTest(intTest, tinyintTest, smallIntTest, bigIntTest, unsigned
 	nullIntTest, nullTinyintTest, nullSmallIntTest, nullBigIntTest, nullUnsignedTest, nullVarcharTest, nullCharTest, nullTextTest, nullDateTest, nullDateTimeTest, nullTimestampTest, nullFloatTest, nullDoubleTest, nullDecimalTest, nullBitTest)
 VALUES (4, 4, 4, 4, 4, N'行4', '行4char', '行4text', '2021-07-04', '2021-07-04 15:38:50.425','2021-07-04 15:38:50.425', 4.456, 4.15678, 4.45678999, 0,
 	4, 4, 4, 4, 4, N'行4', '行4char', '行4text', '2021-07-04', '2021-07-04 15:38:50.425','2021-07-04 15:38:50.425', 4.456, 4.15678, 4.45678999, 0);
+

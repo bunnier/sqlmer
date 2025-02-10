@@ -43,7 +43,7 @@ func Test_bindMsSqlArgs(t *testing.T) {
 			fixedSql, args, err := bindArgs(tt.oriSql, tt.args...)
 
 			if tt.wantErr != nil {
-				if !errors.As(err, &tt.wantErr) {
+				if !errors.Is(err, tt.wantErr) {
 					t.Errorf("mssqlDbClient.bindMsSqlArgs() error = %v, wantErr %v", err, tt.wantErr)
 					return
 				}
