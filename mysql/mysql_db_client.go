@@ -282,7 +282,7 @@ func extendInParams(sqlText string, params []any) (string, []any) {
 
 		// 处理切片类型。
 		// 排除 []byte，因为虽然 []byte 也是切片类型，但是它是二进制数据，不应该被展开。
-		if (paramValue.Kind() == reflect.Slice || paramValue.Kind() == reflect.Array) && paramValue.Type() != reflect.TypeOf([]byte{}) {
+		if (paramValue.Kind() == reflect.Slice || paramValue.Kind() == reflect.Array) && !paramValue.Type().ConvertibleTo(reflect.TypeOf([]byte{})) {
 			paramLen := paramValue.Len()
 			if paramLen == 0 {
 				// 空切片替换为 SQL 不可能条件。
