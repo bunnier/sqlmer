@@ -125,6 +125,12 @@ func mergeArgs(args ...any) ([]any, error) {
 	for _, arg := range args {
 		argType := reflect.TypeOf(arg)
 
+		// 针对指针参数，获取其指向的值和类型进行判断。
+		if argType.Kind() == reflect.Ptr {
+			argType = argType.Elem()
+			arg = reflect.ValueOf(arg).Elem().Interface()
+		}
+
 		switch {
 		// 如果参数是 map 类型，直接合并到 paramsMap 中。
 		case argType.Kind() == reflect.Map:
@@ -134,7 +140,7 @@ func mergeArgs(args ...any) ([]any, error) {
 			}
 
 		// 如果参数是结构体类型，转成 map 后合并。
-		case argType.Kind() == reflect.Struct && !reflect.TypeOf(time.Time{}).ConvertibleTo(argType):
+		case (argType.Kind() == reflect.Struct) && !reflect.TypeOf(time.Time{}).ConvertibleTo(argType):
 			argMap, err := dbConv.StructToMap(arg)
 			if err != nil {
 				return nil, err
@@ -145,7 +151,7 @@ func mergeArgs(args ...any) ([]any, error) {
 				paramsMap[k] = v
 			}
 
-			// 其余类型，作为索引参数传递。
+		// 其余类型，作为索引参数传递。
 		default:
 			indexParamIdx++
 			paramsMap["p"+strconv.Itoa(indexParamIdx)] = arg

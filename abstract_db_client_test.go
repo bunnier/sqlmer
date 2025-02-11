@@ -78,6 +78,17 @@ func TestArgsMerge(t *testing.T) {
 		}
 	})
 
+	t.Run("多个map参数", func(t *testing.T) {
+		got, err := mergeArgs(map[string]any{"T": "t"}, map[string]any{"T": "t2"})
+		if err != nil {
+			t.Errorf("mergeArgs() error = %v, wantErr false", err)
+			return
+		}
+		if !reflect.DeepEqual(got, []any{map[string]any{"T": "t2"}}) {
+			t.Errorf("mergeArgs() = %v, want %v", got, []any{map[string]any{"T": "t2"}})
+		}
+	})
+
 	t.Run("单个结构体参数", func(t *testing.T) {
 		got, err := mergeArgs(TypeA{A: "a"})
 		if err != nil {
@@ -89,8 +100,30 @@ func TestArgsMerge(t *testing.T) {
 		}
 	})
 
+	t.Run("单个指针结构体参数", func(t *testing.T) {
+		got, err := mergeArgs(&TypeA{A: "a"})
+		if err != nil {
+			t.Errorf("mergeArgs() error = %v, wantErr false", err)
+			return
+		}
+		if !reflect.DeepEqual(got, []any{map[string]any{"A": "a"}}) {
+			t.Errorf("mergeArgs() = %v, want %v", got, []any{map[string]any{"A": "a"}})
+		}
+	})
+
 	t.Run("多个结构体参数", func(t *testing.T) {
 		got, err := mergeArgs(TypeA{A: "a"}, TypeB{B: "b"})
+		if err != nil {
+			t.Errorf("mergeArgs() error = %v, wantErr false", err)
+			return
+		}
+		if !reflect.DeepEqual(got, []any{map[string]any{"A": "a", "B": "b"}}) {
+			t.Errorf("mergeArgs() = %v, want %v", got, []any{map[string]any{"A": "a", "B": "b"}})
+		}
+	})
+
+	t.Run("多个结构体指针参数", func(t *testing.T) {
+		got, err := mergeArgs(&TypeA{A: "a"}, &TypeB{B: "b"})
 		if err != nil {
 			t.Errorf("mergeArgs() error = %v, wantErr false", err)
 			return
