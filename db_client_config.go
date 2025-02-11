@@ -50,6 +50,17 @@ func NewDbClientConfig(options ...DbClientOption) (*DbClientConfig, error) {
 		}
 	}
 
+	// 为 bindArgsFunc 注入参数合并逻辑。
+	oriBindArgsFunc := config.bindArgsFunc
+	config.bindArgsFunc = func(s string, i ...any) (string, []any, error) {
+		i, err := preHandleArgs(i...) // 进行 结构体/map/索引 等各种参数的合并处理。
+		if err != nil {
+			return "", nil, err
+		}
+
+		return oriBindArgsFunc(s, i...)
+	}
+
 	return config, nil
 }
 

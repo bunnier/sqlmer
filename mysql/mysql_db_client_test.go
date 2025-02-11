@@ -81,6 +81,26 @@ func Test_internalDbClient_Scalar(t *testing.T) {
 			int64(3),
 			false,
 		},
+		{
+			"mysql4",
+			mysqlClient,
+			args{
+				"SELECT COUNT(1) FROM go_TypeTest WHERE id=@p1 OR id=@p2 OR id=@name1 OR id=@name2",
+				[]any{map[string]any{"p1": 1, "p2": 2, "name1": 3, "name2": 4}},
+			},
+			int64(4),
+			false,
+		},
+		{
+			"mysql5",
+			mysqlClient,
+			args{
+				"SELECT COUNT(1) FROM go_TypeTest WHERE varcharTest=@varcharTest OR id=@p1 OR id=@p2",
+				[]any{3, map[string]any{"varcharTest": "行1"}, 2},
+			},
+			int64(3),
+			false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -348,7 +368,7 @@ func Test_internalDbClient_Rows(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			"mysql",
+			"noParams",
 			mysqlClient,
 			args{
 				"SELECT varcharTest,dateTest,dateTimeTest,timestampTest,decimalTest FROM go_TypeTest WHERE id IN (1,2)",
@@ -368,6 +388,159 @@ func Test_internalDbClient_Rows(t *testing.T) {
 					"dateTimeTest":  time.Date(2021, 7, 2, 15, 38, 50, 0, time.UTC),
 					"timestampTest": time.Date(2021, 7, 2, 15, 38, 50, 0, time.UTC),
 					"decimalTest":   "2.4567899900",
+				},
+			},
+			false,
+		},
+		{
+			"arrayParams",
+			mysqlClient,
+			args{
+				"SELECT varcharTest,dateTest,dateTimeTest,timestampTest,decimalTest FROM go_TypeTest WHERE id IN (@p1)",
+				[]any{[]int{1, 2}},
+			},
+			[]map[string]any{
+				{
+					"varcharTest":   "行1",
+					"dateTest":      time.Date(2021, 7, 1, 0, 0, 0, 0, time.UTC),
+					"dateTimeTest":  time.Date(2021, 7, 1, 15, 38, 50, 0, time.UTC),
+					"timestampTest": time.Date(2021, 7, 1, 15, 38, 50, 0, time.UTC),
+					"decimalTest":   "1.4567899900",
+				},
+				{
+					"varcharTest":   "行2",
+					"dateTest":      time.Date(2021, 7, 2, 0, 0, 0, 0, time.UTC),
+					"dateTimeTest":  time.Date(2021, 7, 2, 15, 38, 50, 0, time.UTC),
+					"timestampTest": time.Date(2021, 7, 2, 15, 38, 50, 0, time.UTC),
+					"decimalTest":   "2.4567899900",
+				},
+			},
+			false,
+		},
+		{
+			"arrayParams2",
+			mysqlClient,
+			args{
+				"SELECT varcharTest,dateTest,dateTimeTest,timestampTest,decimalTest FROM go_TypeTest WHERE id IN (@ids)",
+				[]any{map[string]any{"ids": []int{2}}},
+			},
+			[]map[string]any{
+				{
+					"varcharTest":   "行2",
+					"dateTest":      time.Date(2021, 7, 2, 0, 0, 0, 0, time.UTC),
+					"dateTimeTest":  time.Date(2021, 7, 2, 15, 38, 50, 0, time.UTC),
+					"timestampTest": time.Date(2021, 7, 2, 15, 38, 50, 0, time.UTC),
+					"decimalTest":   "2.4567899900",
+				},
+			},
+			false,
+		},
+		{
+			"structParams",
+			mysqlClient,
+			args{
+				"SELECT varcharTest,dateTest,dateTimeTest,timestampTest,decimalTest FROM go_TypeTest WHERE id IN (@Ids)",
+				[]any{struct {
+					Ids []int
+				}{
+					Ids: []int{2},
+				}},
+			},
+			[]map[string]any{
+				{
+					"varcharTest":   "行2",
+					"dateTest":      time.Date(2021, 7, 2, 0, 0, 0, 0, time.UTC),
+					"dateTimeTest":  time.Date(2021, 7, 2, 15, 38, 50, 0, time.UTC),
+					"timestampTest": time.Date(2021, 7, 2, 15, 38, 50, 0, time.UTC),
+					"decimalTest":   "2.4567899900",
+				},
+			},
+			false,
+		},
+		{
+			"structParamsMerge1",
+			mysqlClient,
+			args{
+				"SELECT varcharTest,dateTest,dateTimeTest,timestampTest,decimalTest FROM go_TypeTest WHERE id IN (@Ids) AND id!=@p1",
+				[]any{struct {
+					Ids []int
+				}{
+					Ids: []int{1, 2},
+				}, 1},
+			},
+			[]map[string]any{
+				{
+					"varcharTest":   "行2",
+					"dateTest":      time.Date(2021, 7, 2, 0, 0, 0, 0, time.UTC),
+					"dateTimeTest":  time.Date(2021, 7, 2, 15, 38, 50, 0, time.UTC),
+					"timestampTest": time.Date(2021, 7, 2, 15, 38, 50, 0, time.UTC),
+					"decimalTest":   "2.4567899900",
+				},
+			},
+			false,
+		},
+		{
+			"structParamsMerge2",
+			mysqlClient,
+			args{
+				"SELECT varcharTest,dateTest,dateTimeTest,timestampTest,decimalTest FROM go_TypeTest WHERE id IN (@Ids) AND id!=@p1",
+				[]any{
+					struct{ Ids []int }{Ids: []int{1, 2}},
+					1,
+					map[string]any{"Ids": []int{1, 2, 3}},
+				},
+			},
+			[]map[string]any{
+				{
+					"varcharTest":   "行2",
+					"dateTest":      time.Date(2021, 7, 2, 0, 0, 0, 0, time.UTC),
+					"dateTimeTest":  time.Date(2021, 7, 2, 15, 38, 50, 0, time.UTC),
+					"timestampTest": time.Date(2021, 7, 2, 15, 38, 50, 0, time.UTC),
+					"decimalTest":   "2.4567899900",
+				},
+				{
+					"varcharTest":   "行3",
+					"dateTest":      time.Date(2021, 7, 3, 0, 0, 0, 0, time.UTC),
+					"dateTimeTest":  time.Date(2021, 7, 3, 15, 38, 50, 0, time.UTC),
+					"timestampTest": time.Date(2021, 7, 3, 15, 38, 50, 0, time.UTC),
+					"decimalTest":   "3.4567899900",
+				},
+			},
+			false,
+		},
+		{
+			"structParamsMerge3",
+			mysqlClient,
+			args{
+				"SELECT varcharTest,dateTest,dateTimeTest,timestampTest,decimalTest FROM go_TypeTest WHERE id IN (@Ids) OR id IN (@p1, @p2)",
+				[]any{
+					map[string]any{"Ids": []int{1}},
+					2,
+					4,
+					struct{ Ids []int }{Ids: []int{3}},
+				},
+			},
+			[]map[string]any{
+				{
+					"varcharTest":   "行2",
+					"dateTest":      time.Date(2021, 7, 2, 0, 0, 0, 0, time.UTC),
+					"dateTimeTest":  time.Date(2021, 7, 2, 15, 38, 50, 0, time.UTC),
+					"timestampTest": time.Date(2021, 7, 2, 15, 38, 50, 0, time.UTC),
+					"decimalTest":   "2.4567899900",
+				},
+				{
+					"varcharTest":   "行3",
+					"dateTest":      time.Date(2021, 7, 3, 0, 0, 0, 0, time.UTC),
+					"dateTimeTest":  time.Date(2021, 7, 3, 15, 38, 50, 0, time.UTC),
+					"timestampTest": time.Date(2021, 7, 3, 15, 38, 50, 0, time.UTC),
+					"decimalTest":   "3.4567899900",
+				},
+				{
+					"varcharTest":   "行4",
+					"dateTest":      time.Date(2021, 7, 4, 0, 0, 0, 0, time.UTC),
+					"dateTimeTest":  time.Date(2021, 7, 4, 15, 38, 50, 0, time.UTC),
+					"timestampTest": time.Date(2021, 7, 4, 15, 38, 50, 0, time.UTC),
+					"decimalTest":   "4.4567899900",
 				},
 			},
 			false,

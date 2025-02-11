@@ -85,9 +85,9 @@ var dbConv = conv.Conv{
 	},
 }
 
-// mergeArgs 用于对 SQL 语句和参数进行预处理，支持多结构体参数的处理。
+// preHandleArgs 用于对 SQL 语句和参数进行预处理。
 // 它会尝试从结构体参数中提取字段值，并将其合并到一个 map 中再交由 bindArgs 处理。
-func mergeArgs(args ...any) ([]any, error) {
+func preHandleArgs(args ...any) ([]any, error) {
 	needMerge := false // 是否需要合并参数。
 	hasMap := false    // 是否有map类型的参数。
 

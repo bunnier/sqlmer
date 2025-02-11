@@ -24,7 +24,7 @@ type StrABC struct {
 	C string
 }
 
-func TestArgsMerge(t *testing.T) {
+func Test_preHandleArgs(t *testing.T) {
 	type TypeA struct {
 		A string
 	}
@@ -46,7 +46,7 @@ func TestArgsMerge(t *testing.T) {
 	testTime := time.Date(2021, 7, 3, 0, 0, 0, 0, time.UTC)
 
 	t.Run("空参数列表", func(t *testing.T) {
-		got, err := mergeArgs()
+		got, err := preHandleArgs()
 		if err != nil {
 			t.Errorf("mergeArgs() error = %v, wantErr false", err)
 			return
@@ -57,7 +57,7 @@ func TestArgsMerge(t *testing.T) {
 	})
 
 	t.Run("基础类型切片参数", func(t *testing.T) {
-		got, err := mergeArgs([]int{1, 2, 3})
+		got, err := preHandleArgs([]int{1, 2, 3})
 		if err != nil {
 			t.Errorf("mergeArgs() error = %v, wantErr false", err)
 			return
@@ -68,7 +68,7 @@ func TestArgsMerge(t *testing.T) {
 	})
 
 	t.Run("单个map参数", func(t *testing.T) {
-		got, err := mergeArgs(map[string]any{"T": "t"})
+		got, err := preHandleArgs(map[string]any{"T": "t"})
 		if err != nil {
 			t.Errorf("mergeArgs() error = %v, wantErr false", err)
 			return
@@ -79,7 +79,7 @@ func TestArgsMerge(t *testing.T) {
 	})
 
 	t.Run("多个map参数", func(t *testing.T) {
-		got, err := mergeArgs(map[string]any{"T": "t"}, map[string]any{"T": "t2"})
+		got, err := preHandleArgs(map[string]any{"T": "t"}, map[string]any{"T": "t2"})
 		if err != nil {
 			t.Errorf("mergeArgs() error = %v, wantErr false", err)
 			return
@@ -90,7 +90,7 @@ func TestArgsMerge(t *testing.T) {
 	})
 
 	t.Run("单个结构体参数", func(t *testing.T) {
-		got, err := mergeArgs(TypeA{A: "a"})
+		got, err := preHandleArgs(TypeA{A: "a"})
 		if err != nil {
 			t.Errorf("mergeArgs() error = %v, wantErr false", err)
 			return
@@ -101,7 +101,7 @@ func TestArgsMerge(t *testing.T) {
 	})
 
 	t.Run("单个指针结构体参数", func(t *testing.T) {
-		got, err := mergeArgs(&TypeA{A: "a"})
+		got, err := preHandleArgs(&TypeA{A: "a"})
 		if err != nil {
 			t.Errorf("mergeArgs() error = %v, wantErr false", err)
 			return
@@ -112,7 +112,7 @@ func TestArgsMerge(t *testing.T) {
 	})
 
 	t.Run("多个结构体参数", func(t *testing.T) {
-		got, err := mergeArgs(TypeA{A: "a"}, TypeB{B: "b"})
+		got, err := preHandleArgs(TypeA{A: "a"}, TypeB{B: "b"})
 		if err != nil {
 			t.Errorf("mergeArgs() error = %v, wantErr false", err)
 			return
@@ -123,7 +123,7 @@ func TestArgsMerge(t *testing.T) {
 	})
 
 	t.Run("多个结构体指针参数", func(t *testing.T) {
-		got, err := mergeArgs(&TypeA{A: "a"}, &TypeB{B: "b"})
+		got, err := preHandleArgs(&TypeA{A: "a"}, &TypeB{B: "b"})
 		if err != nil {
 			t.Errorf("mergeArgs() error = %v, wantErr false", err)
 			return
@@ -134,7 +134,7 @@ func TestArgsMerge(t *testing.T) {
 	})
 
 	t.Run("嵌套结构体参数", func(t *testing.T) {
-		got, err := mergeArgs(TypeAB{TypeA: TypeA{A: "ab_a"}, TypeB: TypeB{B: "ab_b"}})
+		got, err := preHandleArgs(TypeAB{TypeA: TypeA{A: "ab_a"}, TypeB: TypeB{B: "ab_b"}})
 		if err != nil {
 			t.Errorf("mergeArgs() error = %v, wantErr false", err)
 			return
@@ -145,7 +145,7 @@ func TestArgsMerge(t *testing.T) {
 	})
 
 	t.Run("多层嵌套结构体参数", func(t *testing.T) {
-		got, err := mergeArgs(TypeABC{TypeAB: TypeAB{TypeA: TypeA{A: "abc_a"}, TypeB: TypeB{B: "abc_b"}}, C: "abc_c"})
+		got, err := preHandleArgs(TypeABC{TypeAB: TypeAB{TypeA: TypeA{A: "abc_a"}, TypeB: TypeB{B: "abc_b"}}, C: "abc_c"})
 		if err != nil {
 			t.Errorf("mergeArgs() error = %v, wantErr false", err)
 			return
@@ -175,7 +175,7 @@ func TestArgsMerge(t *testing.T) {
 			"p3": []int{1, 2, 3},
 			"p4": testTime,
 		}}
-		got, err := mergeArgs(args...)
+		got, err := preHandleArgs(args...)
 		if err != nil {
 			t.Errorf("mergeArgs() error = %v, wantErr false", err)
 			return
