@@ -182,10 +182,10 @@ func isLegalParamNameCharter(r rune) bool {
 }
 
 // 分析Sql语句，提取用到的命名参数名称（按顺序），并将 @ 占位参数转换为 mysql 驱动支持的 ? 形式。
-func parseMySqlNamedSql(sqlText string) *mysqlNamedParsedResult {
+func parseMySqlNamedSql(sqlText string) mysqlNamedParsedResult {
 	// 如果缓存中有数据，直接返回。
 	if cacheResult, ok := mysqlNamedSqlParsedResult.Load(sqlText); ok {
-		return cacheResult.(*mysqlNamedParsedResult)
+		return cacheResult.(mysqlNamedParsedResult)
 	}
 
 	names := make([]string, 0, 10) // 存放 sql 中所有的参数名称。
@@ -241,7 +241,7 @@ func parseMySqlNamedSql(sqlText string) *mysqlNamedParsedResult {
 		}
 	}
 
-	parsedResult := &mysqlNamedParsedResult{fixedSqlTextBuilder.String(), names}
+	parsedResult := mysqlNamedParsedResult{fixedSqlTextBuilder.String(), names}
 	mysqlNamedSqlParsedResult.Store(sqlText, parsedResult) // 缓存结果。
 	return parsedResult
 }
