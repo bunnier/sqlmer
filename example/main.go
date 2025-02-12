@@ -89,7 +89,9 @@ func selectionDemo() {
 	fmt.Println(count.(int64)) // Output: 2
 
 	// 如果喜欢标准库风格，这里也提供了增强版本的 sql.Rows，支持 SliceScan、MapScan。
-	// 注意：如果 slice 为空，会被解析为 NULL ，这会导致 in/not in 语句均为 false；
+	// 注意：
+	//   - 这里用到了 slice/array 的参数展开特性
+	//   - 如果传入的 slice/array 长度为 0，会被解析为 NULL ，会导致 in/not in 语句均为 false；
 	rows := dbClient.MustRows("SELECT Name, now() FROM demo WHERE Name IN (@p1)", []any{"rui", "bao"})
 	for rows.Next() {
 		// SliceScan 会自动判断列数及列类型，用 []any 方式返回。
