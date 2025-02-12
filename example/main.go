@@ -61,17 +61,30 @@ func purge() {
 
 func selectionDemo() {
 	// 命名参数查询数据，命名参数采用 map，key 为 sql 语句 @ 之后的参数名，value 为值。
-	dataMap := dbClient.MustGet("SELECT * FROM demo WHERE Name=@name", map[string]any{"name": "rui"})
-	fmt.Println(dataMap) // Output: map[Age:1 Id:1 Name:rui]
+	dataMap := dbClient.MustGet("SELECT * FROM demo WHERE Name=@Name", map[string]any{"Name": "rui"})
+	fmt.Println(dataMap) // Output: map[Age:1 Id:1 Name:rui Scores:SCORES:1,3,5,7]
 
-	// 获取第一行第一列，DBNull 和 未命中都会返回 nil，因此提供了第二返回值 hit（bool 类型）来区分是 DBNull 和无数据，这里不是可空字段因此无需判断。
+	// 命名参数查询数据，命名参数采用 struct ，字段名为 sql 语句 @ 之后的参数名，字段值为参数值。
+	type Params struct {
+		Name string
+	}
+	dataMap = dbClient.MustGet("SELECT * FROM demo WHERE Name=@Name", Params{Name: "rui"})
+	fmt.Println(dataMap) // Output: map[Age:1 Id:1 Name:rui Scores:SCORES:1,3,5,7]
+
+	// 可提供多个参数，DbClient 会自动进行参数合并，优先取靠后的参数中的同名字段（ struct 和 map 可互相覆盖）。
+	dataMap = dbClient.MustGet("SELECT * FROM demo WHERE Name=@Name", Params{Name: "rui"}, map[string]any{"Name": "bao"})
+	fmt.Println(dataMap) // Output: map[Age:2 Id:2 Name:bao Scores:SCORES:2,4,6,8]
+
+	// 可通过 @p1.。。@pN 方式，指定参数的位置，参数位置从 1 开始。
 	name, _ := dbClient.MustScalar("SELECT Name FROM demo WHERE Name=@p1", "rui")
-	fmt.Println(name.(string)) // Output: rui
+	fmt.Println(name.(string))
+
+	// 可混用 struct / map / 索引参数，DbClient 会自动进行参数合并。
+	count, _ := dbClient.MustScalar("SELECT COUNT(1) FROM demo WHERE Name=@p1 OR Name=@Name", "rui", Params{Name: "bao"})
+	fmt.Println(count.(int64)) // Output: 2
 
 	// 如果喜欢标准库风格，这里也提供了增强版本的 sql.Rows，支持 SliceScan、MapScan。
-	// 注意：
-	//    - 这里 in 的参数适用了 slice 的方式，这个特性目前仅支持 MySQL，针对 SQL Server 暂时需要自行展开；
-	//    - 如果 slice 为空，会被解析为 NULL ，这会导致 in/not in 语句均为 false；
+	// 注意：如果 slice 为空，会被解析为 NULL ，这会导致 in/not in 语句均为 false；
 	rows := dbClient.MustRows("SELECT Name, now() FROM demo WHERE Name IN (@p1)", []any{"rui", "bao"})
 	for rows.Next() {
 		// SliceScan 会自动判断列数及列类型，用 []any 方式返回。
