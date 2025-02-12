@@ -80,7 +80,12 @@ func selectionDemo() {
 	fmt.Println(name.(string))
 
 	// 可混用 struct / map / 索引参数，DbClient 会自动进行参数合并。
-	count, _ := dbClient.MustScalar("SELECT COUNT(1) FROM demo WHERE Name=@p1 OR Name=@Name", "rui", Params{Name: "bao"})
+	// 下面这个语句的 3 个参数，DbClient 进行合并后最后的参数列表是： @p1=rui, @Name="bao"
+	count, _ := dbClient.MustScalar("SELECT COUNT(1) FROM demo WHERE Name=@p1 OR Name=@Name",
+		map[string]any{"Name": "other"},
+		"rui",
+		Params{Name: "bao"},
+	)
 	fmt.Println(count.(int64)) // Output: 2
 
 	// 如果喜欢标准库风格，这里也提供了增强版本的 sql.Rows，支持 SliceScan、MapScan。
