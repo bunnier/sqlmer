@@ -75,13 +75,14 @@ func selectionDemo() {
 	dataMap = dbClient.MustGet("SELECT * FROM demo WHERE Name=@Name", Params{Name: "rui"}, map[string]any{"Name": "bao"})
 	fmt.Println(dataMap) // Output: map[Age:2 Id:2 Name:bao Scores:SCORES:2,4,6,8]
 
-	// 可通过 @p1.。。@pN 方式，指定参数的位置，参数位置从 1 开始。
+	// 可通过 @p1...@pN 方式，指定参数的位置，参数位置从 1 开始。
 	name, _ := dbClient.MustScalar("SELECT Name FROM demo WHERE Name=@p1", "rui")
 	fmt.Println(name.(string))
 
 	// 可混用 struct / map / 索引参数，DbClient 会自动进行参数合并。
 	// 下面这个语句的 3 个参数，DbClient 进行合并后最后的参数列表是： @p1=rui, @Name="bao"
-	count, _ := dbClient.MustScalar("SELECT COUNT(1) FROM demo WHERE Name=@p1 OR Name=@Name",
+	count, _ := dbClient.MustScalar(
+		"SELECT COUNT(1) FROM demo WHERE Name=@p1 OR Name=@Name",
 		map[string]any{"Name": "other"},
 		"rui",
 		Params{Name: "bao"},
