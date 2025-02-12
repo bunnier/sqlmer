@@ -10,6 +10,7 @@ import (
 	"github.com/bunnier/sqlmer"
 	"github.com/bunnier/sqlmer/internal/testenv"
 	"github.com/bunnier/sqlmer/mysql"
+	"github.com/bunnier/sqlmer/sqlen"
 )
 
 func init() {
@@ -325,15 +326,8 @@ func Test_internalDbClient_Rows(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	t.Run("noParams", func(t *testing.T) {
-		rows, err := mysqlClient.Rows("SELECT varcharTest,dateTest,dateTimeTest,timestampTest,decimalTest FROM go_TypeTest WHERE id IN (1,2)")
-		if err != nil {
-			t.Errorf("internalDbClient.Rows() error = %v, wantErr %v", err, false)
-			return
-		}
-		defer rows.Close()
+	rowAssert := func(rows *sqlen.EnhanceRows, want []map[string]any) {
 		index := 0
-		want := []map[string]any{row1, row2}
 		for rows.Next() {
 			got, err := rows.MapScan()
 			if err != nil {
@@ -346,6 +340,17 @@ func Test_internalDbClient_Rows(t *testing.T) {
 			}
 			index++
 		}
+	}
+
+	t.Run("noParams", func(t *testing.T) {
+		rows, err := mysqlClient.Rows("SELECT varcharTest,dateTest,dateTimeTest,timestampTest,decimalTest FROM go_TypeTest WHERE id IN (1,2)")
+		if err != nil {
+			t.Errorf("internalDbClient.Rows() error = %v, wantErr %v", err, false)
+			return
+		}
+		defer rows.Close()
+
+		rowAssert(rows, []map[string]any{row1, row2})
 	})
 
 	t.Run("arrayParams", func(t *testing.T) {
@@ -355,20 +360,8 @@ func Test_internalDbClient_Rows(t *testing.T) {
 			return
 		}
 		defer rows.Close()
-		index := 0
-		want := []map[string]any{row1, row2}
-		for rows.Next() {
-			got, err := rows.MapScan()
-			if err != nil {
-				t.Errorf("internalDbClient.Rows() error = %v, wantErr %v", err, false)
-				return
-			}
-			if !reflect.DeepEqual(got, want[index]) {
-				t.Errorf("internalDbClient.Get() = %v, want %v", got, want[index])
-				return
-			}
-			index++
-		}
+
+		rowAssert(rows, []map[string]any{row1, row2})
 	})
 
 	t.Run("arrayParams2", func(t *testing.T) {
@@ -382,20 +375,8 @@ func Test_internalDbClient_Rows(t *testing.T) {
 			return
 		}
 		defer rows.Close()
-		index := 0
-		want := []map[string]any{row2}
-		for rows.Next() {
-			got, err := rows.MapScan()
-			if err != nil {
-				t.Errorf("internalDbClient.Rows() error = %v, wantErr %v", err, false)
-				return
-			}
-			if !reflect.DeepEqual(got, want[index]) {
-				t.Errorf("internalDbClient.Get() = %v, want %v", got, want[index])
-				return
-			}
-			index++
-		}
+
+		rowAssert(rows, []map[string]any{row2})
 	})
 
 	t.Run("structParams", func(t *testing.T) {
@@ -405,26 +386,13 @@ func Test_internalDbClient_Rows(t *testing.T) {
 			}{
 				Ids: []int{2},
 			})
-
 		if err != nil {
 			t.Errorf("internalDbClient.Rows() error = %v, wantErr %v", err, false)
 			return
 		}
 		defer rows.Close()
-		index := 0
-		want := []map[string]any{row2}
-		for rows.Next() {
-			got, err := rows.MapScan()
-			if err != nil {
-				t.Errorf("internalDbClient.Rows() error = %v, wantErr %v", err, false)
-				return
-			}
-			if !reflect.DeepEqual(got, want[index]) {
-				t.Errorf("internalDbClient.Get() = %v, want %v", got, want[index])
-				return
-			}
-			index++
-		}
+
+		rowAssert(rows, []map[string]any{row2})
 	})
 
 	t.Run("structParamsMerge1", func(t *testing.T) {
@@ -439,20 +407,8 @@ func Test_internalDbClient_Rows(t *testing.T) {
 			return
 		}
 		defer rows.Close()
-		index := 0
-		want := []map[string]any{row2}
-		for rows.Next() {
-			got, err := rows.MapScan()
-			if err != nil {
-				t.Errorf("internalDbClient.Rows() error = %v, wantErr %v", err, false)
-				return
-			}
-			if !reflect.DeepEqual(got, want[index]) {
-				t.Errorf("internalDbClient.Get() = %v, want %v", got, want[index])
-				return
-			}
-			index++
-		}
+
+		rowAssert(rows, []map[string]any{row2})
 	})
 
 	t.Run("structParamsMerge2", func(t *testing.T) {
@@ -466,20 +422,8 @@ func Test_internalDbClient_Rows(t *testing.T) {
 			return
 		}
 		defer rows.Close()
-		index := 0
-		want := []map[string]any{row2, row3}
-		for rows.Next() {
-			got, err := rows.MapScan()
-			if err != nil {
-				t.Errorf("internalDbClient.Rows() error = %v, wantErr %v", err, false)
-				return
-			}
-			if !reflect.DeepEqual(got, want[index]) {
-				t.Errorf("internalDbClient.Get() = %v, want %v", got, want[index])
-				return
-			}
-			index++
-		}
+
+		rowAssert(rows, []map[string]any{row2, row3})
 	})
 
 	t.Run("structParamsMerge3", func(t *testing.T) {
@@ -494,19 +438,7 @@ func Test_internalDbClient_Rows(t *testing.T) {
 			return
 		}
 		defer rows.Close()
-		index := 0
-		want := []map[string]any{row2, row3, row4}
-		for rows.Next() {
-			got, err := rows.MapScan()
-			if err != nil {
-				t.Errorf("internalDbClient.Rows() error = %v, wantErr %v", err, false)
-				return
-			}
-			if !reflect.DeepEqual(got, want[index]) {
-				t.Errorf("internalDbClient.Get() = %v, want %v", got, want[index])
-				return
-			}
-			index++
-		}
+
+		rowAssert(rows, []map[string]any{row2, row3, row4})
 	})
 }
