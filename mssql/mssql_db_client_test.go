@@ -11,6 +11,7 @@ import (
 	"github.com/bunnier/sqlmer"
 	"github.com/bunnier/sqlmer/internal/testenv"
 	"github.com/bunnier/sqlmer/mssql"
+	"github.com/bunnier/sqlmer/sqlen"
 )
 
 func init() {
@@ -319,72 +320,214 @@ func Test_internalDbClient_Get(t *testing.T) {
 }
 
 func Test_internalDbClient_Rows(t *testing.T) {
+	row1 := map[string]any{
+		"NvarcharTest":  "行1",
+		"VarcharTest":   "Row1",
+		"DateTimeTest":  time.Date(2021, 7, 1, 15, 38, 39, 583000000, time.UTC),
+		"DateTime2Test": time.Date(2021, 7, 1, 15, 38, 50, 425781300, time.UTC),
+		"DateTest":      time.Date(2021, 7, 1, 0, 0, 0, 0, time.UTC),
+		"TimeTest":      time.Date(1, 1, 1, 12, 1, 1, 345000000, time.UTC),
+		"DecimalTest":   "1.4567899900",
+	}
+	row2 := map[string]any{
+		"NvarcharTest":  "行2",
+		"VarcharTest":   "Row2",
+		"DateTimeTest":  time.Date(2021, 7, 2, 15, 38, 39, 583000000, time.UTC),
+		"DateTime2Test": time.Date(2021, 7, 2, 15, 38, 50, 425781300, time.UTC),
+		"DateTest":      time.Date(2021, 7, 2, 0, 0, 0, 0, time.UTC),
+		"TimeTest":      time.Date(1, 1, 1, 12, 2, 1, 345000000, time.UTC),
+		"DecimalTest":   "2.4567899900",
+	}
+	row3 := map[string]any{
+		"NvarcharTest":  "行3",
+		"VarcharTest":   "Row3",
+		"DateTimeTest":  time.Date(2021, 7, 3, 15, 38, 39, 583000000, time.UTC),
+		"DateTime2Test": time.Date(2021, 7, 3, 15, 38, 50, 425781300, time.UTC),
+		"DateTest":      time.Date(2021, 7, 3, 0, 0, 0, 0, time.UTC),
+		"TimeTest":      time.Date(1, 1, 1, 12, 3, 1, 345000000, time.UTC),
+		"DecimalTest":   "3.4567899900",
+	}
+	row4 := map[string]any{
+		"NvarcharTest":  "行4",
+		"VarcharTest":   "Row4",
+		"DateTimeTest":  time.Date(2021, 7, 4, 15, 38, 39, 583000000, time.UTC),
+		"DateTime2Test": time.Date(2021, 7, 4, 15, 38, 50, 425781300, time.UTC),
+		"DateTest":      time.Date(2021, 7, 4, 0, 0, 0, 0, time.UTC),
+		"TimeTest":      time.Date(1, 1, 1, 12, 4, 1, 345000000, time.UTC),
+		"DecimalTest":   "4.4567899900",
+	}
+
+	type IdsType struct {
+		Ids []int
+	}
+
 	mssqlClient, err := testenv.NewSqlServerClient()
 	if err != nil {
 		t.Fatal(err)
 	}
-	type args struct {
-		sqlText string
-		args    []any
-	}
-	tests := []struct {
-		name    string
-		client  sqlmer.DbClient
-		args    args
-		want    []map[string]any
-		wantErr bool
-	}{
-		{
-			"mssql",
-			mssqlClient,
-			args{
-				"SELECT NvarcharTest,VarcharTest,DateTimeTest,DateTime2Test,DateTest,TimeTest,DecimalTest FROM go_TypeTest WHERE Id IN (1,2)",
-				[]any{},
-			},
-			[]map[string]any{
-				{
-					"NvarcharTest":  "行1",
-					"VarcharTest":   "Row1",
-					"DateTimeTest":  time.Date(2021, 7, 1, 15, 38, 39, 583000000, time.UTC),
-					"DateTime2Test": time.Date(2021, 7, 1, 15, 38, 50, 425781300, time.UTC),
-					"DateTest":      time.Date(2021, 7, 1, 0, 0, 0, 0, time.UTC),
-					"TimeTest":      time.Date(1, 1, 1, 12, 1, 1, 345000000, time.UTC),
-					"DecimalTest":   "1.4567899900",
-				},
-				{
-					"NvarcharTest":  "行2",
-					"VarcharTest":   "Row2",
-					"DateTimeTest":  time.Date(2021, 7, 2, 15, 38, 39, 583000000, time.UTC),
-					"DateTime2Test": time.Date(2021, 7, 2, 15, 38, 50, 425781300, time.UTC),
-					"DateTest":      time.Date(2021, 7, 2, 0, 0, 0, 0, time.UTC),
-					"TimeTest":      time.Date(1, 1, 1, 12, 2, 1, 345000000, time.UTC),
-					"DecimalTest":   "2.4567899900",
-				},
-			},
-			false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			rows, err := tt.client.Rows(tt.args.sqlText, tt.args.args...)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("internalDbClient.Rows() error = %v, wantErr %v", err, tt.wantErr)
+
+	rowAssert := func(rows *sqlen.EnhanceRows, want []map[string]any) {
+		index := 0
+		for rows.Next() {
+			got, err := rows.MapScan()
+			if err != nil {
+				t.Errorf("internalDbClient.Rows() error = %v, wantErr %v", err, false)
 				return
 			}
-			defer rows.Close()
-			index := 0
-			for rows.Next() {
-				got, err := rows.MapScan()
-				if (err != nil) != tt.wantErr {
-					t.Errorf("internalDbClient.Rows() error = %v, wantErr %v", err, tt.wantErr)
-					return
-				}
-				if !reflect.DeepEqual(got, tt.want[index]) {
-					t.Errorf("internalDbClient.Get() = %v, want %v", got, tt.want)
-					return
-				}
-				index++
+			if !reflect.DeepEqual(got, want[index]) {
+				t.Errorf("internalDbClient.Get() = %v, want %v", got, want[index])
+				return
 			}
-		})
+			index++
+		}
 	}
+
+	t.Run("noParams", func(t *testing.T) {
+		rows, err := mssqlClient.Rows("SELECT NvarcharTest,VarcharTest,DateTimeTest,DateTime2Test,DateTest,TimeTest,DecimalTest  FROM go_TypeTest WHERE id IN (1,2)")
+		if err != nil {
+			t.Errorf("internalDbClient.Rows() error = %v, wantErr %v", err, false)
+			return
+		}
+		defer rows.Close()
+
+		rowAssert(rows, []map[string]any{row1, row2})
+	})
+
+	t.Run("arrayParams", func(t *testing.T) {
+		rows, err := mssqlClient.Rows("SELECT NvarcharTest,VarcharTest,DateTimeTest,DateTime2Test,DateTest,TimeTest,DecimalTest  FROM go_TypeTest WHERE id IN (@p1)", []int{1, 2})
+		if err != nil {
+			t.Errorf("internalDbClient.Rows() error = %v, wantErr %v", err, false)
+			return
+		}
+		defer rows.Close()
+
+		rowAssert(rows, []map[string]any{row1, row2})
+	})
+
+	t.Run("arrayParams2", func(t *testing.T) {
+		rows, err := mssqlClient.Rows("SELECT NvarcharTest,VarcharTest,DateTimeTest,DateTime2Test,DateTest,TimeTest,DecimalTest  FROM go_TypeTest WHERE id IN (@ids)",
+			map[string]any{
+				"ids": []int{2},
+			})
+
+		if err != nil {
+			t.Errorf("internalDbClient.Rows() error = %v, wantErr %v", err, false)
+			return
+		}
+		defer rows.Close()
+
+		rowAssert(rows, []map[string]any{row2})
+	})
+
+	t.Run("structParams", func(t *testing.T) {
+		rows, err := mssqlClient.Rows("SELECT NvarcharTest,VarcharTest,DateTimeTest,DateTime2Test,DateTest,TimeTest,DecimalTest  FROM go_TypeTest WHERE id IN (@Ids)",
+			struct {
+				Ids []int
+			}{
+				Ids: []int{2},
+			})
+		if err != nil {
+			t.Errorf("internalDbClient.Rows() error = %v, wantErr %v", err, false)
+			return
+		}
+		defer rows.Close()
+
+		rowAssert(rows, []map[string]any{row2})
+	})
+
+	t.Run("structParamsMerge1", func(t *testing.T) {
+		rows, err := mssqlClient.Rows("SELECT NvarcharTest,VarcharTest,DateTimeTest,DateTime2Test,DateTest,TimeTest,DecimalTest  FROM go_TypeTest WHERE id IN (@Ids) AND id!=@p1",
+			struct{ Ids []int }{
+				Ids: []int{1, 2},
+			},
+			1,
+		)
+		if err != nil {
+			t.Errorf("internalDbClient.Rows() error = %v, wantErr %v", err, false)
+			return
+		}
+		defer rows.Close()
+
+		rowAssert(rows, []map[string]any{row2})
+	})
+
+	t.Run("structParamsMerge2", func(t *testing.T) {
+		rows, err := mssqlClient.Rows("SELECT NvarcharTest,VarcharTest,DateTimeTest,DateTime2Test,DateTest,TimeTest,DecimalTest  FROM go_TypeTest WHERE id IN (@Ids) AND id!=@p1",
+			IdsType{Ids: []int{1, 2}},
+			1,
+			map[string]any{"Ids": []int{1, 2, 3}},
+		)
+		if err != nil {
+			t.Errorf("internalDbClient.Rows() error = %v, wantErr %v", err, false)
+			return
+		}
+		defer rows.Close()
+
+		rowAssert(rows, []map[string]any{row2, row3})
+	})
+
+	t.Run("structParamsMerge3", func(t *testing.T) {
+		rows, err := mssqlClient.Rows("SELECT NvarcharTest,VarcharTest,DateTimeTest,DateTime2Test,DateTest,TimeTest,DecimalTest  FROM go_TypeTest WHERE id IN (@Ids) OR id IN (@p1, @p2)",
+			map[string]any{"Ids": []int{1}},
+			2,
+			4,
+			IdsType{Ids: []int{3}},
+		)
+		if err != nil {
+			t.Errorf("internalDbClient.Rows() error = %v, wantErr %v", err, false)
+			return
+		}
+		defer rows.Close()
+
+		rowAssert(rows, []map[string]any{row2, row3, row4})
+	})
+
+	t.Run("structParamsMerge4", func(t *testing.T) {
+		rows, err := mssqlClient.Rows("SELECT NvarcharTest,VarcharTest,DateTimeTest,DateTime2Test,DateTest,TimeTest,DecimalTest  FROM go_TypeTest WHERE id IN (@Ids) OR dateTest=@p1",
+			map[string]any{"Ids": []int{1}},
+			time.Date(2021, 7, 3, 0, 0, 0, 0, time.UTC),
+			IdsType{Ids: []int{2}},
+		)
+		if err != nil {
+			t.Errorf("internalDbClient.Rows() error = %v, wantErr %v", err, false)
+			return
+		}
+		defer rows.Close()
+
+		rowAssert(rows, []map[string]any{row2, row3})
+	})
+
+	t.Run("structParamsMerge5", func(t *testing.T) {
+		rows, err := mssqlClient.Rows("SELECT NvarcharTest,VarcharTest,DateTimeTest,DateTime2Test,DateTest,TimeTest,DecimalTest  FROM go_TypeTest WHERE id IN (@Ids)",
+			IdsType{Ids: []int{2}},
+			IdsType{Ids: []int{1}},
+		)
+		if err != nil {
+			t.Errorf("internalDbClient.Rows() error = %v, wantErr %v", err, false)
+			return
+		}
+		defer rows.Close()
+
+		rowAssert(rows, []map[string]any{row1})
+	})
+
+	t.Run("structParamsMerge6", func(t *testing.T) {
+		rows, err := mssqlClient.Rows("SELECT NvarcharTest,VarcharTest,DateTimeTest,DateTime2Test,DateTest,TimeTest,DecimalTest  FROM go_TypeTest WHERE id IN (@Ids)",
+			IdsType{Ids: []int{2}},
+			struct {
+				IdsType
+			}{
+				IdsType{
+					Ids: []int{1}, // 嵌套类型也应该覆盖。
+				},
+			},
+		)
+		if err != nil {
+			t.Errorf("internalDbClient.Rows() error = %v, wantErr %v", err, false)
+			return
+		}
+		defer rows.Close()
+
+		rowAssert(rows, []map[string]any{row1})
+	})
 }
