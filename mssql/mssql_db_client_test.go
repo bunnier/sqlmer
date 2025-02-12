@@ -41,40 +41,17 @@ func Test_internalDbClient_Scalar(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	type args struct {
-		sqlText string
-		args    []any
-	}
-	tests := []struct {
-		name    string
-		client  sqlmer.DbClient
-		args    args
-		want    any
-		wantErr bool
-	}{
-		{
-			"mssql",
-			mssqlClient,
-			args{
-				"SELECT Id FROM go_TypeTest WHERE Id=@p1",
-				[]any{1},
-			},
-			int64(1),
-			false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, _, err := tt.client.Scalar(tt.args.sqlText, tt.args.args...)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("internalDbClient.Scalar() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("internalDbClient.Scalar() = %v, want %v", got, tt.want)
-			}
-		})
-	}
+
+	t.Run("mssql", func(t *testing.T) {
+		got, _, err := mssqlClient.Scalar("SELECT Id FROM go_TypeTest WHERE Id=@p1", 1)
+		if err != nil {
+			t.Errorf("internalDbClient.Scalar() error = %v, wantErr false", err)
+			return
+		}
+		if !reflect.DeepEqual(got, int64(1)) {
+			t.Errorf("internalDbClient.Scalar() = %v, want %v", got, int64(1))
+		}
+	})
 }
 
 func Test_internalDbClient_Execute(t *testing.T) {
@@ -82,51 +59,30 @@ func Test_internalDbClient_Execute(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	type args struct {
-		sqlText string
-		args    []any
-	}
-	tests := []struct {
-		name    string
-		client  sqlmer.DbClient
-		args    args
-		wantErr bool
-	}{
-		{
-			"mssql",
-			mssqlClient,
-			args{
-				`INSERT INTO go_TypeTest (TinyIntTest, SmallIntTest, IntTest, BitTest, NvarcharTest, VarcharTest, NcharTest, CharTest, DateTimeTest, DateTime2Test, DateTest, TimeTest, MoneyTest, FloatTest, DecimalTest, BinaryTest)
-				VALUES (5, 5, 5, 5, N'行5', 'Row5', N'行5', 'Row5', '2021-07-05 15:38:39.583', '2021-07-05 15:38:50.4257813', '2021-07-05', '12:05:01.345', 5.123, 5.12345, 5.45678999, 1);`,
-				[]any{},
-			},
-			false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			effectRow, err := tt.client.Execute(tt.args.sqlText, tt.args.args...)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("internalDbClient.Execute() error = %v, wantErr %v", err, tt.wantErr)
-			}
 
-			if effectRow != int64(1) {
-				if (err != nil) != tt.wantErr {
-					t.Errorf("internalDbClient.Execute() error = %v, wantErr %v", err, tt.wantErr)
-				}
-			}
+	t.Run("mssql", func(t *testing.T) {
+		sqlText := `INSERT INTO go_TypeTest (TinyIntTest, SmallIntTest, IntTest, BitTest, NvarcharTest, VarcharTest, NcharTest, CharTest, DateTimeTest, DateTime2Test, DateTest, TimeTest, MoneyTest, FloatTest, DecimalTest, BinaryTest)
+				VALUES (5, 5, 5, 5, N'行5', 'Row5', N'行5', 'Row5', '2021-07-05 15:38:39.583', '2021-07-05 15:38:50.4257813', '2021-07-05', '12:05:01.345', 5.123, 5.12345, 5.45678999, 1);`
 
-			err = tt.client.SizedExecute(1, tt.args.sqlText, tt.args.args...)
-			if err != nil {
-				t.Errorf("internalDbClient.SizedExecute() error = %v, wantErr %v", err, tt.wantErr)
-			}
+		effectRow, err := mssqlClient.Execute(sqlText)
+		if err != nil {
+			t.Errorf("internalDbClient.Execute() error = %v, wantErr false", err)
+		}
 
-			err = tt.client.SizedExecute(2, tt.args.sqlText, tt.args.args...)
-			if !errors.Is(err, sqlmer.ErrExpectedSizeWrong) {
-				t.Errorf("internalDbClient.SizedExecute() error = %v, wantErr DbSqlError", err)
-			}
-		})
-	}
+		if effectRow != int64(1) {
+			t.Errorf("internalDbClient.Execute() effectRow = %v, want 1", effectRow)
+		}
+
+		err = mssqlClient.SizedExecute(1, sqlText)
+		if err != nil {
+			t.Errorf("internalDbClient.SizedExecute() error = %v, wantErr false", err)
+		}
+
+		err = mssqlClient.SizedExecute(2, sqlText)
+		if !errors.Is(err, sqlmer.ErrExpectedSizeWrong) {
+			t.Errorf("internalDbClient.SizedExecute() error = %v, wantErr DbSqlError", err)
+		}
+	})
 }
 
 func Test_internalDbClient_Exists(t *testing.T) {
@@ -134,50 +90,28 @@ func Test_internalDbClient_Exists(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	type args struct {
-		sqlText string
-		args    []any
-	}
-	tests := []struct {
-		name    string
-		client  sqlmer.DbClient
-		args    args
-		want    bool
-		wantErr bool
-	}{
-		{
-			"mssql_exist",
-			mssqlClient,
-			args{
-				"SELECT NvarcharTest,VarcharTest,DateTimeTest,DateTime2Test,DateTest,TimeTest,DecimalTest FROM go_TypeTest WHERE Id=1",
-				[]any{},
-			},
-			true,
-			false,
-		},
-		{
-			"mssql_notexist",
-			mssqlClient,
-			args{
-				"SELECT NvarcharTest,VarcharTest,DateTimeTest,DateTime2Test,DateTest,TimeTest,DecimalTest FROM go_TypeTest WHERE Id=10000",
-				[]any{},
-			},
-			false,
-			false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := tt.client.Exists(tt.args.sqlText, tt.args.args...)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("internalDbClient.Exists() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("internalDbClient.Exists() = %v, want %v", got, tt.want)
-			}
-		})
-	}
+
+	t.Run("mssql_exist", func(t *testing.T) {
+		got, err := mssqlClient.Exists("SELECT NvarcharTest,VarcharTest,DateTimeTest,DateTime2Test,DateTest,TimeTest,DecimalTest FROM go_TypeTest WHERE Id=1")
+		if err != nil {
+			t.Errorf("internalDbClient.Exists() error = %v, wantErr false", err)
+			return
+		}
+		if !reflect.DeepEqual(got, true) {
+			t.Errorf("internalDbClient.Exists() = %v, want %v", got, true)
+		}
+	})
+
+	t.Run("mssql_notexist", func(t *testing.T) {
+		got, err := mssqlClient.Exists("SELECT NvarcharTest,VarcharTest,DateTimeTest,DateTime2Test,DateTest,TimeTest,DecimalTest FROM go_TypeTest WHERE Id=10000")
+		if err != nil {
+			t.Errorf("internalDbClient.Exists() error = %v, wantErr false", err)
+			return
+		}
+		if !reflect.DeepEqual(got, false) {
+			t.Errorf("internalDbClient.Exists() = %v, want %v", got, false)
+		}
+	})
 }
 
 func Test_internalDbClient_Get(t *testing.T) {
@@ -498,6 +432,10 @@ func Test_internalDbClient_Rows(t *testing.T) {
 	})
 
 	t.Run("structParamsMerge5", func(t *testing.T) {
+		type IdsType struct {
+			Ids []int
+		}
+
 		rows, err := mssqlClient.Rows("SELECT NvarcharTest,VarcharTest,DateTimeTest,DateTime2Test,DateTest,TimeTest,DecimalTest  FROM go_TypeTest WHERE id IN (@Ids)",
 			IdsType{Ids: []int{2}},
 			IdsType{Ids: []int{1}},
@@ -512,6 +450,10 @@ func Test_internalDbClient_Rows(t *testing.T) {
 	})
 
 	t.Run("structParamsMerge6", func(t *testing.T) {
+		type IdsType struct {
+			Ids []int
+		}
+
 		rows, err := mssqlClient.Rows("SELECT NvarcharTest,VarcharTest,DateTimeTest,DateTime2Test,DateTest,TimeTest,DecimalTest  FROM go_TypeTest WHERE id IN (@Ids)",
 			IdsType{Ids: []int{2}},
 			struct {
