@@ -14,8 +14,8 @@
 - 增强了原生 sql.Rows / sql.Row 的能力，使其支持自动检测列的类型及数量，自动 Scan 到合适的类型里，并装载到 Map 或 Slice 中；
 - 支持 全局/单独 指定 SQL 语句的连接和读写超时；
 - 提供了支持 `嵌套事务` 的事务 API；
+- 支持传递为 `in 子句` 传递 `slice` 类型的参数；
 - 能根据目标数据库的配置，自动配置 `SetConnMaxLifetime` (目前仅支持 MySQL)；
-- 支持传递为 `in 子句` 传递 `slice` 类型的参数 (目前仅支持 MySQL)；
 
 ## 来个 Demo
 
