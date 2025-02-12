@@ -115,12 +115,11 @@ func extendInParams(sqlText string, params map[string]any) (string, []any, error
 	var newParams []any = make([]any, 0, len(params))
 	var newSqlBuilder strings.Builder
 
-	inString := false
-	inName := false
-	paramNameBuilder := strings.Builder{}
+	inString := false                                // 用于判断当前字符是否在字符串中。
+	inName := false                                  // 用于判断当前字符是否属于参数名的一部分。
+	paramNameBuilder := strings.Builder{}            // 用于存储参数名。
 	lastIndex := utf8.RuneCountInString(sqlText) - 1 // sql 语句 bytes 的最后一个索引位置。
-
-	hasParam := map[string]struct{}{} // 用于判断某个参数是否已经存在返回结果的参数列表中
+	hasParam := map[string]struct{}{}                // 用于判断某个参数是否已经存在返回结果的参数列表中。
 
 	for i, r := range sqlText {
 		if r == '\'' {
@@ -134,84 +133,83 @@ func extendInParams(sqlText string, params map[string]any) (string, []any, error
 			continue
 		}
 
-		if !inName && !strings.ContainsRune("@", r) {
-			newSqlBuilder.WriteRune(r)
-			continue
-		}
-
-		// 标识参数的开始。
+		// 处理参数标识符。
 		if r == '@' {
-			// 连续2个@可以用来转义，需要跳出作用域。
+			// 处理转义的 @@ 情况。
 			if inName && i > 0 && sqlText[i-1] == '@' {
 				paramNameBuilder.WriteRune(r)
 				inName = false
 				continue
 			}
+
+			// 开始新的参数名
 			inName = true
 			paramNameBuilder.Reset()
 			continue
 		}
 
-		// 当前状态正处于参数名中，且当前字符不是合法的参数字符，标示着参数名范围结束。
-		// 只要本字符不是最后一个字符，都会有后续的字符触发参数处理逻辑，都可以继续，但如果是最后一个字符，需要直接开始处理参数逻辑。
-		if inName && isLegalParamNameCharter(r) {
+		// 普通语句字符，直接入库即可。
+		if !inName {
+			newSqlBuilder.WriteRune(r)
+			continue
+		}
+
+		// 处理参数名称字符。
+		isLegalChar := isLegalParamNameCharter(r)
+		if isLegalChar {
 			paramNameBuilder.WriteRune(r)
 			if i < lastIndex {
 				continue
 			}
 		}
 
-		inName = isLegalParamNameCharter(r) // 如果最后一个字符是合法字符还走到这里，说明本字符其实是参数名的最后一个字。
-
+		// 参数名称结束，处理参数。
+		inName = isLegalChar // 更新参数名状态。
 		paramName := paramNameBuilder.String()
-
-		// 走到这里就是一个参数名结束，需要开始处理参数的时候了。
 		param := params[paramName]
-
-		// 处理切片类型。
-		// 排除 []byte，因为虽然 []byte 也是切片类型，但是它是二进制数据，不应该被展开。
 		paramValue := reflect.ValueOf(param)
-		if (paramValue.Kind() == reflect.Slice || paramValue.Kind() == reflect.Array) && !paramValue.Type().ConvertibleTo(reflect.TypeOf([]byte{})) {
+
+		// 处理需要展开的参数。
+		_, hasThisParam := hasParam[paramName]
+		if (paramValue.Kind() == reflect.Slice || paramValue.Kind() == reflect.Array) &&
+			!paramValue.Type().ConvertibleTo(reflect.TypeOf([]byte{})) {
 			paramLen := paramValue.Len()
 			if paramLen == 0 {
-				// 空切片替换为 SQL 不可能条件。
 				newSqlBuilder.WriteString("NULL")
 				continue
 			}
 
-			_, hasThisParam := hasParam[paramName]
-			for i := 0; i < paramLen; i++ {
-				if i != 0 {
+			for j := 0; j < paramLen; j++ {
+				if j != 0 {
 					newSqlBuilder.WriteByte(',')
 				}
 
-				// 生成占位符。@xxx 将被展开为 @xxx_0, @xxx_1, @xxx_2...
+				// 生成展开参数的参数占位符。
+				newParamName := fmt.Sprintf("%s_%d", paramName, j)
 				newSqlBuilder.WriteByte('@')
-				paramName := fmt.Sprintf("%s_%d", paramName, i)
-				newSqlBuilder.WriteString(paramName)
+				newSqlBuilder.WriteString(newParamName)
 
-				if hasThisParam { // 表明本参数已经在列表里面了，不需要再次添加。
-					continue
+				// 只在参数首次出现时添加到参数列表。
+				if !hasThisParam {
+					newParams = append(newParams, sql.Named(newParamName, paramValue.Index(j).Interface()))
 				}
-
-				// 插入参数。
-				newParams = append(newParams, sql.Named(paramName, paramValue.Index(i).Interface()))
 			}
 		} else {
+			// 处理非切片类型参数
 			newSqlBuilder.WriteRune('@')
 			newSqlBuilder.WriteString(paramName)
 
-			if _, ok := hasParam[paramName]; ok {
-				continue
+			// 只在参数首次出现时添加到参数列表。
+			if !hasThisParam {
+				newParams = append(newParams, sql.Named(paramName, param))
 			}
-
-			newParams = append(newParams, sql.Named(paramName, param))
 		}
 
-		// 标记为本参数已在列表中，且需要把触发参数结束的字符写入。
+		// 更新参数状态并处理结束字符
 		hasParam[paramName] = struct{}{}
 
-		if !inName { // 如果上面是因为最后一个字符触发的参数逻辑，这里的字符就是参数名的最后一个字符，不用再写入。
+		// 如果是参数名的下一个字符触发的参数处理逻辑，该字符需要入语句。
+		if !inName {
 			newSqlBuilder.WriteRune(r)
 		}
 	}
