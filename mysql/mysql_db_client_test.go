@@ -464,6 +464,20 @@ func Test_internalDbClient_Rows(t *testing.T) {
 	t.Run("structParamsMerge5", func(t *testing.T) {
 		rows, err := mysqlClient.Rows("SELECT varcharTest,dateTest,dateTimeTest,timestampTest,decimalTest FROM go_TypeTest WHERE id IN (@Ids)",
 			IdsType{Ids: []int{2}},
+			IdsType{Ids: []int{1}},
+		)
+		if err != nil {
+			t.Errorf("internalDbClient.Rows() error = %v, wantErr %v", err, false)
+			return
+		}
+		defer rows.Close()
+
+		rowAssert(rows, []map[string]any{row1})
+	})
+
+	t.Run("structParamsMerge6", func(t *testing.T) {
+		rows, err := mysqlClient.Rows("SELECT varcharTest,dateTest,dateTimeTest,timestampTest,decimalTest FROM go_TypeTest WHERE id IN (@Ids)",
+			IdsType{Ids: []int{2}},
 			struct {
 				IdsType
 			}{
