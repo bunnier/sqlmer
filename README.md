@@ -20,28 +20,28 @@
 - **便捷的 IN 查询**：支持直接传递 slice/array 类型参数到 IN 子句，无需手动拼接语句；
 - **智能的连接管理**：根据数据库配置自动初始化连接生命周期（该特性仅支持 MySQL）；
 
-## 来个 Demo
+## 快速上手
+
+让我们通过一系列示例来展示 sqlmer 的强大功能。以下示例将展示如何使用 sqlmer 进行数据库操作，包括基础查询、ORM 映射、事务处理等核心特性。
+
+> 本小节完整例子：[example](https://github.com/bunnier/sqlmer/blob/main/example/main.go)
+
+### 获取 sqlmer
+
+```bash
+go get github.com/bunnier/sqlmer
+```
+
+### 连接数据库
+
+首先，让我们创建一个数据库连接。sqlmer 提供了统一的接口设计，无论是 MySQL 还是 SQL Server，都可以使用相同的 API 进行操作。
 
 ```go
-package main
-
-import (
-	"context"
-	"fmt"
-	"log"
-	"strconv"
-	"strings"
-	"time"
-
-	"github.com/bunnier/sqlmer"
-	"github.com/bunnier/sqlmer/mysql"
-)
-
 var dbClient sqlmer.DbClient // 这是本库的主接口，统一了各种数据库的 API 操作。
 var err error                // 本库同时提供了 error/panic 两套 API，为了 demo 更为简洁，后续主要通过 panic(Must) 版本 API 演示。
 
 func init() {
-	// 这里使用 MySQL 做示范，SQL Server 也提供了一致的 API 和相应的参数解析逻辑。
+	// 这里使用 MySQL (mysql 包)做示范，SQL Server （mssql 包）也提供了一致的 API 和相应的参数解析逻辑。
 	if dbClient, err = mysql.NewMySqlDbClient(
 		"test:testpwd@tcp(127.0.0.1:3306)/test",
 		sqlmer.WithConnTimeout(time.Second*30), // 连接超时。
@@ -50,18 +50,14 @@ func init() {
 		log.Fatal(err)
 	}
 }
+```
 
-func main() {
-	prepare()
-	defer purge()
+### 基础查询操作
 
-	selectionDemo()
-	ormDemo()
-	ormWithFieldConvert()
-	transactionDemo()
-	timeoutDemo()
-}
+sqlmer 支持多种参数传递方式，包括命名参数和索引参数，也支持参数的重写覆盖逻辑，让 SQL 语句更易维护和重用。
 
+```go
+// 准备演示数据。
 func prepare() {
 	// 创建/删除 测试表。
 	dbClient.MustExecute(`
@@ -80,16 +76,13 @@ func prepare() {
 	dbClient.MustExecute("INSERT INTO demo(Name, Age, Scores) VALUES(@p1, @p2, @p3)", "bao", 2, "SCORES:2,4,6,8")
 }
 
-func purge() {
-	dbClient.MustExecute("DROP TABLE demo")
-}
-
+// 开始演示基础查询功能了~
 func selectionDemo() {
-	// 命名参数查询数据，命名参数采用 map，key 为 sql 语句 @ 之后的参数名，value 为值。
+	// 命名参数查询数据，参数采用 map 时：key 为 sql 语句 @ 之后的参数名，value 为值。
 	dataMap := dbClient.MustGet("SELECT * FROM demo WHERE Name=@Name", map[string]any{"Name": "rui"})
 	fmt.Println(dataMap) // Output: map[Age:1 Id:1 Name:rui Scores:SCORES:1,3,5,7]
 
-	// 命名参数查询数据，命名参数采用 struct ，字段名为 sql 语句 @ 之后的参数名，字段值为参数值。
+	// 命名参数查询数据，参数采用 struct 时：字段名为 sql 语句 @ 之后的参数名，字段值为参数值。
 	type Params struct {
 		Name string
 	}
@@ -138,7 +131,13 @@ func selectionDemo() {
 		log.Fatal(err)
 	}
 }
+```
 
+### 轻量级 ORM 映射
+
+sqlmer 提供了简单而强大的轻量级 ORM 映射功能，支持将查询结果直接映射到 Go 结构体。支持驼峰和下划线分割的名称的首字母模糊匹配，让数据操作更加灵活：
+
+```go
 // 演示如何使用轻量化 ORM 功能。将数据库的行，映射到 Go struct 。
 //
 // 由于 Go 语言的限制， struct 的字段必须是大写字母开头的，可能和数据库命名规范不一致。
@@ -208,7 +207,13 @@ func ormWithFieldConvert() {
 
 	fmt.Printf("%v\n", row) // Output: {1 rui 1 [1 3 5 7]}
 }
+```
 
+### 事务处理
+
+sqlmer 提供了强大的事务支持，包括嵌套事务，让复杂的事务场景处理变得简单：
+
+```go
 // 演示如何使用数据库事务。
 func transactionDemo() {
 	rowNum, _ := dbClient.MustScalar("SELECT count(1) FROM demo")
@@ -239,7 +244,13 @@ func transactionDemo() {
 	rowNum, _ = dbClient.MustScalar("SELECT count(1) FROM demo")
 	fmt.Println(rowNum) // Output: 0
 }
+```
 
+### 超时控制
+
+所有数据库操作都支持通过 Context 设置超时，提供更好的系统稳定性：
+
+```go
 // 演示如何设置超时时间。 DbClient 中的方法，都有一个 Context 版，支持传入 Context 以设置超时。
 // 如 Execute 对应 ExecuteContext 。
 func timeoutDemo() {

@@ -16,7 +16,7 @@ var dbClient sqlmer.DbClient // 这是本库的主接口，统一了各种数据
 var err error                // 本库同时提供了 error/panic 两套 API，为了 demo 更为简洁，后续主要通过 panic(Must) 版本 API 演示。
 
 func init() {
-	// 这里使用 MySQL 做示范，SQL Server 也提供了一致的 API 和相应的参数解析逻辑。
+	// 这里使用 MySQL (mysql 包)做示范，SQL Server （mssql 包）也提供了一致的 API 和相应的参数解析逻辑。
 	if dbClient, err = mysql.NewMySqlDbClient(
 		"test:testpwd@tcp(127.0.0.1:3306)/test",
 		sqlmer.WithConnTimeout(time.Second*30), // 连接超时。
@@ -60,11 +60,11 @@ func purge() {
 }
 
 func selectionDemo() {
-	// 命名参数查询数据，命名参数采用 map，key 为 sql 语句 @ 之后的参数名，value 为值。
+	// 命名参数查询数据，参数采用 map 时：key 为 sql 语句 @ 之后的参数名，value 为值。
 	dataMap := dbClient.MustGet("SELECT * FROM demo WHERE Name=@Name", map[string]any{"Name": "rui"})
 	fmt.Println(dataMap) // Output: map[Age:1 Id:1 Name:rui Scores:SCORES:1,3,5,7]
 
-	// 命名参数查询数据，命名参数采用 struct ，字段名为 sql 语句 @ 之后的参数名，字段值为参数值。
+	// 命名参数查询数据，参数采用 struct 时：字段名为 sql 语句 @ 之后的参数名，字段值为参数值。
 	type Params struct {
 		Name string
 	}
