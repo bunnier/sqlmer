@@ -321,6 +321,10 @@ func Test_internalDbClient_Rows(t *testing.T) {
 		"decimalTest":   "4.4567899900",
 	}
 
+	type IdsType struct {
+		Ids []int
+	}
+
 	mysqlClient, err := testenv.NewMysqlClient()
 	if err != nil {
 		t.Fatal(err)
@@ -413,7 +417,7 @@ func Test_internalDbClient_Rows(t *testing.T) {
 
 	t.Run("structParamsMerge2", func(t *testing.T) {
 		rows, err := mysqlClient.Rows("SELECT varcharTest,dateTest,dateTimeTest,timestampTest,decimalTest FROM go_TypeTest WHERE id IN (@Ids) AND id!=@p1",
-			struct{ Ids []int }{Ids: []int{1, 2}},
+			IdsType{Ids: []int{1, 2}},
 			1,
 			map[string]any{"Ids": []int{1, 2, 3}},
 		)
@@ -431,7 +435,7 @@ func Test_internalDbClient_Rows(t *testing.T) {
 			map[string]any{"Ids": []int{1}},
 			2,
 			4,
-			struct{ Ids []int }{Ids: []int{3}},
+			IdsType{Ids: []int{3}},
 		)
 		if err != nil {
 			t.Errorf("internalDbClient.Rows() error = %v, wantErr %v", err, false)
@@ -440,5 +444,40 @@ func Test_internalDbClient_Rows(t *testing.T) {
 		defer rows.Close()
 
 		rowAssert(rows, []map[string]any{row2, row3, row4})
+	})
+
+	t.Run("structParamsMerge4", func(t *testing.T) {
+		rows, err := mysqlClient.Rows("SELECT varcharTest,dateTest,dateTimeTest,timestampTest,decimalTest FROM go_TypeTest WHERE id IN (@Ids) OR dateTest=@p1",
+			map[string]any{"Ids": []int{1}},
+			time.Date(2021, 7, 3, 0, 0, 0, 0, time.UTC),
+			IdsType{Ids: []int{2}},
+		)
+		if err != nil {
+			t.Errorf("internalDbClient.Rows() error = %v, wantErr %v", err, false)
+			return
+		}
+		defer rows.Close()
+
+		rowAssert(rows, []map[string]any{row2, row3})
+	})
+
+	t.Run("structParamsMerge5", func(t *testing.T) {
+		rows, err := mysqlClient.Rows("SELECT varcharTest,dateTest,dateTimeTest,timestampTest,decimalTest FROM go_TypeTest WHERE id IN (@Ids)",
+			IdsType{Ids: []int{2}},
+			struct {
+				IdsType
+			}{
+				IdsType{
+					Ids: []int{1}, // 嵌套类型也应该覆盖。
+				},
+			},
+		)
+		if err != nil {
+			t.Errorf("internalDbClient.Rows() error = %v, wantErr %v", err, false)
+			return
+		}
+		defer rows.Close()
+
+		rowAssert(rows, []map[string]any{row1})
 	})
 }
