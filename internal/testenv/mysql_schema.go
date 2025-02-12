@@ -17,12 +17,12 @@ CREATE TABLE go_TypeTest (
 	charTextTest text NOT NULL,
 	dateTest date NOT NULL,
 	dateTimeTest datetime NOT NULL,
-	timestampTest timestamp NOT NULL,
+	timestampTest TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	floatTest float(5, 3) NOT NULL,
 	doubleTest double(10, 5) NOT NULL,
 	decimalTest DECIMAL(15, 10) NOT NULL,
 	bitTest bit(1) NOT NULL,
-	
+
 	nullIntTest int NULL,
 	nullTinyintTest tinyint NULL,
 	nullSmallIntTest smallint NULL,
@@ -42,7 +42,7 @@ CREATE TABLE go_TypeTest (
 
 	PRIMARY KEY (id),
 	KEY idx_go_TypeTest (id)
-) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4;
 `,
 		Drop: `DROP TABLE go_TypeTest`,
 	},
