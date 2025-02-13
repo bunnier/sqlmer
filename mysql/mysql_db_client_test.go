@@ -494,4 +494,70 @@ func Test_internalDbClient_Rows(t *testing.T) {
 
 		rowAssert(rows, []map[string]any{row1})
 	})
+
+	// in 测试空数组参数。
+	t.Run("inEmptyArrayParams", func(t *testing.T) {
+		rows, err := mysqlClient.Rows("SELECT varcharTest,dateTest,dateTimeTest,timestampTest,decimalTest FROM go_TypeTest WHERE id IN (@ids)",
+			map[string]any{
+				"ids": []int{},
+			})
+		if err != nil {
+			t.Errorf("Expected no error for nil parameter, error = %v", err)
+			return
+		}
+		defer rows.Close()
+
+		if rows.Next() {
+			t.Error("Expected no rows for empty array parameter")
+		}
+	})
+
+	//  not in 测试空数组参数。
+	t.Run("notInEmptyArrayParams", func(t *testing.T) {
+		rows, err := mysqlClient.Rows("SELECT varcharTest,dateTest,dateTimeTest,timestampTest,decimalTest FROM go_TypeTest WHERE id NOT IN (@ids)",
+			map[string]any{
+				"ids": []int{},
+			})
+		if err != nil {
+			t.Errorf("Expected no error for nil parameter, error = %v", err)
+			return
+		}
+		defer rows.Close()
+
+		if rows.Next() {
+			t.Error("Expected no rows for empty array parameter")
+		}
+	})
+
+	// in 测试 nil 参数。
+	t.Run("inNilParams", func(t *testing.T) {
+		rows, err := mysqlClient.Rows("SELECT varcharTest,dateTest,dateTimeTest,timestampTest,decimalTest FROM go_TypeTest WHERE id IN (@ids)",
+			map[string]any{
+				"ids": nil,
+			})
+		if err != nil {
+			t.Errorf("Expected no error for nil parameter, error = %v", err)
+			return
+		}
+
+		if rows.Next() {
+			t.Error("Expected no rows for empty array parameter")
+		}
+	})
+
+	// not in 测试 nil 参数。
+	t.Run("notInNilParams", func(t *testing.T) {
+		rows, err := mysqlClient.Rows("SELECT varcharTest,dateTest,dateTimeTest,timestampTest,decimalTest FROM go_TypeTest WHERE id NOT IN (@ids)",
+			map[string]any{
+				"ids": nil,
+			})
+		if err != nil {
+			t.Errorf("Expected no error for nil parameter, error = %v", err)
+			return
+		}
+
+		if rows.Next() {
+			t.Error("Expected error for nil parameter")
+		}
+	})
 }
