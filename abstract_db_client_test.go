@@ -48,33 +48,33 @@ func Test_preHandleArgs(t *testing.T) {
 	t.Run("empty_args", func(t *testing.T) {
 		got, err := preHandleArgs()
 		if err != nil {
-			t.Errorf("mergeArgs() error = %v, wantErr false", err)
+			t.Errorf("preHandleArgs() error = %v, want no error", err)
 			return
 		}
 		if len(got) != 0 {
-			t.Errorf("mergeArgs() = %v, want %v", got, []any{})
+			t.Errorf("preHandleArgs() = %v, want empty slice", got)
 		}
 	})
 
 	t.Run("basic_type_slice", func(t *testing.T) {
 		got, err := preHandleArgs([]int{1, 2, 3})
 		if err != nil {
-			t.Errorf("mergeArgs() error = %v, wantErr false", err)
+			t.Errorf("preHandleArgs() error = %v, want no error", err)
 			return
 		}
 		if !reflect.DeepEqual(got, []any{[]int{1, 2, 3}}) {
-			t.Errorf("mergeArgs() = %v, want %v", got, []any{[]int{1, 2, 3}})
+			t.Errorf("preHandleArgs() = %v, want %v", got, []any{[]int{1, 2, 3}})
 		}
 	})
 
 	t.Run("single_map", func(t *testing.T) {
 		got, err := preHandleArgs(map[string]any{"T": "t"})
 		if err != nil {
-			t.Errorf("mergeArgs() error = %v, wantErr false", err)
+			t.Errorf("preHandleArgs() error = %v, want no error", err)
 			return
 		}
 		if !reflect.DeepEqual(got, []any{map[string]any{"T": "t"}}) {
-			t.Errorf("mergeArgs() = %v, want %v", got, []any{map[string]any{"T": "t"}})
+			t.Errorf("preHandleArgs() = %v, want %v", got, []any{map[string]any{"T": "t"}})
 		}
 	})
 
