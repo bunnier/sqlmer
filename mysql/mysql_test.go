@@ -152,7 +152,7 @@ func Test_extendInParams(t *testing.T) {
 }
 
 func Test_bindMySqlArgs(t *testing.T) {
-	t.Run("map1", func(t *testing.T) {
+	t.Run("basic_map_binding", func(t *testing.T) {
 		oriSql := "SELECT * FROM go_TypeTest WHERE id=@id"
 		args := []any{
 			map[string]any{
@@ -175,7 +175,7 @@ func Test_bindMySqlArgs(t *testing.T) {
 		}
 	})
 
-	t.Run("map2", func(t *testing.T) {
+	t.Run("map_binding_with_underscore", func(t *testing.T) {
 		oriSql := "SELECT * FROM go_TypeTest WHERE idv2=@id_id"
 		args := []any{
 			map[string]any{
@@ -198,7 +198,7 @@ func Test_bindMySqlArgs(t *testing.T) {
 		}
 	})
 
-	t.Run("map3", func(t *testing.T) {
+	t.Run("map_binding_multiple_params", func(t *testing.T) {
 		oriSql := "SELECT * FROM go_TypeTest WHERE idv2=@id_id AND id=@id"
 		args := []any{
 			map[string]any{
@@ -222,7 +222,7 @@ func Test_bindMySqlArgs(t *testing.T) {
 		}
 	})
 
-	t.Run("map_name_err", func(t *testing.T) {
+	t.Run("map_binding_missing_param", func(t *testing.T) {
 		oriSql := "SELECT * FROM go_TypeTest WHERE id=@id1 OR id=@id2"
 		args := []any{
 			map[string]any{
@@ -236,7 +236,7 @@ func Test_bindMySqlArgs(t *testing.T) {
 		}
 	})
 
-	t.Run("index", func(t *testing.T) {
+	t.Run("basic_index_binding", func(t *testing.T) {
 		oriSql := "SELECT * FROM go_TypeTest WHERE id=@p1"
 		args := []any{1}
 		wantSql := "SELECT * FROM go_TypeTest WHERE id=?"
@@ -255,7 +255,7 @@ func Test_bindMySqlArgs(t *testing.T) {
 		}
 	})
 
-	t.Run("index_index_err1", func(t *testing.T) {
+	t.Run("index_binding_insufficient_params", func(t *testing.T) {
 		oriSql := "SELECT * FROM go_TypeTest WHERE id=@p1 AND id=@p2"
 		args := []any{1}
 
@@ -265,7 +265,7 @@ func Test_bindMySqlArgs(t *testing.T) {
 		}
 	})
 
-	t.Run("index_index_err2", func(t *testing.T) {
+	t.Run("index_binding_invalid_reference", func(t *testing.T) {
 		oriSql := "SELECT * FROM go_TypeTest WHERE id=@p3"
 		args := []any{1}
 
@@ -275,7 +275,7 @@ func Test_bindMySqlArgs(t *testing.T) {
 		}
 	})
 
-	t.Run("index_index_err3", func(t *testing.T) {
+	t.Run("invalid_param_format", func(t *testing.T) {
 		oriSql := "SELECT * FROM go_TypeTest WHERE id=@test"
 		args := []any{1}
 
@@ -285,7 +285,7 @@ func Test_bindMySqlArgs(t *testing.T) {
 		}
 	})
 
-	t.Run("index_index_err4", func(t *testing.T) {
+	t.Run("invalid_param_name", func(t *testing.T) {
 		oriSql := "SELECT * FROM go_TypeTest WHERE id=@pttt"
 		args := []any{1}
 
@@ -295,7 +295,7 @@ func Test_bindMySqlArgs(t *testing.T) {
 		}
 	})
 
-	t.Run("index_reuse_index", func(t *testing.T) {
+	t.Run("reuse_index_param", func(t *testing.T) {
 		oriSql := "SELECT * FROM go_TypeTest WHERE id=@p1 AND id=@p1"
 		args := []any{1}
 		wantSql := "SELECT * FROM go_TypeTest WHERE id=? AND id=?"
@@ -314,7 +314,7 @@ func Test_bindMySqlArgs(t *testing.T) {
 		}
 	})
 
-	t.Run("params_more_than_names", func(t *testing.T) {
+	t.Run("excess_params", func(t *testing.T) {
 		oriSql := "SELECT * FROM go_TypeTest WHERE id=@p3 AND id=@p3"
 		args := []any{1, 2, 3, 4, 5, 6, 7}
 		wantSql := "SELECT * FROM go_TypeTest WHERE id=? AND id=?"
@@ -333,7 +333,7 @@ func Test_bindMySqlArgs(t *testing.T) {
 		}
 	})
 
-	t.Run("inwhere1", func(t *testing.T) {
+	t.Run("array_binding_in_clause", func(t *testing.T) {
 		oriSql := "SELECT * FROM go_TypeTest WHERE id IN (@ids)"
 		args := []any{
 			map[string]any{
@@ -356,7 +356,7 @@ func Test_bindMySqlArgs(t *testing.T) {
 		}
 	})
 
-	t.Run("inwhere2", func(t *testing.T) {
+	t.Run("complex_binding_with_array", func(t *testing.T) {
 		oriSql := "SELECT * FROM go_TypeTest WHERE id!=@noid AND id IN (@ids)"
 		args := []any{
 			map[string]any{

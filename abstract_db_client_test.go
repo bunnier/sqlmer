@@ -45,7 +45,7 @@ func Test_preHandleArgs(t *testing.T) {
 
 	testTime := time.Date(2021, 7, 3, 0, 0, 0, 0, time.UTC)
 
-	t.Run("空参数列表", func(t *testing.T) {
+	t.Run("empty_args", func(t *testing.T) {
 		got, err := preHandleArgs()
 		if err != nil {
 			t.Errorf("mergeArgs() error = %v, wantErr false", err)
@@ -56,7 +56,7 @@ func Test_preHandleArgs(t *testing.T) {
 		}
 	})
 
-	t.Run("基础类型切片参数", func(t *testing.T) {
+	t.Run("basic_type_slice", func(t *testing.T) {
 		got, err := preHandleArgs([]int{1, 2, 3})
 		if err != nil {
 			t.Errorf("mergeArgs() error = %v, wantErr false", err)
@@ -67,7 +67,7 @@ func Test_preHandleArgs(t *testing.T) {
 		}
 	})
 
-	t.Run("单个map参数", func(t *testing.T) {
+	t.Run("single_map", func(t *testing.T) {
 		got, err := preHandleArgs(map[string]any{"T": "t"})
 		if err != nil {
 			t.Errorf("mergeArgs() error = %v, wantErr false", err)
@@ -78,7 +78,7 @@ func Test_preHandleArgs(t *testing.T) {
 		}
 	})
 
-	t.Run("多个map参数", func(t *testing.T) {
+	t.Run("multiple_maps", func(t *testing.T) {
 		got, err := preHandleArgs(map[string]any{"T": "t"}, map[string]any{"T": "t2"})
 		if err != nil {
 			t.Errorf("mergeArgs() error = %v, wantErr false", err)
@@ -89,7 +89,7 @@ func Test_preHandleArgs(t *testing.T) {
 		}
 	})
 
-	t.Run("单个结构体参数", func(t *testing.T) {
+	t.Run("single_struct", func(t *testing.T) {
 		got, err := preHandleArgs(TypeA{A: "a"})
 		if err != nil {
 			t.Errorf("mergeArgs() error = %v, wantErr false", err)
@@ -100,7 +100,7 @@ func Test_preHandleArgs(t *testing.T) {
 		}
 	})
 
-	t.Run("单个指针结构体参数", func(t *testing.T) {
+	t.Run("single_struct_pointer", func(t *testing.T) {
 		got, err := preHandleArgs(&TypeA{A: "a"})
 		if err != nil {
 			t.Errorf("mergeArgs() error = %v, wantErr false", err)
@@ -111,7 +111,7 @@ func Test_preHandleArgs(t *testing.T) {
 		}
 	})
 
-	t.Run("多个结构体参数", func(t *testing.T) {
+	t.Run("multiple_structs", func(t *testing.T) {
 		got, err := preHandleArgs(TypeA{A: "a"}, TypeB{B: "b"})
 		if err != nil {
 			t.Errorf("mergeArgs() error = %v, wantErr false", err)
@@ -122,7 +122,7 @@ func Test_preHandleArgs(t *testing.T) {
 		}
 	})
 
-	t.Run("多个结构体指针参数", func(t *testing.T) {
+	t.Run("multiple_struct_pointers", func(t *testing.T) {
 		got, err := preHandleArgs(&TypeA{A: "a"}, &TypeB{B: "b"})
 		if err != nil {
 			t.Errorf("mergeArgs() error = %v, wantErr false", err)
@@ -133,7 +133,7 @@ func Test_preHandleArgs(t *testing.T) {
 		}
 	})
 
-	t.Run("嵌套结构体参数", func(t *testing.T) {
+	t.Run("nested_struct", func(t *testing.T) {
 		got, err := preHandleArgs(TypeAB{TypeA: TypeA{A: "ab_a"}, TypeB: TypeB{B: "ab_b"}})
 		if err != nil {
 			t.Errorf("mergeArgs() error = %v, wantErr false", err)
@@ -144,7 +144,7 @@ func Test_preHandleArgs(t *testing.T) {
 		}
 	})
 
-	t.Run("多层嵌套结构体参数", func(t *testing.T) {
+	t.Run("deep_nested_struct", func(t *testing.T) {
 		got, err := preHandleArgs(TypeABC{TypeAB: TypeAB{TypeA: TypeA{A: "abc_a"}, TypeB: TypeB{B: "abc_b"}}, C: "abc_c"})
 		if err != nil {
 			t.Errorf("mergeArgs() error = %v, wantErr false", err)
@@ -155,7 +155,7 @@ func Test_preHandleArgs(t *testing.T) {
 		}
 	})
 
-	t.Run("混合类型参数", func(t *testing.T) {
+	t.Run("mixed_types", func(t *testing.T) {
 		args := []any{
 			TypeAB{TypeA: TypeA{A: "ab_a"}, TypeB: TypeB{B: "ab_b"}},
 			1,
