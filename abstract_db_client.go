@@ -86,79 +86,88 @@ var dbConv = conv.Conv{
 }
 
 // preHandleArgs 用于对 SQL 语句和参数进行预处理。
-// 它会尝试从结构体参数中提取字段值，并将其合并到一个 map 中再交由 bindArgs 处理。
 func preHandleArgs(args ...any) ([]any, error) {
-	needMerge := false // 是否需要合并参数。
-	hasMap := false    // 是否有map类型的参数。
-
-	// 1. 遍历所有参数，判断是否需要合并参数。
-	for i := 0; i < len(args); i++ {
-		argType := reflect.TypeOf(args[i])
-
-		// 如果参数是指针，获取其指向的值。
-		if argType.Kind() == reflect.Ptr {
-			argType = argType.Elem()
-		}
-
-		hasMap = hasMap || argType.Kind() == reflect.Map
-
-		// 如果有 Map 类型的参数，且多余一个，也需要走合并逻辑。
-		if hasMap && i > 0 {
-			needMerge = true
-			break
-		}
-
-		if argType.Kind() == reflect.Struct && !reflect.TypeOf(time.Time{}).ConvertibleTo(argType) {
-			needMerge = true
-			break
-		}
-	}
-
-	// 2. 如果没有需要合并的参数，直接返回。
-	if !needMerge {
+	if !needMergeArgs(args...) {
 		return args, nil
 	}
 
-	// 3. 开始参数处理逻辑。
-	paramsMap := make(map[string]any)
-	indexParamIdx := 0
+	mergedArgs := make(map[string]any, len(args))
+	indexParamCount := 0 // 专门用于记录索引参数的计数
 	for _, arg := range args {
-		argType := reflect.TypeOf(arg)
-
-		// 针对指针参数，获取其指向的值和类型进行判断。
-		if argType.Kind() == reflect.Ptr {
-			argType = argType.Elem()
-			arg = reflect.ValueOf(arg).Elem().Interface()
-		}
-
-		switch {
-		// 如果参数是 map 类型，直接合并到 paramsMap 中。
-		case argType.Kind() == reflect.Map:
-			argMap := arg.(map[string]any)
-			for k, v := range argMap {
-				paramsMap[k] = v
-			}
-
-		// 如果参数是结构体类型，转成 map 后合并。
-		case (argType.Kind() == reflect.Struct) && !reflect.TypeOf(time.Time{}).ConvertibleTo(argType):
-			argMap, err := dbConv.StructToMap(arg)
-			if err != nil {
-				return nil, err
-			}
-
-			// 将参数合并到 paramsMap 中。
-			for k, v := range argMap {
-				paramsMap[k] = v
-			}
-
-		// 其余类型，作为索引参数传递。
-		default:
-			indexParamIdx++
-			paramsMap["p"+strconv.Itoa(indexParamIdx)] = arg
-			continue
+		if err := handleSingleArg(mergedArgs, arg, &indexParamCount); err != nil {
+			return nil, err
 		}
 	}
 
-	// 使用合并后的参数map调用原有的bindArgs函数
-	return []any{paramsMap}, nil
+	return []any{mergedArgs}, nil
+}
+
+// 检查参数类型是否需要合并处理。
+func needMergeArgs(args ...any) bool {
+	hasMap := false // 判断是否有 map 参数。
+	for i, arg := range args {
+		argType := reflect.TypeOf(arg)
+		if argType.Kind() == reflect.Ptr {
+			argType = argType.Elem()
+		}
+
+		// 如果是 map 类型参数。
+		if argType.Kind() == reflect.Map {
+			if i > 0 { // 如果不是第一个参数就是 map，需要合并。
+				return true
+			}
+			hasMap = true
+			continue
+		}
+
+		// 如果是非 time.Time 的结构体，需要合并。
+		if argType.Kind() == reflect.Struct && !reflect.TypeOf(time.Time{}).ConvertibleTo(argType) {
+			return true
+		}
+
+		// 如果已经有 map 且遇到其他类型参数，需要合并。
+		if hasMap {
+			return true
+		}
+	}
+
+	return false
+}
+
+// 处理单个参数。
+func handleSingleArg(paramsMap map[string]any, arg any, indexParamCount *int) error {
+	argType := reflect.TypeOf(arg)
+
+	// 处理指针类型。
+	if argType.Kind() == reflect.Ptr {
+		argType = argType.Elem()
+		arg = reflect.ValueOf(arg).Elem().Interface()
+	}
+
+	switch {
+	// 处理 map 类型参数。
+	case argType.Kind() == reflect.Map:
+		argMap := arg.(map[string]any)
+		for k, v := range argMap {
+			paramsMap[k] = v
+		}
+
+	// 处理结构体类型参数。
+	case argType.Kind() == reflect.Struct && !reflect.TypeOf(time.Time{}).ConvertibleTo(argType):
+		argMap, err := dbConv.StructToMap(arg)
+		if err != nil {
+			return err
+		}
+
+		for k, v := range argMap {
+			paramsMap[k] = v
+		}
+
+	// 索引参数（索引的值 1 开始，所以就是已发现的参数的个数）。
+	default:
+		*indexParamCount++
+		paramsMap["p"+strconv.Itoa(*indexParamCount)] = arg
+	}
+
+	return nil
 }
