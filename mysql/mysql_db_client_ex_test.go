@@ -1054,8 +1054,15 @@ func TestTransactionKeeperEx(t *testing.T) {
 		tran := c.MustCreateTransaction()
 		defer tran.Close()
 
-		tran.MustExecute("UPDATE go_TypeTest SET intTest=2 WHERE id=1")
-		tran.MustCommit()
+		_, err := tran.Execute("UPDATE go_TypeTest SET intTest=2 WHERE id=1")
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+
+		err = tran.Commit()
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
 	})
 
 	t.Run("check2-and-repare", func(t *testing.T) {

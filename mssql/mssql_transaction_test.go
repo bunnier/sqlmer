@@ -57,7 +57,7 @@ func TransactionFuncTest(t *testing.T, dbClient sqlmer.DbClient) {
 			t.Errorf("dbClient.CreateTransaction() error = %v, wantErr nil", err)
 			return
 		}
-		defer tx.MustClose()
+		defer tx.Close()
 
 		TransactionEmbeddedCommit(t, 3, 0, tx)
 		if err := tx.Commit(); err != nil {
@@ -73,7 +73,7 @@ func TransactionFuncTest(t *testing.T, dbClient sqlmer.DbClient) {
 			t.Errorf("dbClient.CreateTransaction() error = %v, wantErr nil", err)
 			return
 		}
-		defer tx.MustClose()
+		defer tx.Close()
 
 		TransactionEmbeddedRollback(t, 3, 0, tx)
 		if err := tx.Commit(); err != nil {
@@ -89,7 +89,7 @@ func TransactionRollback(t *testing.T, dbClient sqlmer.DbClient) {
 		t.Errorf("dbClient.CreateTransaction() error = %v, wantErr nil", err)
 		return
 	}
-	defer tx.MustClose()
+	defer tx.Close()
 
 	res, err := tx.Execute("DELETE FROM go_TypeTest WHERE TinyIntTest=30") // Mysql & Sqlserver都有这个表，这条记录其它测试用例都没用到。
 	if err != nil {
@@ -120,7 +120,7 @@ func TransactionCommit(t *testing.T, dbClient sqlmer.DbClient) {
 		t.Errorf("dbClient.CreateTransaction() error = %v, wantErr nil", err)
 		return
 	}
-	defer tx.MustClose()
+	defer tx.Close()
 
 	res, err := tx.Execute("DELETE FROM go_TypeTest WHERE TinyIntTest=30")
 	if err != nil {
@@ -151,7 +151,7 @@ func TransactionCommitAfterRollback(t *testing.T, dbClient sqlmer.DbClient) {
 		t.Errorf("dbClient.CreateTransaction() error = %v, wantErr nil", err)
 		return
 	}
-	defer tx.MustClose()
+	defer tx.Close()
 
 	res, err := tx.Execute("DELETE FROM go_TypeTest WHERE TinyIntTest=31")
 	if err != nil {
@@ -189,7 +189,7 @@ func TransactionRollbackAfterCommit(t *testing.T, dbClient sqlmer.DbClient) {
 		t.Errorf("dbClient.CreateTransaction() error = %v, wantErr nil", err)
 		return
 	}
-	defer tx.MustClose()
+	defer tx.Close()
 
 	res, err := tx.Execute("DELETE FROM go_TypeTest WHERE TinyIntTest=31")
 	if err != nil {
@@ -227,7 +227,7 @@ func TransactionEmbeddedCommit(t *testing.T, maxDepth int, currentDepth int, tx 
 		t.Errorf("dbClient.CreateTransaction() Embeddedly error = %v, wantErr nil", err)
 		return
 	}
-	defer tx.MustClose()
+	defer tx.Close()
 
 	// 嵌套下去。
 	if maxDepth > currentDepth {
@@ -247,7 +247,7 @@ func TransactionEmbeddedRollback(t *testing.T, maxDepth int, currentDepth int, t
 		t.Errorf("dbClient.CreateTransaction() Embeddedly error = %v, wantErr nil", err)
 		return
 	}
-	defer tx.MustClose()
+	defer tx.Close()
 
 	if maxDepth > currentDepth {
 		currentDepth++

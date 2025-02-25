@@ -8,7 +8,7 @@ import (
 	"github.com/bunnier/sqlmer/sqlen"
 )
 
-var _ ErrorDbClient = (*AbstractDbClient)(nil)
+var _ DbClient = (*AbstractDbClient)(nil)
 
 // CreateTransaction 用于开始一个事务。
 // returns:
@@ -24,7 +24,7 @@ func (client *AbstractDbClient) CreateTransaction() (TransactionKeeper, error) {
 	txDbClient := &AbstractDbClient{
 		config: client.config,
 		Db:     client.Db,                         // Db 对象。
-		Exer:   sqlen.NewTxEnhance(tx, client.Db), // 新的client中的实际执行对象使用开启的事务。
+		Exer:   sqlen.NewTxEnhance(tx, client.Db), // 新的 client 中的实际执行对象使用开启的事务。
 	}
 
 	return &abstractTransactionKeeper{

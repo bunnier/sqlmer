@@ -64,14 +64,24 @@ func getDb(ctx context.Context, driverName string, dsn string, withPingCheck boo
 	return db, nil
 }
 
-// getExecTimeoutContext 用于获取数据库语句默认超时 context。
-func (client *AbstractDbClient) getExecTimeoutContext() (context.Context, context.CancelFunc) {
-	return context.WithTimeout(context.Background(), client.config.execTimeout)
+// GetExecTimeout 用于获取当前 DbClient 实例的执行超时时间。
+func (client *AbstractDbClient) GetExecTimeout() time.Duration {
+	return client.config.execTimeout
+}
+
+// GetConnTimeout 用于获取当前 DbClient 实例的连接超时时间。
+func (client *AbstractDbClient) GetConnTimeout() time.Duration {
+	return client.config.connTimeout
 }
 
 // Dsn 用于获取当前实例所使用的数据库连接字符串。
 func (client *AbstractDbClient) Dsn() string {
 	return client.config.Dsn
+}
+
+// getExecTimeoutContext 用于获取数据库语句默认超时 context。
+func (client *AbstractDbClient) getExecTimeoutContext() (context.Context, context.CancelFunc) {
+	return context.WithTimeout(context.Background(), client.GetExecTimeout())
 }
 
 var dbConv = conv.Conv{

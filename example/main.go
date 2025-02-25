@@ -12,11 +12,19 @@ import (
 	"github.com/bunnier/sqlmer/mysql"
 )
 
-var dbClient sqlmer.DbClient // 这是本库的主接口，统一了各种数据库的 API 操作。
-var err error                // 本库同时提供了 error/panic 两套 API，为了 demo 更为简洁，后续主要通过 panic(Must) 版本 API 演示。
+var (
+	// 这是本库的基础接口，提供了访问数据库的的核心 API 操作。
+	dbClient sqlmer.DbClient
+
+	// 这是本库的扩展接口（推荐使用）。
+	// DbClientEx 实现了 DbClient 的所有接口，并增加 must 版本 API、ORM 等扩展功能。
+	// 后续演示为了简洁，使用了 panic 版本 API，因此主要使用这个接口。
+	dbClientEx *sqlmer.DbClientEx
+)
 
 func init() {
 	// 这里使用 MySQL (mysql 包)做示范，SQL Server （mssql 包）也提供了一致的 API 和相应的参数解析逻辑。
+	var err error
 	if dbClient, err = mysql.NewMySqlDbClient(
 		"test:testpwd@tcp(127.0.0.1:3306)/test",
 		sqlmer.WithConnTimeout(time.Second*30), // 连接超时。
@@ -24,6 +32,8 @@ func init() {
 	); err != nil {
 		log.Fatal(err)
 	}
+
+	dbClientEx = sqlmer.Extend(dbClient)
 }
 
 func main() {
@@ -39,7 +49,7 @@ func main() {
 
 func prepare() {
 	// 创建/删除 测试表。
-	dbClient.MustExecute(`
+	dbClientEx.MustExecute(`
 		CREATE TABLE IF NOT EXISTS demo (
 			Id int(11) NOT NULL AUTO_INCREMENT,
 			Name VARCHAR(10) NOT NULL,
@@ -51,37 +61,37 @@ func prepare() {
 	`)
 
 	// 索引方式插入数据，@p1..@pN，分别对应第 1..n 个参数。
-	dbClient.MustExecute("INSERT INTO demo(Name, Age, Scores) VALUES(@p1, @p2, @p3)", "rui", 1, "SCORES:1,3,5,7")
-	dbClient.MustExecute("INSERT INTO demo(Name, Age, Scores) VALUES(@p1, @p2, @p3)", "bao", 2, "SCORES:2,4,6,8")
+	dbClientEx.MustExecute("INSERT INTO demo(Name, Age, Scores) VALUES(@p1, @p2, @p3)", "rui", 1, "SCORES:1,3,5,7")
+	dbClientEx.MustExecute("INSERT INTO demo(Name, Age, Scores) VALUES(@p1, @p2, @p3)", "bao", 2, "SCORES:2,4,6,8")
 }
 
 func purge() {
-	dbClient.MustExecute("DROP TABLE demo")
+	dbClientEx.MustExecute("DROP TABLE demo")
 }
 
 func selectionDemo() {
 	// 命名参数查询数据，参数采用 map 时：key 为 sql 语句 @ 之后的参数名，value 为值。
-	dataMap := dbClient.MustGet("SELECT * FROM demo WHERE Name=@Name", map[string]any{"Name": "rui"})
+	dataMap := dbClientEx.MustGet("SELECT * FROM demo WHERE Name=@Name", map[string]any{"Name": "rui"})
 	fmt.Println(dataMap) // Output: map[Age:1 Id:1 Name:rui Scores:SCORES:1,3,5,7]
 
 	// 命名参数查询数据，参数采用 struct 时：字段名为 sql 语句 @ 之后的参数名，字段值为参数值。
 	type Params struct {
 		Name string
 	}
-	dataMap = dbClient.MustGet("SELECT * FROM demo WHERE Name=@Name", Params{Name: "rui"})
+	dataMap = dbClientEx.MustGet("SELECT * FROM demo WHERE Name=@Name", Params{Name: "rui"})
 	fmt.Println(dataMap) // Output: map[Age:1 Id:1 Name:rui Scores:SCORES:1,3,5,7]
 
 	// 可提供多个参数，DbClient 会自动进行参数合并，优先取靠后的参数中的同名字段（ struct 和 map 可互相覆盖）。
-	dataMap = dbClient.MustGet("SELECT * FROM demo WHERE Name=@Name", Params{Name: "rui"}, map[string]any{"Name": "bao"})
+	dataMap = dbClientEx.MustGet("SELECT * FROM demo WHERE Name=@Name", Params{Name: "rui"}, map[string]any{"Name": "bao"})
 	fmt.Println(dataMap) // Output: map[Age:2 Id:2 Name:bao Scores:SCORES:2,4,6,8]
 
 	// 可通过 @p1...@pN 方式，指定参数的位置，参数位置从 1 开始。
-	name, _ := dbClient.MustScalar("SELECT Name FROM demo WHERE Name=@p1", "rui")
+	name, _ := dbClientEx.MustScalar("SELECT Name FROM demo WHERE Name=@p1", "rui")
 	fmt.Println(name.(string))
 
 	// 可混用 struct / map / 索引参数，DbClient 会自动进行参数合并。
 	// 下面这个语句的 3 个参数，DbClient 进行合并后最后的参数列表是： @p1=rui, @Name="bao"
-	count, _ := dbClient.MustScalar(
+	count, _ := dbClientEx.MustScalar(
 		"SELECT COUNT(1) FROM demo WHERE Name=@p1 OR Name=@Name",
 		map[string]any{"Name": "other"},
 		"rui",
@@ -93,7 +103,7 @@ func selectionDemo() {
 	// 注意：
 	//   - 这里用到了 slice/array 的参数展开特性
 	//   - 如果传入的 slice/array 长度为 0，会被解析为 NULL ，会导致 in/not in 语句均为 false；
-	rows := dbClient.MustRows("SELECT Name, now() FROM demo WHERE Name IN (@p1)", []any{"rui", "bao"})
+	rows := dbClientEx.MustRows("SELECT Name, now() FROM demo WHERE Name IN (@p1)", []any{"rui", "bao"})
 	for rows.Next() {
 		// SliceScan 会自动判断列数及列类型，用 []any 方式返回。
 		if dataSlice, err := rows.SliceScan(); err != nil {
@@ -106,10 +116,11 @@ func selectionDemo() {
 		}
 	}
 	// 和标准库一样，Rows 的 Err 和 Close 返回的错误记得要处理哦～
-	if err = rows.Err(); err != nil {
+	if err := rows.Err(); err != nil {
 		log.Fatal(err)
 	}
-	if err = rows.Close(); err != nil {
+
+	if err := rows.Close(); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -186,12 +197,12 @@ func ormWithFieldConvert() {
 
 // 演示如何使用数据库事务。
 func transactionDemo() {
-	rowNum, _ := dbClient.MustScalar("SELECT count(1) FROM demo")
+	rowNum, _ := dbClientEx.MustScalar("SELECT count(1) FROM demo")
 	fmt.Println(rowNum) // Output: 2
 
 	// CreateTransaction 返回一个 TransactionKeeper ，
 	// 它实现了 DbClient ，所以数据库操作方式和一般的 DbClient 完全一致。
-	trans := dbClient.MustCreateTransaction()
+	trans := dbClientEx.MustCreateTransactionEx()
 
 	// 如果 TransactionKeeper.Commit/MustCommit 没有被调用，则 Close 操作会回滚事务；
 	// 若事务已提交，则 Close 操作仅关闭连接。
@@ -201,7 +212,7 @@ func transactionDemo() {
 
 	// 支持使用嵌套事务。
 	func() {
-		embeddedTrans := trans.MustCreateTransaction()
+		embeddedTrans := trans.MustCreateTransactionEx()
 		defer embeddedTrans.MustClose() // 注意：嵌套事务也需要 Close 。
 
 		embeddedTrans.MustExecute("DELETE FROM demo WHERE Id=2")
@@ -211,15 +222,16 @@ func transactionDemo() {
 	// 提交外层的事务。
 	trans.MustCommit()
 
-	rowNum, _ = dbClient.MustScalar("SELECT count(1) FROM demo")
+	rowNum, _ = dbClientEx.MustScalar("SELECT count(1) FROM demo")
 	fmt.Println(rowNum) // Output: 0
 }
 
 // 演示如何设置超时时间。 DbClient 中的方法，都有一个 Context 版，支持传入 Context 以设置超时。
 // 如 Execute 对应 ExecuteContext 。
 func timeoutDemo() {
-	ctx, _ := context.WithTimeout(context.Background(), time.Second*1)
-	if _, err = dbClient.ExecuteContext(ctx, "SELECT sleep(3)"); err != nil {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), time.Second*1)
+	defer cancelFunc()
+	if _, err := dbClient.ExecuteContext(ctx, "SELECT sleep(3)"); err != nil {
 		fmt.Println("timeout: " + err.Error()) // 预期内的超时~
 	}
 }

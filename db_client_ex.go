@@ -31,36 +31,6 @@ func Extend(raw DbClient) *DbClientEx {
 	return &DbClientEx{raw, dbConv}
 }
 
-// TransactionKeeperEx 扩展 TransactionKeeper ，增加 DbClientEx 的功能。
-type TransactionKeeperEx struct {
-	*DbClientEx
-	TransactionKeeper
-}
-
-var _ TransactionKeeper = (*TransactionKeeperEx)(nil)
-
-// CreateTransactionEx 基于 DbClient.CreateTransaction 创建一个 TransactionKeeperEx 实例。
-func (c *DbClientEx) CreateTransactionEx() (tran *TransactionKeeperEx, err error) {
-	t, err := c.DbClient.CreateTransaction()
-	if err != nil {
-		return nil, err
-	}
-
-	return &TransactionKeeperEx{
-		DbClientEx:        Extend(t),
-		TransactionKeeper: t,
-	}, nil
-}
-
-// MustCreateTransactionEx 基于 DbClient.MustCreateTransaction 创建一个 TransactionKeeperEx 实例。
-func (c *DbClientEx) MustCreateTransactionEx() (tran *TransactionKeeperEx) {
-	t := c.DbClient.MustCreateTransaction()
-	return &TransactionKeeperEx{
-		DbClientEx:        Extend(t),
-		TransactionKeeper: t,
-	}
-}
-
 // GetStruct 获取一行的查询结果，转化并填充到 ptr 。 ptr 必须是 struct 类型的指针。
 // 若查询没有命中行，返回 ok=false ， ptr 不会被赋值。
 func (c *DbClientEx) GetStruct(ptr any, query string, args ...any) (ok bool, err error) {
