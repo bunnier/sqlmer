@@ -10,6 +10,7 @@ import (
 
 	"github.com/bunnier/sqlmer"
 	"github.com/bunnier/sqlmer/mysql"
+	"github.com/bunnier/sqlmer/wrap"
 )
 
 var (
@@ -45,6 +46,7 @@ func main() {
 	ormWithFieldConvert()
 	transactionDemo()
 	timeoutDemo()
+	decoratedDemo()
 }
 
 func prepare() {
@@ -234,4 +236,28 @@ func timeoutDemo() {
 	if _, err := dbClient.ExecuteContext(ctx, "SELECT sleep(3)"); err != nil {
 		fmt.Println("timeout: " + err.Error()) // 预期内的超时~
 	}
+}
+
+// 演示如何通过 wrap 包提供的装饰器注入慢日志。
+func decoratedDemo() {
+	// 通过 wrap 包提供的扩展注入慢日志逻辑。
+	dbClient := wrap.Extend(dbClient, func(sql string, args []any) func(error) {
+		// 函数会立刻执行。
+		startTime := time.Now()
+
+		// 返回的函数会在语句执行后执行。
+		return func(err error) {
+			duration := time.Since(startTime)
+			if duration <= 100*time.Microsecond {
+				return
+			}
+
+			fmt.Printf("[SlowSql]Sql=%s, Duration=%d(ms), Err=%v", sql, duration/time.Millisecond, err)
+		}
+	})
+
+	// 因为还是 DbClient 接口，还可以继续扩展为 DbClientEx。
+	clientEx := sqlmer.Extend(dbClient)
+
+	clientEx.Execute("SELECT sleep(1)") // Output: [SlowSql]Sql=SELECT sleep(1), Duration=1240(ms), Err=<nil>
 }
