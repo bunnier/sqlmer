@@ -21,12 +21,12 @@ func extendExecWrapTx(tx sqlmer.TransactionKeeper, wrapFunc WrapFunc) *WrappedTr
 
 // Commit 用于提交事务。
 func (t *WrappedTransactionKeeper) Commit() error {
-	return t.transactionKeeper.Close()
+	return t.transactionKeeper.Commit()
 }
 
 // Rollback 用于回滚事务。
 func (t *WrappedTransactionKeeper) Rollback() error {
-	return t.transactionKeeper.Close()
+	return t.transactionKeeper.Rollback()
 }
 
 // Close 用于优雅关闭事务，创建事务后可 defer 执行本方法。
