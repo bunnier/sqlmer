@@ -8,6 +8,15 @@ type TransactionKeeperEx struct {
 	TransactionKeeper
 }
 
+// ExtendTx 加强 TransactionKeeper 。
+//   - 提供 Must 版本的 API；
+func ExtendTx(raw TransactionKeeper) *TransactionKeeperEx {
+	return &TransactionKeeperEx{
+		DbClientEx:        Extend(raw),
+		TransactionKeeper: raw,
+	}
+}
+
 // MustCreateTransaction 用于开始一个事务。
 func (transKeeper *TransactionKeeperEx) MustCreateTransaction() TransactionKeeper {
 	if trans, err := transKeeper.CreateTransaction(); err != nil {

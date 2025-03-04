@@ -7,7 +7,9 @@ import (
 	"github.com/cmstar/go-conv"
 )
 
-// DbClientEx 加强 DbClient ，提供强类型的转化方法。
+// DbClientEx 加强 DbClient。
+//   - 提供 Must 版本的 API；
+//   - 提供强类型的转化方法；
 type DbClientEx struct {
 	DbClient           // 原始的 DbClient 实例。
 	Conv     conv.Conv // 为当前实例提供类型转换的 conv.Conv 实例。
