@@ -18,7 +18,7 @@ func ExtendTx(raw TransactionKeeper) *TransactionKeeperEx {
 }
 
 // CreateTransactionEx 基于 DbClient.CreateTransaction 创建一个 TransactionKeeperEx 实例。
-func (c *DbClientEx) CreateTransactionEx() (tran *TransactionKeeperEx, err error) {
+func (c *DbClientEx) CreateTransactionEx() (*TransactionKeeperEx, error) {
 	if tx, err := c.DbClient.CreateTransaction(); err != nil {
 		return nil, err
 	} else {
@@ -30,7 +30,7 @@ func (c *DbClientEx) CreateTransactionEx() (tran *TransactionKeeperEx, err error
 // returns:
 //
 //	@tran 返回一个TransactionKeeperEx 实例（实现了 TransactionKeeper、DbClient 接口） 接口的对象，在上面执行的语句会在同一个事务中执行。
-func (c *DbClientEx) MustCreateTransactionEx() (tran *TransactionKeeperEx) {
+func (c *DbClientEx) MustCreateTransactionEx() *TransactionKeeperEx {
 	return c.MustCreateTransaction()
 }
 
