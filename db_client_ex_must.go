@@ -9,10 +9,10 @@ import (
 // MustDbClient 提供了 DBClient 的 panic 版本 API
 type MustDbClient interface {
 
-	// MustCreateTransaction 用于开始一个事务。
+	// MustCreateTransactionEx（和 MustCreateTransaction 一致） 用于开始一个事务。
 	// returns:
-	//  @tran 返回一个实现了 TransactionKeeper（内嵌 DbClient 接口） 接口的对象，在上面执行的语句会在同一个事务中执行。
-	MustCreateTransaction() (tran TransactionKeeper)
+	//	@tran 返回一个TransactionKeeperEx 实例（实现了 TransactionKeeper、DbClient 接口） 接口的对象，在上面执行的语句会在同一个事务中执行。
+	MustCreateTransaction() (tran *TransactionKeeperEx)
 
 	// MustExecute 用于执行非查询 sql 语句，并返回所影响的行数。
 	// params:

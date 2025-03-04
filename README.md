@@ -231,8 +231,8 @@ func transactionDemo() {
 	rowNum, _ := dbClientEx.MustScalar("SELECT count(1) FROM demo")
 	fmt.Println(rowNum) // Output: 2
 
-	// CreateTransaction 返回一个 TransactionKeeper ，
-	// 它实现了 DbClient ，所以数据库操作方式和一般的 DbClient 完全一致。
+	// CreateTransaction 返回一个 TransactionKeeper，提供了 DbClient 一致的 API。
+	// CreateTransactionEx 返回一个 TransactionKeeperEx ，提供了 DbClientEx 一致的 API。
 	trans := dbClientEx.MustCreateTransactionEx()
 
 	// 如果 TransactionKeeper.Commit/MustCommit 没有被调用，则 Close 操作会回滚事务；

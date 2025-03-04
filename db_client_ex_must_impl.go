@@ -14,15 +14,15 @@ func (client *DbClientEx) getExecTimeoutContext() (context.Context, context.Canc
 	return context.WithTimeout(context.Background(), client.GetExecTimeout())
 }
 
-// MustCreateTransaction 用于开始一个事务。
+// MustCreateTransactionEx（和 MustCreateTransaction 一致） 用于开始一个事务。
 // returns:
 //
-//	@tran 返回一个实现了 TransactionKeeper（内嵌 DbClient 接口） 接口的对象，在上面执行的语句会在同一个事务中执行。
-func (client *DbClientEx) MustCreateTransaction() TransactionKeeper {
-	if trans, err := client.CreateTransaction(); err != nil {
+//	@tran 返回一个TransactionKeeperEx 实例（实现了 TransactionKeeper、DbClient 接口） 接口的对象，在上面执行的语句会在同一个事务中执行。
+func (client *DbClientEx) MustCreateTransaction() *TransactionKeeperEx {
+	if tx, err := client.CreateTransaction(); err != nil {
 		panic(err)
 	} else {
-		return trans
+		return ExtendTx(tx)
 	}
 }
 

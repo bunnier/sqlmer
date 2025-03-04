@@ -17,35 +17,21 @@ func ExtendTx(raw TransactionKeeper) *TransactionKeeperEx {
 	}
 }
 
-// MustCreateTransaction 用于开始一个事务。
-func (transKeeper *TransactionKeeperEx) MustCreateTransaction() TransactionKeeper {
-	if trans, err := transKeeper.CreateTransaction(); err != nil {
-		panic(err)
-	} else {
-		return trans
-	}
-}
-
 // CreateTransactionEx 基于 DbClient.CreateTransaction 创建一个 TransactionKeeperEx 实例。
 func (c *DbClientEx) CreateTransactionEx() (tran *TransactionKeeperEx, err error) {
-	t, err := c.DbClient.CreateTransaction()
-	if err != nil {
+	if tx, err := c.DbClient.CreateTransaction(); err != nil {
 		return nil, err
+	} else {
+		return ExtendTx(tx), nil
 	}
-
-	return &TransactionKeeperEx{
-		DbClientEx:        Extend(t),
-		TransactionKeeper: t,
-	}, nil
 }
 
-// MustCreateTransactionEx 基于 DbClient.MustCreateTransaction 创建一个 TransactionKeeperEx 实例。
+// MustCreateTransactionEx（和 MustCreateTransaction 一致） 用于开始一个事务。
+// returns:
+//
+//	@tran 返回一个TransactionKeeperEx 实例（实现了 TransactionKeeper、DbClient 接口） 接口的对象，在上面执行的语句会在同一个事务中执行。
 func (c *DbClientEx) MustCreateTransactionEx() (tran *TransactionKeeperEx) {
-	t := c.MustCreateTransaction()
-	return &TransactionKeeperEx{
-		DbClientEx:        Extend(t),
-		TransactionKeeper: t,
-	}
+	return c.MustCreateTransaction()
 }
 
 // MustCommit 用于提交事务。
