@@ -6,24 +6,6 @@ import (
 	"time"
 )
 
-type StrA struct {
-	A string
-}
-
-type StrB struct {
-	B string
-}
-
-type StrAB struct {
-	A string
-	B string
-}
-
-type StrABC struct {
-	StrAB
-	C string
-}
-
 func Test_preHandleArgs(t *testing.T) {
 	type TypeA struct {
 		A string
@@ -41,6 +23,11 @@ func Test_preHandleArgs(t *testing.T) {
 	type TypeABC struct {
 		TypeAB
 		C string
+	}
+
+	type TypeTimeA struct {
+		TypeA
+		Time time.Time
 	}
 
 	testTime := time.Date(2021, 7, 3, 0, 0, 0, 0, time.UTC)
@@ -152,6 +139,22 @@ func Test_preHandleArgs(t *testing.T) {
 		}
 		if !reflect.DeepEqual(got, []any{map[string]any{"A": "abc_a", "B": "abc_b", "C": "abc_c"}}) {
 			t.Errorf("mergeArgs() = %v, want %v", got, []any{map[string]any{"A": "abc_a", "B": "abc_b", "C": "abc_c"}})
+		}
+	})
+
+	t.Run("time_convert", func(t *testing.T) {
+		testTime := time.Now()
+		paramTimeA := TypeTimeA{
+			TypeA: TypeA{A: "abc_a"},
+			Time:  testTime,
+		}
+		got, err := preHandleArgs(paramTimeA)
+		if err != nil {
+			t.Errorf("mergeArgs() error = %v, wantErr false", err)
+			return
+		}
+		if !reflect.DeepEqual(got, []any{map[string]any{"A": "abc_a", "Time": testTime}}) {
+			t.Errorf("mergeArgs() = %v, want %v", got, []any{map[string]any{"A": "abc_a", "Time": testTime}})
 		}
 	})
 
