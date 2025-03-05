@@ -18,13 +18,14 @@ type WrappedDbClient struct {
 
 // WrapFunc 用于包裹 SQL 执行方法。
 // 函数本身在执行 SQL 语句前执行，返回一个函数，在执行 SQL 语句后执行。
+// 返回函数的 err 参数是 SQL 执行后返回的 error。
 type WrapFunc func(sql string, args []any) func(error)
 
 // Extend 加强 DbClient，在 DbClient 的数据库访问上，提供一层装饰器包裹，以注入慢日志/统计指标等能力。
 // params:
 //
 //	@raw 原始的 DbClient 实例。
-//	@execWrapFunc 包裹函数，在执行 SQL 语句前执行，返回一个函数，在执行 SQL 语句后执行。
+//	@execWrapFunc 包裹函数，在执行 SQL 语句前执行，返回一个函数，在执行 SQL 语句后执行。返回函数的 err 参数是 SQL 执行后返回的 error。
 //
 // returns:
 //
