@@ -11,6 +11,10 @@ func Test_preHandleArgs(t *testing.T) {
 		A string
 	}
 
+	type TypeAptr struct {
+		Ap *string
+	}
+
 	type TypeB struct {
 		B string
 	}
@@ -28,6 +32,11 @@ func Test_preHandleArgs(t *testing.T) {
 	type TypeTimeA struct {
 		TypeA
 		Time time.Time
+	}
+
+	type TypePtrTimeA struct {
+		TypeA
+		TimePtr *time.Time
 	}
 
 	testTime := time.Date(2021, 7, 3, 0, 0, 0, 0, time.UTC)
@@ -83,6 +92,27 @@ func Test_preHandleArgs(t *testing.T) {
 			return
 		}
 		if !reflect.DeepEqual(got, []any{map[string]any{"A": "a"}}) {
+			t.Errorf("mergeArgs() = %v, want %v", got, []any{map[string]any{"A": "a"}})
+		}
+	})
+
+	t.Run("single_ptr_struct", func(t *testing.T) {
+		pStr := "a"
+		got, err := preHandleArgs(TypeAptr{Ap: &pStr})
+		if err != nil {
+			t.Errorf("mergeArgs() error = %v, wantErr false", err)
+			return
+		}
+		if !reflect.DeepEqual(got, []any{map[string]any{"Ap": pStr}}) {
+			t.Errorf("mergeArgs() = %v, want %v", got, []any{map[string]any{"A": "a"}})
+		}
+
+		got, err = preHandleArgs(TypeAptr{Ap: nil})
+		if err != nil {
+			t.Errorf("mergeArgs() error = %v, wantErr false", err)
+			return
+		}
+		if !reflect.DeepEqual(got, []any{map[string]any{"Ap": nil}}) {
 			t.Errorf("mergeArgs() = %v, want %v", got, []any{map[string]any{"A": "a"}})
 		}
 	})
@@ -155,6 +185,36 @@ func Test_preHandleArgs(t *testing.T) {
 		}
 		if !reflect.DeepEqual(got, []any{map[string]any{"A": "abc_a", "Time": testTime}}) {
 			t.Errorf("mergeArgs() = %v, want %v", got, []any{map[string]any{"A": "abc_a", "Time": testTime}})
+		}
+	})
+
+	t.Run("time_ptr_convert", func(t *testing.T) {
+		testTime := time.Now()
+		paramTimeA := TypePtrTimeA{
+			TypeA:   TypeA{A: "abc_a"},
+			TimePtr: &testTime,
+		}
+		got, err := preHandleArgs(paramTimeA)
+		if err != nil {
+			t.Errorf("mergeArgs() error = %v, wantErr false", err)
+			return
+		}
+		if !reflect.DeepEqual(got, []any{map[string]any{"A": "abc_a", "TimePtr": testTime}}) {
+			t.Errorf("mergeArgs() = %v, want %v", got, []any{map[string]any{"A": "abc_a", "TimePtr": testTime}})
+		}
+
+		paramTimeA = TypePtrTimeA{
+			TypeA:   TypeA{A: "abc_a"},
+			TimePtr: nil,
+		}
+
+		got, err = preHandleArgs(paramTimeA)
+		if err != nil {
+			t.Errorf("mergeArgs() error = %v, wantErr false", err)
+			return
+		}
+		if !reflect.DeepEqual(got, []any{map[string]any{"A": "abc_a", "TimePtr": nil}}) {
+			t.Errorf("mergeArgs() = %v, want %v", got, []any{map[string]any{"A": "abc_a", "TimePtr": testTime}})
 		}
 	})
 
