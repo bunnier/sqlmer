@@ -7,7 +7,7 @@
 
 ## 功能简介
 
-一个面向原生 SQL 的数据库操作库，在保持 SQL 语句灵活性的同时，通过统一的接口设计、便捷的参数处理和轻量级的 ORM 映射能力，让数据库操作更加优雅高效。目前支持 MySQL 和 SQL Server。
+一个面向原生 SQL 的数据库操作库，在保持 SQL 语句灵活性的同时，通过统一的接口设计、便捷的参数处理和轻量级的 ORM 映射能力，让数据库操作更加优雅高效。目前支持 MySQL / SQLite / SQL Server 。
 
 ### 核心特性
 
@@ -35,7 +35,7 @@ go get github.com/bunnier/sqlmer
 
 ### 连接数据库
 
-首先，让我们创建一个数据库连接。sqlmer 提供了统一的接口设计，无论是 MySQL 还是 SQL Server，都可以使用相同的 API 进行操作。
+首先，让我们创建一个数据库连接。sqlmer 提供了统一的接口设计，无论是 MySQL / SQLite / SQL Server，都可以使用相同的 API 进行操作。
 
 ```go
 var (
@@ -49,7 +49,7 @@ var (
 )
 
 func init() {
-	// 这里使用 MySQL (mysql 包)做示范，SQL Server （mssql 包）也提供了一致的 API 和相应的参数解析逻辑。
+	// 这里使用 MySQL (mysql 包)做示范，其它支持的数据库也提供了一致的 API 和相应的参数解析逻辑。
 	var err error
 	if dbClient, err = mysql.NewMySqlDbClient(
 		"test:testpwd@tcp(127.0.0.1:3306)/test",
@@ -318,6 +318,16 @@ func decoratedDemo() {
 | date / datetime / timestamp                        | time.Time   |
 | bit                                                | []byte      |
 
+### SQLite
+
+| DB datatype                    | Go datatype |
+|--------------------------------|-------------|
+| text / varchar / char / clob   | string      |
+| integer / int / tiny int / ... | int64       |
+| real / double / float          | float64     |
+| time / date / datetime         | time.Time   |
+| blob                           | []byte      |
+
 ### SQL Server
 
 | DB datatype                              | Go datatype |
@@ -338,7 +348,8 @@ func decoratedDemo() {
 
 		{
 			"mysql": "testuser:testuser@tcp(127.0.0.1:3306)/test",
-			"sqlserver": "server=127.0.0.1; database=test; user id=testuser;password=testuser;"
+			"sqlserver": "server=127.0.0.1; database=test; user id=testuser;password=testuser;",
+			"sqlite": "test.db"
 		}
 
 2. 如果第 1 步配置的连接字符串有 DDL 权限，可通过调用 `go run ./internal/testcmd/main.go -a PREPARE` 来同时准备 MySQL / SQL Server 环境，如果没有 DDL 权限可自行直接执行 `internal/testenv/*_prepare.sql` 准备环境；
