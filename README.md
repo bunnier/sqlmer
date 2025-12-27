@@ -49,10 +49,10 @@ var (
 )
 
 func init() {
-	// 这里使用 MySQL (mysql 包)做示范，其它支持的数据库也提供了一致的 API 和相应的参数解析逻辑。
+	// 这里使用 SQLite (sqlite 包)做示范，其它支持的数据库也提供了一致的 API 和相应的参数解析逻辑。
 	var err error
-	if dbClient, err = mysql.NewMySqlDbClient(
-		"test:testpwd@tcp(127.0.0.1:3306)/test",
+	if dbClient, err = sqlite.NewSqliteDbClient(
+		"demo.db",
 		sqlmer.WithConnTimeout(time.Second*30), // 连接超时。
 		sqlmer.WithExecTimeout(time.Second*30), // 读写超时(执行语句时候，如果没有指定超时时间，默认用这个)。
 	); err != nil {
@@ -73,12 +73,10 @@ func prepare() {
 	// 创建/删除 测试表。
 	dbClientEx.MustExecute(`
 		CREATE TABLE IF NOT EXISTS demo (
-			Id int(11) NOT NULL AUTO_INCREMENT,
-			Name VARCHAR(10) NOT NULL,
-			Age INT NOT NULL,
-			Scores VARCHAR(200) NOT NULL,
-			PRIMARY KEY (Id),
-			KEY demo (Id)
+			Id INTEGER PRIMARY KEY AUTOINCREMENT,
+			Name TEXT NOT NULL,
+			Age INTEGER NOT NULL,
+			Scores TEXT NOT NULL
 		)
 	`)
 
@@ -122,7 +120,7 @@ func selectionDemo() {
 	// 注意：
 	//   - 这里用到了 slice/array 的参数展开特性
 	//   - 如果传入的 slice/array 长度为 0，会被解析为 NULL ，会导致 in/not in 语句均为 false；
-	rows := dbClientEx.MustRows("SELECT Name, now() FROM demo WHERE Name IN (@p1)", []any{"rui", "bao"})
+	rows := dbClientEx.MustRows("SELECT Name, datetime('now') FROM demo WHERE Name IN (@p1)", []any{"rui", "bao"})
 	for rows.Next() {
 		// SliceScan 会自动判断列数及列类型，用 []any 方式返回。
 		if dataSlice, err := rows.SliceScan(); err != nil {
@@ -130,8 +128,8 @@ func selectionDemo() {
 		} else {
 			fmt.Println(dataSlice...)
 			// Output:
-			// rui 2022-04-09 22:35:33 +0000 UTC
-			// bao 2022-04-09 22:35:33 +0000 UTC
+			// rui 2022-04-09 22:35:33
+			// bao 2022-04-09 22:35:33
 		}
 	}
 	// 和标准库一样，Rows 的 Err 和 Close 返回的错误记得要处理哦～
@@ -266,8 +264,10 @@ func transactionDemo() {
 // 演示如何设置超时时间。 DbClient 中的方法，都有一个 Context 版，支持传入 Context 以设置超时。
 // 如 Execute 对应 ExecuteContext 。
 func timeoutDemo() {
-	ctx, _ := context.WithTimeout(context.Background(), time.Second*1)
-	if _, err = dbClient.ExecuteContext(ctx, "SELECT sleep(3)"); err != nil {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), time.Millisecond*10)
+	defer cancelFunc()
+	// 使用递归查询模拟耗时操作 (SQLite 无法使用 sleep)。
+	if _, err := dbClient.ExecuteContext(ctx, "WITH RECURSIVE r(i) AS (VALUES(0) UNION ALL SELECT i+1 FROM r WHERE i < 1000000) SELECT count(*) FROM r"); err != nil {
 		fmt.Println("timeout: " + err.Error()) // 预期内的超时~
 	}
 }
@@ -299,7 +299,8 @@ func decoratedDemo() {
 	// 因为还是 DbClient 接口，还可以继续扩展为 DbClientEx。
 	clientEx := sqlmer.Extend(dbClient)
 
-	clientEx.Execute("SELECT sleep(1)") // Output: [SlowSql]Sql=SELECT sleep(1), Duration=1240(ms), Err=<nil>
+	// 使用递归查询模拟耗时操作 (SQLite 无法使用 sleep)。
+	clientEx.Execute("WITH RECURSIVE r(i) AS (VALUES(0) UNION ALL SELECT i+1 FROM r WHERE i < 500000) SELECT count(*) FROM r") // Output: [SlowSql]Sql=..., Duration=...(ms), Err=<nil>
 }
 ```
 
