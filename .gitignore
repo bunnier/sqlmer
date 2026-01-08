@@ -19,3 +19,6 @@
 
 # Temporary folder
 /tmp
+
+# demo db file
+demo.db

@@ -13,11 +13,12 @@ import (
 	"github.com/bunnier/sqlmer"
 	"github.com/bunnier/sqlmer/sqlen"
 
-	_ "modernc.org/sqlite"
+	_ "github.com/ncruces/go-sqlite3/driver"
+	_ "github.com/ncruces/go-sqlite3/embed"
 )
 
 // DriverName 是 Sqlite 驱动名称。
-const DriverName = "sqlite"
+const DriverName = "sqlite3"
 
 var _ sqlmer.DbClient = (*SqliteDbClient)(nil)
 
@@ -255,8 +256,6 @@ func extendInParams(sqlText string, params []any) (string, []any) {
 
 // getScanTypeFn 根据驱动配置返回一个可以正确获取 Scan 类型的函数。
 func getScanTypeFn() sqlen.GetScanTypeFunc {
-	// sqlite 的 ScanType 可能不够准确，这里尽量使用通用的处理。
-	// modernc.org/sqlite 可能会返回 nil 或者 interface{} 如果类型未知。
 	return func(columnType *sql.ColumnType) reflect.Type {
 		// 如果 ScanType 返回 nil，使用 interface{} 或者 sql.RawBytes。
 		// 使用 interface{} 可以让驱动决定返回什么类型。
@@ -271,7 +270,6 @@ func getScanTypeFn() sqlen.GetScanTypeFunc {
 // getUnifyDataTypeFn 根据驱动配置返回一个统一处理数据类型的函数。
 func getUnifyDataTypeFn() sqlen.UnifyDataTypeFn {
 	return func(columnType *sql.ColumnType, dest *any) {
-		// 获取数据库类型名称，注意 SQLite 类型可能是 "VARCHAR(20)" 这种。
 		typeName := strings.ToUpper(columnType.DatabaseTypeName())
 
 		// 处理字符串类型。
@@ -296,9 +294,6 @@ func getUnifyDataTypeFn() sqlen.UnifyDataTypeFn {
 		}
 
 		// 处理时间类型。
-		// SQLite 默认没有时间类型，通常存为 TEXT 或 REAL 或 INTEGER。
-		// 如果定义表时使用了 DATETIME 等类型，driver 可能会有所提示。
-		// modernc.org/sqlite 对 DATETIME 类型好像会返回 string。
 		if strings.Contains(typeName, "TIME") || strings.Contains(typeName, "DATE") {
 			switch v := (*dest).(type) {
 			case string:

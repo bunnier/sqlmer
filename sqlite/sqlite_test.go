@@ -380,4 +380,3 @@ func Test_bindSqliteArgs(t *testing.T) {
 		}
 	})
 }
-

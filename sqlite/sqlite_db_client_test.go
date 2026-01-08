@@ -23,7 +23,7 @@ func TestMain(m *testing.M) {
 	os.Remove("test.db")
 
 	// 创建数据库和 Schema。
-	db, err := sql.Open("sqlite", "test.db")
+	db, err := sql.Open("sqlite3", "test.db")
 	if err != nil {
 		panic(err)
 	}
