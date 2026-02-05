@@ -15,13 +15,26 @@ func Test_preHandleArgs(t *testing.T) {
 		Ap *string
 	}
 
+	type TypeAptr2 struct {
+		TypeAptr
+	}
+
+	type TypeAptr3 struct {
+		TypeAptr2
+	}
+
 	type TypeB struct {
 		B string
+	}
+
+	type TypeIgnore struct {
+		Ignore string
 	}
 
 	type TypeAB struct {
 		TypeA
 		TypeB
+		*TypeIgnore // 不赋值此字段，它在作为参数时会被忽略掉。
 	}
 
 	type TypeABC struct {
@@ -98,23 +111,28 @@ func Test_preHandleArgs(t *testing.T) {
 
 	t.Run("single_ptr_struct", func(t *testing.T) {
 		pStr := "a"
-		got, err := preHandleArgs(TypeAptr{Ap: &pStr})
+		got, err := preHandleArgs(TypeAptr3{TypeAptr2: TypeAptr2{TypeAptr: TypeAptr{Ap: &pStr}}})
 		if err != nil {
 			t.Errorf("mergeArgs() error = %v, wantErr false", err)
 			return
 		}
 		if !reflect.DeepEqual(got, []any{map[string]any{"Ap": pStr}}) {
-			t.Errorf("mergeArgs() = %v, want %v", got, []any{map[string]any{"A": "a"}})
+			t.Errorf("mergeArgs() = %v, want %v", got, []any{map[string]any{"Ap": "a"}})
 		}
 
-		got, err = preHandleArgs(TypeAptr{Ap: nil})
-		if err != nil {
-			t.Errorf("mergeArgs() error = %v, wantErr false", err)
-			return
+		checkEmbeddedField := func(v any) {
+			got, err = preHandleArgs(v)
+			if err != nil {
+				t.Errorf("mergeArgs() error = %v, wantErr false", err)
+				return
+			}
+			if !reflect.DeepEqual(got, []any{map[string]any{"Ap": nil}}) {
+				t.Errorf("mergeArgs() = %v, want %v", got, []any{map[string]any{"Ap": nil}})
+			}
 		}
-		if !reflect.DeepEqual(got, []any{map[string]any{"Ap": nil}}) {
-			t.Errorf("mergeArgs() = %v, want %v", got, []any{map[string]any{"A": "a"}})
-		}
+		checkEmbeddedField(TypeAptr{})
+		checkEmbeddedField(TypeAptr2{})
+		checkEmbeddedField(TypeAptr3{})
 	})
 
 	t.Run("single_struct_pointer", func(t *testing.T) {
@@ -219,12 +237,26 @@ func Test_preHandleArgs(t *testing.T) {
 	})
 
 	t.Run("mixed_types", func(t *testing.T) {
+		ab := TypeAB{}
+		ab.A = "ab_a"
+		ab.B = "ab_b"
+
+		abc := TypeABC{}
+		abc.A = "abc_a"
+		abc.B = "abc_b" // override ab.A
+		abc.C = "abc_c"
+
+		m := map[string]any{
+			"C": "map_c", // override abc.C
+			"D": "map_d",
+		}
+
 		args := []any{
-			TypeAB{TypeA: TypeA{A: "ab_a"}, TypeB: TypeB{B: "ab_b"}},
+			ab,
 			1,
-			TypeABC{TypeAB: TypeAB{TypeA: TypeA{A: "abc_a"}, TypeB: TypeB{B: "abc_b"}}, C: "abc_c"},
+			abc,
 			[]byte{1, 2},
-			map[string]any{"C": "map_c", "D": "map_d"},
+			m,
 			[]int{1, 2, 3},
 			testTime,
 		}

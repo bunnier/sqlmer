@@ -3,7 +3,7 @@ module github.com/bunnier/sqlmer
 go 1.24.0
 
 require (
-	github.com/cmstar/go-conv v0.6.3
+	github.com/cmstar/go-conv v0.6.6
 	github.com/denisenkom/go-mssqldb v0.12.3
 	github.com/go-sql-driver/mysql v1.9.3
 	github.com/ncruces/go-sqlite3 v0.30.4
