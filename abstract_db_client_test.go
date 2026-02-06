@@ -232,7 +232,7 @@ func Test_preHandleArgs(t *testing.T) {
 			return
 		}
 		if !reflect.DeepEqual(got, []any{map[string]any{"A": "abc_a", "TimePtr": nil}}) {
-			t.Errorf("mergeArgs() = %v, want %v", got, []any{map[string]any{"A": "abc_a", "TimePtr": testTime}})
+			t.Errorf("mergeArgs() = %v, want %v", got, []any{map[string]any{"A": "abc_a", "TimePtr": nil}})
 		}
 	})
 

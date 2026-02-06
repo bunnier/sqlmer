@@ -1007,7 +1007,7 @@ func TestDbClientEx_ListOf(t *testing.T) {
 
 		expect := []int{1, 2, 3, 4}
 		if !reflect.DeepEqual(expect, list) {
-			t.Fatalf("expect expect %v, got %v", expect, list)
+			t.Fatalf("expect %v, got %v", expect, list)
 		}
 	})
 }
