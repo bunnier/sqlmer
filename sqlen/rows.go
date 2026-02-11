@@ -98,6 +98,25 @@ func (rs *EnhanceRows) SliceScan() ([]any, error) {
 		// 之前为了能让 Scan 修改数据，保存的是指针，而返回上层时候只需要实际数据，因此进行解引用。
 		dest[i] = destRefVal[i].Elem().Interface()
 
+		// 注意：database/sql 的 driver 可能在后续复用其内部 buffer。
+		// Scan 返回后到“下一次使用该连接”之前，[]byte/sql.RawBytes 仍然有效；
+		// 但如果将该 []byte 直接向上层暴露，可能在之后被覆盖，导致数据损坏。
+		// 因此这里必须对 []byte 做一次 deep copy，将数据拷贝到独立内存中。
+		switch v := dest[i].(type) {
+		case []byte:
+			if v != nil {
+				nb := make([]byte, len(v))
+				copy(nb, v)
+				dest[i] = nb
+			}
+		case sql.RawBytes:
+			if v != nil {
+				nb := make([]byte, len(v))
+				copy(nb, v)
+				dest[i] = sql.RawBytes(nb)
+			}
+		}
+
 		extractNullableColumnValue(rs.columnMetaSlice[i].colType, &dest[i]) // 进行统一的空值处理逻辑。
 		if dest[i] != nil {
 			rs.unifyDataType(rs.columnMetaSlice[i].colType, &dest[i]) // 进行数据库定制的类型处理。
