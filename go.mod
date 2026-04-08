@@ -1,6 +1,6 @@
 module github.com/bunnier/sqlmer
 
-go 1.20
+go 1.23.0
 
 require (
 	github.com/cmstar/go-conv v0.6.3
