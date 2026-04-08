@@ -153,13 +153,63 @@ func bindArgs(sqlText string, args ...any) (string, []any, error) {
 	return namedParsedResult.Sql, resultArgs, nil
 }
 
-// 用于缓存 parseMySqlNamedSql 解析的结果。
-var mysqlNamedSqlParsedResult sync.Map
-
 type mysqlNamedParsedResult struct {
 	Sql   string   // 处理后的sql语句。
 	Names []string // 原语句中用到的命名参数集合 (没有去重逻辑如果有同名参数，会有多项)。
 }
+
+// mysqlParsedSqlCacheCapacity 是双代缓存每代的最大条目数，内存上限为 2 倍该值。
+const mysqlParsedSqlCacheCapacity = 1024
+
+// twoGenCache 是一个基于双代淘汰策略的有界缓存。
+// 当 hot 代条目数达到容量上限时，将 hot 降级为 cold，并创建新的 hot 代。
+// 最大内存占用为 2 * capacity 条目。
+type twoGenCache struct {
+	mu       sync.RWMutex
+	hot      map[string]mysqlNamedParsedResult // 当前活跃代。
+	cold     map[string]mysqlNamedParsedResult // 上一代（待淘汰）。
+	capacity int
+}
+
+func newTwoGenCache(capacity int) *twoGenCache {
+	return &twoGenCache{
+		hot:      make(map[string]mysqlNamedParsedResult, capacity),
+		cold:     make(map[string]mysqlNamedParsedResult),
+		capacity: capacity,
+	}
+}
+
+// Load 从缓存中读取。hot 未命中时查 cold，cold 命中则将条目提升至 hot。
+func (c *twoGenCache) Load(key string) (mysqlNamedParsedResult, bool) {
+	c.mu.RLock()
+	if v, ok := c.hot[key]; ok {
+		c.mu.RUnlock()
+		return v, true
+	}
+	v, ok := c.cold[key]
+	c.mu.RUnlock()
+
+	if ok {
+		// 将 cold 中命中的条目提升到 hot，使其不因下次轮转而丢失。
+		c.Store(key, v)
+	}
+	return v, ok
+}
+
+// Store 将条目写入 hot 代。hot 满时触发轮转：cold = hot，hot = 新空 map。
+func (c *twoGenCache) Store(key string, value mysqlNamedParsedResult) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if len(c.hot) >= c.capacity {
+		c.cold = c.hot
+		c.hot = make(map[string]mysqlNamedParsedResult, c.capacity)
+	}
+	c.hot[key] = value
+}
+
+// 用于缓存 parseMySqlNamedSql 解析的结果，使用双代缓存防止内存无限增长。
+var mysqlNamedSqlParsedResult = newTwoGenCache(mysqlParsedSqlCacheCapacity)
 
 // 用于初始化合法字符集合 map，用于快速筛选合法字符。
 var onceInitParamNameMap = sync.Once{}
@@ -185,7 +235,7 @@ func isLegalParamNameCharter(r rune) bool {
 func parseMySqlNamedSql(sqlText string) mysqlNamedParsedResult {
 	// 如果缓存中有数据，直接返回。
 	if cacheResult, ok := mysqlNamedSqlParsedResult.Load(sqlText); ok {
-		return cacheResult.(mysqlNamedParsedResult)
+		return cacheResult
 	}
 
 	names := make([]string, 0, 10) // 存放 sql 中所有的参数名称。
@@ -242,7 +292,7 @@ func parseMySqlNamedSql(sqlText string) mysqlNamedParsedResult {
 	}
 
 	parsedResult := mysqlNamedParsedResult{fixedSqlTextBuilder.String(), names}
-	mysqlNamedSqlParsedResult.Store(sqlText, parsedResult) // 缓存结果。
+	mysqlNamedSqlParsedResult.Store(sqlText, parsedResult) // 缓存结果，即使是无参数也缓存，减少解析带来的开销。
 	return parsedResult
 }
 
