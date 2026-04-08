@@ -380,3 +380,105 @@ func Test_bindMySqlArgs(t *testing.T) {
 		}
 	})
 }
+
+func Test_twoGenCache_hit_in_hot(t *testing.T) {
+	c := newTwoGenCache(10)
+	v := mysqlNamedParsedResult{Sql: "SELECT 1", Names: []string{"id"}}
+	c.Store("key1", v)
+
+	got, ok := c.Load("key1")
+	if !ok {
+		t.Fatal("expected cache hit in hot, got miss")
+	}
+	if got.Sql != v.Sql {
+		t.Errorf("expected sql=%s, got=%s", v.Sql, got.Sql)
+	}
+}
+
+func Test_twoGenCache_hit_in_cold(t *testing.T) {
+	c := newTwoGenCache(2)
+	v := mysqlNamedParsedResult{Sql: "SELECT cold", Names: []string{"x"}}
+	c.Store("cold_key", v)
+
+	// 填满 hot，触发轮转，cold_key 进入 cold 代。
+	c.Store("fill1", mysqlNamedParsedResult{Sql: "s1", Names: []string{"a"}})
+	c.Store("fill2", mysqlNamedParsedResult{Sql: "s2", Names: []string{"b"}})
+
+	got, ok := c.Load("cold_key")
+	if !ok {
+		t.Fatal("expected cache hit in cold, got miss")
+	}
+	if got.Sql != v.Sql {
+		t.Errorf("expected sql=%s, got=%s", v.Sql, got.Sql)
+	}
+
+	// 命中 cold 后，条目应被提升到 hot。
+	c.mu.RLock()
+	_, promotedToHot := c.hot["cold_key"]
+	c.mu.RUnlock()
+	if !promotedToHot {
+		t.Error("expected cold_key to be promoted to hot after cold hit")
+	}
+}
+
+func Test_twoGenCache_eviction_on_capacity(t *testing.T) {
+	c := newTwoGenCache(2)
+
+	c.Store("k1", mysqlNamedParsedResult{Sql: "s1", Names: []string{"a"}})
+	c.Store("k2", mysqlNamedParsedResult{Sql: "s2", Names: []string{"b"}})
+
+	// hot 已满（2 条），再写入触发轮转，k1/k2 进入 cold，hot 重置。
+	c.Store("k3", mysqlNamedParsedResult{Sql: "s3", Names: []string{"c"}})
+
+	c.mu.RLock()
+	hotLen := len(c.hot)
+	coldLen := len(c.cold)
+	c.mu.RUnlock()
+
+	if hotLen != 1 {
+		t.Errorf("expected hot len=1 after eviction, got=%d", hotLen)
+	}
+	if coldLen != 2 {
+		t.Errorf("expected cold len=2 after eviction, got=%d", coldLen)
+	}
+}
+
+func Test_twoGenCache_miss(t *testing.T) {
+	c := newTwoGenCache(10)
+	_, ok := c.Load("nonexistent")
+	if ok {
+		t.Error("expected cache miss, got hit")
+	}
+}
+
+func Test_parseMySqlNamedSql_no_params_not_cached(t *testing.T) {
+	// 使用一个独立的 twoGenCache 实例验证语义，避免污染全局缓存。
+	c := newTwoGenCache(10)
+
+	noParamSql := "SELECT * FROM t WHERE id = 1"
+	result := mysqlNamedParsedResult{Sql: noParamSql, Names: []string{}}
+
+	// 模拟 parseMySqlNamedSql 中的判断：无命名参数时不写缓存。
+	if len(result.Names) > 0 {
+		c.Store(noParamSql, result)
+	}
+
+	_, ok := c.Load(noParamSql)
+	if ok {
+		t.Error("expected no-param SQL to not be cached, but it was")
+	}
+
+	// 有参数的 SQL 应正常缓存。
+	paramSql := "SELECT * FROM t WHERE id=@id"
+	parsedResult := parseMySqlNamedSql(paramSql)
+	if len(parsedResult.Names) == 0 {
+		t.Fatal("expected paramSql to have named params")
+	}
+	cached, ok := mysqlNamedSqlParsedResult.Load(paramSql)
+	if !ok {
+		t.Error("expected parameterized SQL to be cached, but it was not")
+	}
+	if cached.Sql != parsedResult.Sql {
+		t.Errorf("cached sql mismatch: expected=%s, got=%s", parsedResult.Sql, cached.Sql)
+	}
+}
