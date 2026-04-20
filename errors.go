@@ -27,17 +27,66 @@ var (
 	ErrExecutingSql = errors.New("dbClient: failed to execute sql")
 )
 
+// SqlContextError 在 SQL 执行或校验失败时附加原始 SQL、解析后 SQL（若有）与参数信息。
+// 底层驱动错误可通过 errors.Unwrap、errors.Is、errors.As 访问。
+type SqlContextError struct {
+	Err      error
+	RawSQL   string
+	FixedSQL string
+	Params   []any // 参数引用仅用于错误输出格式化。
+	// IsExecutingSQL 为 true 时，表示执行 SQL 阶段失败，errors.Is(err, ErrExecutingSql) 为 true。
+	IsExecutingSQL bool
+}
+
+// Error 返回与历史版本一致的文本格式，便于日志与既有测试。
+func (e *SqlContextError) Error() string {
+	if e == nil {
+		return ""
+	}
+	if e.IsExecutingSQL {
+		sb := printSqlParams(e.Params)
+		return fmt.Sprintf("%s\nraw error: %s\nsql:\ninput sql=%s\nexecuting sql=%s\n%s",
+			ErrExecutingSql.Error(), e.Err.Error(), e.RawSQL, e.FixedSQL, sb)
+	}
+	sb := printSqlParams(e.Params)
+	return fmt.Sprintf("%s\nsql:\ninput sql=%s\n%s", e.Err.Error(), e.RawSQL, sb)
+}
+
+// Unwrap 返回底层错误，用于错误链上的 Is / As。
+func (e *SqlContextError) Unwrap() error {
+	if e == nil {
+		return nil
+	}
+	return e.Err
+}
+
+// Is 支持 errors.Is(err, ErrExecutingSql)，且不阻断对底层错误的匹配。
+func (e *SqlContextError) Is(target error) bool {
+	if e == nil {
+		return false
+	}
+	return e.IsExecutingSQL && target == ErrExecutingSql
+}
+
 // getExecutingSqlError 用于生成一个带着 SQL 和参数列表的 ErrExecutingSql。
 // 错误内容中包含了：原始传入的 SQL，解析后的 SQL，参数列表。
 func getExecutingSqlError(err error, rawSql string, fixedSql string, params []any) error {
-	sb := printSqlParams(params)
-	return fmt.Errorf("%w\nraw error: %s\nsql:\ninput sql=%s\nexecuting sql=%s\n%s", ErrExecutingSql, err.Error(), rawSql, fixedSql, sb)
+	return &SqlContextError{
+		Err:            err,
+		RawSQL:         rawSql,
+		FixedSQL:       fixedSql,
+		Params:         params,
+		IsExecutingSQL: true,
+	}
 }
 
 // getSqlError 用于生成一个带着 SQL 和参数列表的指定错误。
 func getSqlError(err error, rawSql string, params []any) error {
-	sb := printSqlParams(params)
-	return fmt.Errorf("%w\nsql:\ninput sql=%s\n%s", err, rawSql, sb)
+	return &SqlContextError{
+		Err:    err,
+		RawSQL: rawSql,
+		Params: params,
+	}
 }
 
 // printSqlParams 用于打印 SQL 参数列表。
