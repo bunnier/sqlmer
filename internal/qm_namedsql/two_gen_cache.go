@@ -5,7 +5,7 @@ import (
 )
 
 // 是双代缓存每代的最大条目数，内存上限为 2 倍该值。
-const _DefaultCacheCapacity = 1024
+const _DefaultCacheCapacity = 4096
 
 //	一个基于双代淘汰策略的有界缓存。
 //
