@@ -93,7 +93,9 @@ func (rs *EnhanceRows) SliceScan() ([]any, error) {
 		return nil, rs.err
 	}
 
-	rs.initColumns()
+	if rs.err = rs.initColumns(); rs.err != nil {
+		return nil, rs.err
+	}
 
 	// 用来存放 Scan 后返回的数据，db 库要求和查询的列完全一致，所以需要判断 columns 长度。
 	dest := make([]any, len(rs.columnMetaSlice))
