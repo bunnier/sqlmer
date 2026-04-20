@@ -146,7 +146,8 @@ func (r *EnhanceRows) Err() error {
 	if r.err != nil {
 		return r.err
 	}
-	return r.wrap(r.Rows.Err())
+	r.err = r.wrap(r.Rows.Err())
+	return r.err
 }
 
 // Close 关闭游标，并对关闭过程中暴露的错误做统一包装。
