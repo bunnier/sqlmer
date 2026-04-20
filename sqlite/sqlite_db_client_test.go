@@ -2,6 +2,7 @@ package sqlite_test
 
 import (
 	"database/sql"
+	"errors"
 	"os"
 	"reflect"
 	"strings"
@@ -244,4 +245,90 @@ func Test_internalDbClient_Rows(t *testing.T) {
 
 		rowAssert(rows, []map[string]any{row1, row2})
 	})
+}
+
+func Test_internalDbClient_Rows_error_wrapped(t *testing.T) {
+	sqliteClient, err := testenv.NewSqliteClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rows, err := sqliteClient.Rows("SELECT varcharTest FROM go_TypeTest WHERE id=@p1", 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer rows.Close()
+
+	if !rows.Next() {
+		t.Fatal("expected first row, got none")
+	}
+
+	var got int
+	err = rows.Scan(&got)
+	if err == nil {
+		t.Fatal("expected wrapped scan error, got nil")
+	}
+	if !errors.Is(err, sqlmer.ErrExecutingSql) {
+		t.Fatalf("expected ErrExecutingSql, got %v", err)
+	}
+	if !strings.Contains(err.Error(), "input sql=SELECT varcharTest FROM go_TypeTest WHERE id=@p1") {
+		t.Fatalf("expected error to contain input sql, got %v", err)
+	}
+	if !strings.Contains(err.Error(), "@p1=1") {
+		t.Fatalf("expected error to contain params, got %v", err)
+	}
+	if !errors.Is(rows.Err(), sqlmer.ErrExecutingSql) {
+		t.Fatalf("expected rows.Err() wrapped, got %v", rows.Err())
+	}
+}
+
+func Test_internalDbClient_Row_error_wrapped(t *testing.T) {
+	sqliteClient, err := testenv.NewSqliteClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	row, err := sqliteClient.Row("SELECT varcharTest FROM go_TypeTest WHERE id=@p1", 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var got int
+	err = row.Scan(&got)
+	if err == nil {
+		t.Fatal("expected wrapped scan error, got nil")
+	}
+	if !errors.Is(err, sqlmer.ErrExecutingSql) {
+		t.Fatalf("expected ErrExecutingSql, got %v", err)
+	}
+	if !strings.Contains(err.Error(), "input sql=SELECT varcharTest FROM go_TypeTest WHERE id=@p1") {
+		t.Fatalf("expected error to contain input sql, got %v", err)
+	}
+	if !strings.Contains(err.Error(), "@p1=1") {
+		t.Fatalf("expected error to contain params, got %v", err)
+	}
+	if !errors.Is(row.Err(), sqlmer.ErrExecutingSql) {
+		t.Fatalf("expected row.Err() wrapped, got %v", row.Err())
+	}
+}
+
+func Test_internalDbClient_Row_no_rows_not_wrapped(t *testing.T) {
+	sqliteClient, err := testenv.NewSqliteClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	row, err := sqliteClient.Row("SELECT varcharTest FROM go_TypeTest WHERE id=@p1", 10000)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var got string
+	err = row.Scan(&got)
+	if !errors.Is(err, sql.ErrNoRows) {
+		t.Fatalf("expected sql.ErrNoRows, got %v", err)
+	}
+	if errors.Is(err, sqlmer.ErrExecutingSql) {
+		t.Fatalf("expected no wrapped executing error, got %v", err)
+	}
 }

@@ -11,6 +11,13 @@ type EnhanceRow struct {
 	err  error
 }
 
+// SetErrWrapper 用于为延迟暴露的错误注入统一包装逻辑。
+func (r *EnhanceRow) SetErrWrapper(wrapper ErrWrapper) {
+	if r.rows != nil {
+		r.rows.SetErrWrapper(wrapper)
+	}
+}
+
 // Scan 用于把一行数据填充到 map 中。
 func (r *EnhanceRow) Scan(dest ...any) error {
 	if r.err != nil {
@@ -97,6 +104,11 @@ func (r *EnhanceRow) SliceScan() ([]any, error) {
 
 func (r *EnhanceRow) Err() error {
 	if r.err != nil {
+		return r.err
+	}
+
+	if r.rows == nil {
+		r.err = sql.ErrNoRows
 		return r.err
 	}
 

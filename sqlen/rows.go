@@ -16,6 +16,7 @@ type EnhanceRows struct {
 	*sql.Rows
 	getScanTypeFn GetScanTypeFunc // 用于获取用于 Scan 的数据类型。
 	unifyDataType UnifyDataTypeFn
+	wrapErr       ErrWrapper
 
 	columnMetaSlice []*columnMeta // 用于对列的元数据做缓存。
 
@@ -25,6 +26,24 @@ type EnhanceRows struct {
 type columnMeta struct {
 	colType  *sql.ColumnType // 列类型。
 	scanType reflect.Type    // 用于 Scan 的类型。
+}
+
+// ErrWrapper 用于对延迟暴露的查询错误进行统一包装。
+type ErrWrapper func(error) error
+
+// SetErrWrapper 用于为延迟暴露的错误注入统一包装逻辑。
+func (rs *EnhanceRows) SetErrWrapper(wrapper ErrWrapper) {
+	rs.wrapErr = wrapper
+}
+
+func (rs *EnhanceRows) wrap(err error) error {
+	if err == nil {
+		return nil
+	}
+	if rs.wrapErr == nil {
+		return err
+	}
+	return rs.wrapErr(err)
 }
 
 // 初始化查询列的元数据。
@@ -51,7 +70,8 @@ func (rs *EnhanceRows) Scan(dest ...any) error {
 	}
 
 	// 直接用原生 row 的 Scan 方法获取数据。
-	return rs.Rows.Scan(dest...)
+	rs.err = rs.wrap(rs.Rows.Scan(dest...))
+	return rs.err
 }
 
 // MapScan 用于把一行数据填充到 map 中。
@@ -124,5 +144,18 @@ func (r *EnhanceRows) Err() error {
 	if r.err != nil {
 		return r.err
 	}
-	return r.Rows.Err()
+	return r.wrap(r.Rows.Err())
+}
+
+// Close 关闭游标，并对关闭过程中暴露的错误做统一包装。
+func (r *EnhanceRows) Close() error {
+	if r.Rows == nil {
+		return nil
+	}
+	closeErr := r.wrap(r.Rows.Close())
+	if r.err != nil {
+		return r.err
+	}
+	r.err = closeErr
+	return r.err
 }

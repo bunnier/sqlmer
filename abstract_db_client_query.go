@@ -3,6 +3,7 @@ package sqlmer
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/bunnier/sqlmer/sqlen"
@@ -404,6 +405,7 @@ func (client *AbstractDbClient) RowContext(ctx context.Context, sqlText string, 
 	}
 
 	row := client.Exer.EnhancedQueryRowContext(ctx, fixedSqlText, args...)
+	row.SetErrWrapper(getSqlRowsErrWrapper(sqlText, fixedSqlText, args))
 	if err := row.Err(); err != nil {
 		return nil, getExecutingSqlError(err, sqlText, fixedSqlText, args)
 	}
@@ -449,9 +451,28 @@ func (client *AbstractDbClient) RowsContext(ctx context.Context, sqlText string,
 	if err != nil {
 		return nil, err
 	}
+
 	rows, err := client.Exer.EnhancedQueryContext(ctx, fixedSqlText, args...)
 	if err != nil {
 		return nil, getExecutingSqlError(err, sqlText, fixedSqlText, args)
 	}
+
+	rows.SetErrWrapper(getSqlRowsErrWrapper(sqlText, fixedSqlText, args))
 	return rows, nil
+}
+
+// 用于在 RowsContext 和 RowContext 等信息里包装 SQL 上下文信息到错误中。
+func getSqlRowsErrWrapper(rawSql string, fixedSql string, args []any) sqlen.ErrWrapper {
+	return func(err error) error {
+		switch {
+		case err == nil:
+			return nil
+		case errors.Is(err, sql.ErrNoRows):
+			return err
+		case errors.Is(err, ErrExecutingSql):
+			return err
+		default:
+			return getExecutingSqlError(err, rawSql, fixedSql, args)
+		}
+	}
 }
