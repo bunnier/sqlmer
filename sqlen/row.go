@@ -19,7 +19,7 @@ func (r *EnhanceRow) SetErrWrapper(wrapper ErrWrapper) {
 }
 
 // Scan 用于把一行数据填充到 map 中。
-func (r *EnhanceRow) Scan(dest ...any) error {
+func (r *EnhanceRow) Scan(dest ...any) (err error) {
 	if r.err != nil {
 		return r.err
 	}
@@ -29,25 +29,34 @@ func (r *EnhanceRow) Scan(dest ...any) error {
 		return r.err
 	}
 
-	defer r.rows.Close()
+	defer func() {
+		closeErr := r.rows.Close()
+		if err == nil {
+			err = closeErr
+		}
+		if err != nil {
+			r.err = err
+		}
+	}()
+
 	if !r.rows.Next() {
-		if r.err = r.rows.Err(); r.err != nil {
-			return r.err
+		if err = r.rows.Err(); err != nil {
+			return err
 		}
 
 		r.err = sql.ErrNoRows
 		return r.err
 	}
 
-	if r.err = r.rows.Scan(dest...); r.err != nil {
-		return r.err
+	if err = r.rows.Scan(dest...); err != nil {
+		return err
 	}
 
-	return r.rows.Close()
+	return nil
 }
 
 // MapScan 用于把一行数据填充到 map 中。
-func (r *EnhanceRow) MapScan() (map[string]any, error) {
+func (r *EnhanceRow) MapScan() (res map[string]any, err error) {
 	if r.err != nil {
 		return nil, r.err
 	}
@@ -57,25 +66,31 @@ func (r *EnhanceRow) MapScan() (map[string]any, error) {
 		return nil, r.err
 	}
 
-	defer r.rows.Close()
+	defer func() {
+		closeErr := r.rows.Close()
+		if err == nil {
+			err = closeErr
+		}
+		if err != nil {
+			r.err = err
+		}
+	}()
+
 	if !r.rows.Next() {
-		if r.err = r.rows.Err(); r.err != nil {
-			return nil, r.err
+		if err = r.rows.Err(); err != nil {
+			return nil, err
 		}
 
 		r.err = sql.ErrNoRows
 		return nil, r.err
 	}
 
-	if res, err := r.rows.MapScan(); err != nil {
-		return nil, err
-	} else {
-		return res, r.rows.Close()
-	}
+	res, err = r.rows.MapScan()
+	return res, err
 }
 
 // SliceScan 用 Slice 返回一行数据。
-func (r *EnhanceRow) SliceScan() ([]any, error) {
+func (r *EnhanceRow) SliceScan() (res []any, err error) {
 	if r.err != nil {
 		return nil, r.err
 	}
@@ -85,21 +100,27 @@ func (r *EnhanceRow) SliceScan() ([]any, error) {
 		return nil, r.err
 	}
 
-	defer r.rows.Close()
+	defer func() {
+		closeErr := r.rows.Close()
+		if err == nil {
+			err = closeErr
+		}
+		if err != nil {
+			r.err = err
+		}
+	}()
+
 	if !r.rows.Next() {
-		if r.err = r.rows.Err(); r.err != nil {
-			return nil, r.err
+		if err = r.rows.Err(); err != nil {
+			return nil, err
 		}
 
 		r.err = sql.ErrNoRows
 		return nil, r.err
 	}
 
-	if res, err := r.rows.SliceScan(); err != nil {
-		return nil, err
-	} else {
-		return res, r.rows.Close()
-	}
+	res, err = r.rows.SliceScan()
+	return res, err
 }
 
 func (r *EnhanceRow) Err() error {
