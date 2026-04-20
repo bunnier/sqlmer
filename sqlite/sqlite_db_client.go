@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/bunnier/sqlmer"
-	"github.com/bunnier/sqlmer/internal/qm_namedsql"
+	"github.com/bunnier/sqlmer/internal/named2qm"
 	"github.com/bunnier/sqlmer/sqlen"
 
 	_ "github.com/ncruces/go-sqlite3/driver"
@@ -50,7 +50,7 @@ func NewSqliteDbClient(dsn string, options ...sqlmer.DbClientOption) (*SqliteDbC
 // bindArgs 用于对 SQL 语句和参数进行预处理。
 // 第一个参数如果是 map，且仅且只有一个参数的情况下，做命名参数处理，其余情况做位置参数处理。
 func bindArgs(sqlText string, args ...any) (string, []any, error) {
-	return qm_namedsql.BindQuestionMarkArgs(sqlText, args...)
+	return named2qm.BindQuestionMarkArgs(sqlText, args...)
 }
 
 // getScanTypeFn 根据驱动配置返回一个可以正确获取 Scan 类型的函数。

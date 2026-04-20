@@ -1,5 +1,5 @@
-// Package qm_namedsql 提供了对 SQL 命名参数解析为 ? 占位符 SQL 的支持（用于：MySQL、SQLite 等使用 ? 占位符的驱动）。
-package qm_namedsql
+// Package named2qm 提供了对 SQL 命名参数解析为 ? 占位符 SQL 的支持（用于：MySQL、SQLite 等使用 ? 占位符的驱动）。
+package named2qm
 
 import (
 	"fmt"
@@ -17,11 +17,38 @@ type ParsedResult struct {
 	Names []string // 原语句中用到的命名参数集合（没有去重逻辑，如果有同名参数，会有多项）。
 }
 
+// QuestionMarkSqlBinder 是支持 ? 占位符驱动的命名参数绑定器。
+type QuestionMarkSqlBinder struct {
+	cache *twoGenCache
+}
+
+// NewQuestionMarkSqlBinder 用于创建一个带有独立缓存的绑定器。
+func NewQuestionMarkSqlBinder(cacheCapacity int) (*QuestionMarkSqlBinder, error) {
+	if cacheCapacity <= 0 {
+		return nil, fmt.Errorf("cache capacity must be greater than 0")
+	}
+
+	return &QuestionMarkSqlBinder{
+		cache: newTwoGenCache(cacheCapacity),
+	}, nil
+}
+
+// defaultQuestionMarkBinder 是默认的包级绑定器。
+var defaultQuestionMarkBinder = &QuestionMarkSqlBinder{
+	cache: parsedSqlCache,
+}
+
 // 分析 SQL 语句，提取用到的命名参数名称（按顺序），并将 @ 占位参数转换为驱动支持的 ? 形式。
 // 结果会被缓存以提升重复调用性能；无命名参数的 SQL 不写入缓存，以防止动态拼接语句导致内存无限增长。
 func ParseNamedSqlToQuestionMark(sqlText string) ParsedResult {
+	return defaultQuestionMarkBinder.ParseNamedSqlToQuestionMark(sqlText)
+}
+
+// ParseNamedSqlToQuestionMark 分析 SQL 语句，提取用到的命名参数名称（按顺序），并将 @ 占位参数转换为驱动支持的 ? 形式。
+// 结果会被缓存以提升重复调用性能；无命名参数的 SQL 不写入缓存，以防止动态拼接语句导致内存无限增长。
+func (binder *QuestionMarkSqlBinder) ParseNamedSqlToQuestionMark(sqlText string) ParsedResult {
 	// 如果缓存中有数据，直接返回。
-	if cacheResult, ok := parsedSqlCache.load(sqlText); ok {
+	if cacheResult, ok := binder.cache.load(sqlText); ok {
 		return cacheResult
 	}
 
@@ -81,7 +108,7 @@ func ParseNamedSqlToQuestionMark(sqlText string) ParsedResult {
 	parsedResult := ParsedResult{fixedSqlTextBuilder.String(), names}
 	// 无命名参数的 SQL 通常是动态拼接的语句，跳过缓存以防止内存无限增长。
 	if len(names) > 0 {
-		parsedSqlCache.store(sqlText, parsedResult)
+		binder.cache.store(sqlText, parsedResult)
 	}
 	return parsedResult
 }
@@ -89,7 +116,13 @@ func ParseNamedSqlToQuestionMark(sqlText string) ParsedResult {
 // 对使用 ? 占位符的驱动（如 MySQL、SQLite）做参数预处理。
 // 若唯一参数为 map，则按 SQL 中的 @name 顺序绑定；否则按 @p1、@p2 形式从 args 切片取位置参数。
 func BindQuestionMarkArgs(sqlText string, args ...any) (string, []any, error) {
-	namedParsedResult := ParseNamedSqlToQuestionMark(sqlText)
+	return defaultQuestionMarkBinder.BindQuestionMarkArgs(sqlText, args...)
+}
+
+// BindQuestionMarkArgs 对使用 ? 占位符的驱动（如 MySQL、SQLite）做参数预处理。
+// 若唯一参数为 map，则按 SQL 中的 @name 顺序绑定；否则按 @p1、@p2 形式从 args 切片取位置参数。
+func (binder *QuestionMarkSqlBinder) BindQuestionMarkArgs(sqlText string, args ...any) (string, []any, error) {
+	namedParsedResult := binder.ParseNamedSqlToQuestionMark(sqlText)
 	parsedNames := len(namedParsedResult.Names)
 	argsCount := len(args)
 	resultArgs := make([]any, 0, parsedNames)

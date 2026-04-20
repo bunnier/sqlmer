@@ -59,6 +59,32 @@ func Test_NewSqliteDbClient(t *testing.T) {
 	}
 }
 
+func Test_NewSqliteDbClient_with_question_mark_named_sql_cache_capacity(t *testing.T) {
+	dbClient, err := sqlite.NewSqliteDbClient("test.db",
+		sqlmer.WithConnTimeout(testenv.DefaultTimeout),
+		sqlmer.WithExecTimeout(testenv.DefaultTimeout),
+		sqlite.WithQuestionMarkNamedSqlCacheCapacity(8))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	got, _, err := dbClient.Scalar("SELECT id FROM go_TypeTest WHERE id=@p1", 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !reflect.DeepEqual(got, int64(1)) {
+		t.Errorf("dbClient.Scalar() = %v, want %v", got, int64(1))
+	}
+}
+
+func Test_WithQuestionMarkNamedSqlCacheCapacity_invalid_capacity(t *testing.T) {
+	_, err := sqlite.NewSqliteDbClient("test.db", sqlite.WithQuestionMarkNamedSqlCacheCapacity(0))
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
+
 func Test_internalDbClient_Scalar(t *testing.T) {
 	sqliteClient, err := testenv.NewSqliteClient()
 	if err != nil {

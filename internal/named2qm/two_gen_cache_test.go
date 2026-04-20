@@ -1,4 +1,4 @@
-package qm_namedsql
+package named2qm
 
 import (
 	"testing"
@@ -68,5 +68,40 @@ func Test_twoGenCache_miss(t *testing.T) {
 	_, ok := c.load("nonexistent")
 	if ok {
 		t.Error("expected cache miss, got hit")
+	}
+}
+
+func Test_NewQuestionMarkBinder_invalid_capacity(t *testing.T) {
+	_, err := NewQuestionMarkSqlBinder(0)
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
+
+func Test_QuestionMarkBinder_has_independent_cache(t *testing.T) {
+	binder1, err := NewQuestionMarkSqlBinder(1)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	binder2, err := NewQuestionMarkSqlBinder(1)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	sqlText := "SELECT * FROM t WHERE id=@id"
+	result1 := binder1.ParseNamedSqlToQuestionMark(sqlText)
+	if result1.Sql != "SELECT * FROM t WHERE id=?" {
+		t.Errorf("expected parsed sql, got %s", result1.Sql)
+	}
+
+	_, ok := binder1.cache.load(sqlText)
+	if !ok {
+		t.Fatal("expected binder1 cache hit, got miss")
+	}
+
+	_, ok = binder2.cache.load(sqlText)
+	if ok {
+		t.Fatal("expected binder2 cache miss, got hit")
 	}
 }

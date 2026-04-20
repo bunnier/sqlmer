@@ -1,4 +1,4 @@
-package qm_namedsql
+package named2qm
 
 import (
 	"fmt"
