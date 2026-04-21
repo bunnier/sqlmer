@@ -6,14 +6,11 @@ import (
 	"errors"
 
 	"github.com/bunnier/sqlmer"
-	"github.com/bunnier/sqlmer/internal/testenv"
 )
 
 func Test_MssqlTransaction(t *testing.T) {
-	mssqlClient, err := testenv.NewSqlServerClient()
-	if err != nil {
-		t.Fatal(err)
-	}
+	mssqlClient := getMsSqlClientOrSkip(t)
+	var err error
 	if _, err = mssqlClient.Execute(
 		`
 INSERT INTO go_TypeTest (TinyIntTest, SmallIntTest, IntTest, BitTest, NvarcharTest, VarcharTest, NcharTest, CharTest, DateTimeTest, DateTime2Test, DateTest, TimeTest, MoneyTest, FloatTest, DecimalTest, BinaryTest)
