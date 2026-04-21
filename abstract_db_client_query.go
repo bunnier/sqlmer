@@ -70,13 +70,9 @@ func (client *AbstractDbClient) Execute(sqlText string, args ...any) (int64, err
 //   - sqlmer.ErrGetEffectedRows: 当执行成功，但驱动不支持获取影响行数时候，返回该类型错误。
 //   - sqlmer.ErrExecutingSql: 当 SQL 语句执行时遇到错误，返回该类型错误。
 func (client *AbstractDbClient) ExecuteContext(ctx context.Context, sqlText string, args ...any) (int64, error) {
-	fixedSqlText, args, err := client.config.bindArgsFunc(sqlText, args...)
+	sqlResult, _, _, err := client.bindAndExecContext(ctx, sqlText, args...)
 	if err != nil {
 		return 0, err
-	}
-	sqlResult, err := client.Exer.ExecContext(ctx, fixedSqlText, args...)
-	if err != nil {
-		return 0, getExecutingSqlError(err, sqlText, fixedSqlText, args)
 	}
 
 	if effectRows, err := sqlResult.RowsAffected(); err != nil {
@@ -172,14 +168,9 @@ func (client *AbstractDbClient) Exists(sqlText string, args ...any) (bool, error
 //   - sqlmer.ErrParseParamFailed: 当 SQL 语句中的参数解析失败时返回该类错误。
 //   - sqlmer.ErrExecutingSql: 当 SQL 语句执行时遇到错误，返回该类型错误。
 func (client *AbstractDbClient) ExistsContext(ctx context.Context, sqlText string, args ...any) (bool, error) {
-	fixedSqlText, args, err := client.config.bindArgsFunc(sqlText, args...)
+	rows, _, _, err := client.bindAndQueryRowsContext(ctx, sqlText, args...)
 	if err != nil {
 		return false, err
-	}
-
-	rows, err := client.Exer.EnhancedQueryContext(ctx, fixedSqlText, args...)
-	if err != nil {
-		return false, getExecutingSqlError(err, sqlText, fixedSqlText, args)
 	}
 	defer rows.Close()
 
@@ -229,16 +220,16 @@ func (client *AbstractDbClient) Scalar(sqlText string, args ...any) (any, bool, 
 //   - sqlmer.ErrParseParamFailed: 当 SQL 语句中的参数解析失败时返回该类错误。
 //   - sqlmer.ErrExecutingSql: 当 SQL 语句执行时遇到错误，返回该类型错误。
 func (client *AbstractDbClient) ScalarContext(ctx context.Context, sqlText string, args ...any) (any, bool, error) {
-	fixedSqlText, args, err := client.config.bindArgsFunc(sqlText, args...)
+	row, fixedSqlText, fixedArgs, err := client.bindAndQueryRowContext(ctx, sqlText, args...)
 	if err != nil {
 		return nil, false, err
 	}
 
-	if result, err := client.Exer.EnhancedQueryRowContext(ctx, fixedSqlText, args...).SliceScan(); err != nil {
+	if result, err := row.SliceScan(); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, false, nil // 没有命中行时候，不用 error 返回，而是通过第二个参数标识。
 		}
-		return nil, false, getExecutingSqlError(err, sqlText, fixedSqlText, args)
+		return nil, false, getExecutingSqlError(err, sqlText, fixedSqlText, fixedArgs)
 	} else {
 		return result[0], true, nil // 只要没有 error，至少有 1 列的。
 	}
@@ -280,13 +271,9 @@ func (client *AbstractDbClient) Get(sqlText string, args ...any) (map[string]any
 //   - sqlmer.ErrParseParamFailed: 当 SQL 语句中的参数解析失败时返回该类错误。
 //   - sqlmer.ErrExecutingSql: 当 SQL 语句执行时遇到错误，返回该类型错误。
 func (client *AbstractDbClient) GetContext(ctx context.Context, sqlText string, args ...any) (map[string]any, error) {
-	fixedSqlText, args, err := client.config.bindArgsFunc(sqlText, args...)
+	rows, _, _, err := client.bindAndQueryRowsContext(ctx, sqlText, args...)
 	if err != nil {
 		return nil, err
-	}
-	rows, err := client.Exer.EnhancedQueryContext(ctx, fixedSqlText, args...)
-	if err != nil {
-		return nil, getExecutingSqlError(err, sqlText, fixedSqlText, args)
 	}
 	defer rows.Close()
 
@@ -338,13 +325,9 @@ func (client *AbstractDbClient) SliceGet(sqlText string, args ...any) ([]map[str
 //   - sqlmer.ErrParseParamFailed: 当 SQL 语句中的参数解析失败时返回该类错误。
 //   - sqlmer.ErrExecutingSql: 当 SQL 语句执行时遇到错误，返回该类型错误。
 func (client *AbstractDbClient) SliceGetContext(ctx context.Context, sqlText string, args ...any) ([]map[string]any, error) {
-	fixedSqlText, args, err := client.config.bindArgsFunc(sqlText, args...)
+	rows, _, _, err := client.bindAndQueryRowsContext(ctx, sqlText, args...)
 	if err != nil {
 		return nil, err
-	}
-	rows, err := client.Exer.EnhancedQueryContext(ctx, fixedSqlText, args...)
-	if err != nil {
-		return nil, getExecutingSqlError(err, sqlText, fixedSqlText, args)
 	}
 	defer rows.Close()
 
@@ -399,15 +382,14 @@ func (client *AbstractDbClient) Row(sqlText string, args ...any) (*sqlen.Enhance
 //   - sqlmer.ErrParseParamFailed: 当 SQL 语句中的参数解析失败时返回该类错误。
 //   - sqlmer.ErrExecutingSql: 当 SQL 语句执行时遇到错误，返回该类型错误。
 func (client *AbstractDbClient) RowContext(ctx context.Context, sqlText string, args ...any) (*sqlen.EnhanceRow, error) {
-	fixedSqlText, args, err := client.config.bindArgsFunc(sqlText, args...)
+	row, fixedSqlText, fixedArgs, err := client.bindAndQueryRowContext(ctx, sqlText, args...)
 	if err != nil {
 		return nil, err
 	}
 
-	row := client.Exer.EnhancedQueryRowContext(ctx, fixedSqlText, args...)
-	row.SetErrWrapper(getSqlRowsErrWrapper(sqlText, fixedSqlText, args))
+	row.SetErrWrapper(getSqlRowsErrWrapper(sqlText, fixedSqlText, fixedArgs))
 	if err := row.Err(); err != nil {
-		return nil, getExecutingSqlError(err, sqlText, fixedSqlText, args)
+		return nil, getExecutingSqlError(err, sqlText, fixedSqlText, fixedArgs)
 	}
 	return row, nil
 }
@@ -447,17 +429,12 @@ func (client *AbstractDbClient) Rows(sqlText string, args ...any) (*sqlen.Enhanc
 //   - sqlmer.ErrParseParamFailed: 当 SQL 语句中的参数解析失败时返回该类错误。
 //   - sqlmer.ErrExecutingSql: 当 SQL 语句执行时遇到错误，返回该类型错误。
 func (client *AbstractDbClient) RowsContext(ctx context.Context, sqlText string, args ...any) (*sqlen.EnhanceRows, error) {
-	fixedSqlText, args, err := client.config.bindArgsFunc(sqlText, args...)
+	rows, fixedSqlText, fixedArgs, err := client.bindAndQueryRowsContext(ctx, sqlText, args...)
 	if err != nil {
 		return nil, err
 	}
 
-	rows, err := client.Exer.EnhancedQueryContext(ctx, fixedSqlText, args...)
-	if err != nil {
-		return nil, getExecutingSqlError(err, sqlText, fixedSqlText, args)
-	}
-
-	rows.SetErrWrapper(getSqlRowsErrWrapper(sqlText, fixedSqlText, args))
+	rows.SetErrWrapper(getSqlRowsErrWrapper(sqlText, fixedSqlText, fixedArgs))
 	return rows, nil
 }
 
