@@ -5,9 +5,58 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/bunnier/sqlmer)](https://goreportcard.com/report/github.com/bunnier/sqlmer)
 [![Go Reference](https://pkg.go.dev/badge/github.com/bunnier/sqlmer.svg)](https://pkg.go.dev/github.com/bunnier/sqlmer)
 
+一个面向原生 SQL 的轻量化 Go 数据库操作库。保留 SQL 的灵活性，同时提供命名参数、结果映射、事务、类型转换等高频能力，适合希望避免重 ORM 约束、但又不想手写大量样板代码的项目。
+
 ## 功能简介
 
-一个面向原生 SQL 的数据库操作库，在保持 SQL 语句灵活性的同时，通过统一的接口设计、便捷的参数处理和轻量级的 ORM 映射能力，让数据库操作更加优雅高效。目前支持 MySQL / SQLite / SQL Server 。
+sqlmer 不是重 ORM，也不是 SQL Builder，而是一个面向原生 SQL 的轻量化数据库操作库。它在 `database/sql` 之上补充了统一的驱动适配、参数处理、结果映射、事务和装饰器扩展能力。它已在实际生产环境中长期使用，并经过了持续验证，目前支持 MySQL / SQLite / SQL Server 。
+
+### 适合什么场景
+
+- 希望继续直接写 SQL，而不是切换到 DSL / 重 ORM；
+- 需要命名参数、`IN` 查询展开、Map / Struct 映射等高频能力；
+- 希望事务和非事务场景保持一致的 API 体验；
+- 想在 `database/sql` 之上补足常用能力，同时保留驱动层面的可控性。
+
+## 快速上手
+
+如果上面的场景描述和你的需求接近，可以先看下面这个最小例子，快速感受 sqlmer 的使用方式：
+
+```go
+type User struct {
+	Id   int
+	Name string
+}
+
+db, err := sqlite.NewSqliteDbClient("demo.db")
+if err != nil {
+	log.Fatal(err)
+}
+
+// Extend 会在基础 DbClient 之上增加更方便的扩展能力，
+// 例如 Must 系列 API、Struct 映射、强类型结果转换等。
+clientEx := sqlmer.Extend(db)
+
+users := clientEx.MustListOf(User{}, `
+	SELECT id, name
+	FROM users
+	WHERE id IN (@ids) OR name=@name
+	ORDER BY id
+`, map[string]any{
+	"ids":  []int{1, 2, 3},
+	"name": "alice",
+}).([]User)
+
+fmt.Println(users)
+```
+
+这个例子同时体现了 sqlmer 的几个核心能力：
+
+- 保留原生 SQL；
+- 支持命名参数；
+- 支持 slice 直接用于 `IN` 查询；
+- 支持将结果直接映射到 Go struct；
+- 不需要手写 `rows.Scan(...)` 等重复样板代码。
 
 ### 核心特性
 
@@ -20,8 +69,6 @@
 - **便捷的 IN 查询**：支持直接传递 slice/array 类型参数到 IN 子句，无需手动拼接语句；
 - **灵活的装饰器模式**：通过 `wrap` 包提供的装饰器模式，可以轻松注入慢日志、监控指标、链路追踪等自定义逻辑，让系统监控和诊断更加便捷；
 - **智能的连接管理**：根据数据库配置自动初始化连接生命周期（该特性仅支持 MySQL）；
-
-## 快速上手
 
 让我们通过一系列示例来展示 sqlmer 的强大功能。以下示例将展示如何使用 sqlmer 进行数据库操作，包括基础查询、ORM 映射、事务处理等核心特性。
 
@@ -59,6 +106,8 @@ func init() {
 		log.Fatal(err)
 	}
 
+	// Extend 会在基础 DbClient 之上增加更方便的扩展能力，
+	// 例如 Must 系列 API、Struct 映射、强类型结果转换等。
 	dbClientEx = sqlmer.Extend(dbClient)
 }
 ```
@@ -142,6 +191,13 @@ func selectionDemo() {
 	}
 }
 ```
+
+上面这段示例主要覆盖了几类最常用的能力：
+
+- 命名参数和索引参数可以混用；
+- `map` / `struct` / 位置参数可以自动合并，并支持后面的参数覆盖前面的同名字段；
+- slice / array 参数可以直接参与 `IN` 查询；
+- 如果偏好标准库风格，也可以继续使用增强后的 `sql.Rows` / `sql.Row`。
 
 ### 轻量级 ORM 映射
 
