@@ -44,7 +44,7 @@ users := clientEx.MustListOf(User{}, `
 	ORDER BY id
 `, map[string]any{
 	"ids":  []int{1, 2, 3},
-	"name": "alice",
+	"name": "rui",
 }).([]User)
 
 fmt.Println(users)
@@ -70,7 +70,7 @@ fmt.Println(users)
 - **灵活的装饰器模式**：通过 `wrap` 包提供的装饰器模式，可以轻松注入慢日志、监控指标、链路追踪等自定义逻辑，让系统监控和诊断更加便捷；
 - **智能的连接管理**：根据数据库配置自动初始化连接生命周期（该特性仅支持 MySQL）；
 
-让我们通过一系列示例来展示 sqlmer 的强大功能。以下示例将展示如何使用 sqlmer 进行数据库操作，包括基础查询、ORM 映射、事务处理等核心特性。
+下面的示例按能力分组组织，建议按 `参数处理 -> 结果映射 -> 增强 Rows / Row -> 事务 -> 装饰器扩展` 的顺序浏览，更容易快速理解 sqlmer 的整体使用方式。
 
 > 本小节完整例子：[example](https://github.com/bunnier/sqlmer/blob/main/example/main.go)
 
@@ -112,9 +112,9 @@ func init() {
 }
 ```
 
-### 基础查询操作
+### 参数绑定与 IN 查询
 
-sqlmer 支持多种参数传递方式，包括命名参数和索引参数，也支持参数的重写覆盖逻辑，让 SQL 语句更易维护和重用。
+sqlmer 支持命名参数、位置参数，以及 `map / struct / 索引参数` 的自动合并。配合 slice / array 自动展开，可以让 SQL 继续保持原生写法，又不用手动拼接 `IN (...)` 占位符。
 
 ```go
 // 准备演示数据。
@@ -134,7 +134,7 @@ func prepare() {
 	dbClientEx.MustExecute("INSERT INTO demo(Name, Age, Scores) VALUES(@p1, @p2, @p3)", "bao", 2, "SCORES:2,4,6,8")
 }
 
-// 开始演示基础查询功能了~
+// 开始演示参数绑定与结果读取能力。
 func selectionDemo() {
 	// 命名参数查询数据，参数采用 map 时：key 为 sql 语句 @ 之后的参数名，value 为值。
 	dataMap := dbClientEx.MustGet("SELECT * FROM demo WHERE Name=@Name", map[string]any{"Name": "rui"})
@@ -164,11 +164,23 @@ func selectionDemo() {
 		Params{Name: "bao"},
 	)
 	fmt.Println(count.(int64)) // Output: 2
+}
+```
 
-	// 如果喜欢标准库风格，这里也提供了增强版本的 sql.Rows，支持 SliceScan、MapScan。
-	// 注意：
-	//   - 这里用到了 slice/array 的参数展开特性
-	//   - 如果传入的 slice/array 长度为 0，会被解析为 NULL ，会导致 in/not in 语句均为 false；
+上面这段示例主要体现了几件事：
+
+- 命名参数和索引参数可以混用；
+- `map` / `struct` / 位置参数可以自动合并，并支持后面的参数覆盖前面的同名字段；
+- 查询仍然保持原生 SQL，不需要引入额外的 DSL。
+
+### 增强的 Rows / Row
+
+如果你偏好标准库风格，sqlmer 也提供了增强版本的 `sql.Rows` / `sql.Row`。它们支持 `SliceScan`、`MapScan`，并会自动根据列数量和列类型装载结果。
+
+```go
+func rowsDemo() {
+	// 这里用到了 slice/array 的参数展开特性。
+	// 如果传入的 slice/array 长度为 0，会被解析为 NULL ，会导致 in/not in 语句均为 false。
 	rows := dbClientEx.MustRows("SELECT Name, datetime('now') FROM demo WHERE Name IN (@p1)", []any{"rui", "bao"})
 	for rows.Next() {
 		// SliceScan 会自动判断列数及列类型，用 []any 方式返回。
@@ -192,16 +204,14 @@ func selectionDemo() {
 }
 ```
 
-上面这段示例主要覆盖了几类最常用的能力：
+这段示例主要覆盖了两类能力：
 
-- 命名参数和索引参数可以混用；
-- `map` / `struct` / 位置参数可以自动合并，并支持后面的参数覆盖前面的同名字段；
 - slice / array 参数可以直接参与 `IN` 查询；
 - 如果偏好标准库风格，也可以继续使用增强后的 `sql.Rows` / `sql.Row`。
 
-### 轻量级 ORM 映射
+### Struct 映射与轻量化 ORM
 
-sqlmer 提供了简单而强大的轻量级 ORM 映射功能，支持将查询结果直接映射到 Go 结构体。支持驼峰和下划线分割的名称的首字母模糊匹配，让数据操作更加灵活：
+sqlmer 提供了简单而直接的轻量化 ORM 能力，支持把查询结果映射到 Go struct，并支持驼峰与下划线命名的模糊匹配，适合希望继续自己写 SQL、但又不想手写大量扫描代码的场景：
 
 ```go
 // 演示如何使用轻量化 ORM 功能。将数据库的行，映射到 Go struct 。

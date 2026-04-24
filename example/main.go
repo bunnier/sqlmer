@@ -42,6 +42,7 @@ func main() {
 	defer purge()
 
 	selectionDemo()
+	rowsDemo()
 	ormDemo()
 	ormWithFieldConvert()
 	transactionDemo()
@@ -98,7 +99,9 @@ func selectionDemo() {
 		Params{Name: "bao"},
 	)
 	fmt.Println(count.(int64)) // Output: 2
+}
 
+func rowsDemo() {
 	// 如果喜欢标准库风格，这里也提供了增强版本的 sql.Rows，支持 SliceScan、MapScan。
 	// 注意：
 	//   - 这里用到了 slice/array 的参数展开特性
