@@ -5,11 +5,11 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/bunnier/sqlmer)](https://goreportcard.com/report/github.com/bunnier/sqlmer)
 [![Go Reference](https://pkg.go.dev/badge/github.com/bunnier/sqlmer.svg)](https://pkg.go.dev/github.com/bunnier/sqlmer)
 
-一个面向原生 SQL 的轻量化 Go 数据库操作库。保留 SQL 的灵活性，同时提供命名参数、结果映射、事务、类型转换等高频能力，适合希望避免重 ORM 约束、但又不想手写大量样板代码的项目。
+一个面向原生 SQL 的轻量化 Go 数据库操作库。保留 SQL 的灵活性，同时提供命名参数、轻量化 ORM 映射、事务、类型转换等高频能力，适合希望避免重 ORM 约束、但又不想手写大量样板代码的项目。
 
 ## 功能简介
 
-sqlmer 不是重 ORM，也不是 SQL Builder，而是一个面向原生 SQL 的轻量化数据库操作库。它在 `database/sql` 之上补充了统一的驱动适配、参数处理、结果映射、事务和装饰器扩展能力。它已在实际生产环境中长期使用，并经过了持续验证，目前支持 MySQL / SQLite / SQL Server 。
+sqlmer 不是重 ORM，也不是 SQL Builder，而是一个面向原生 SQL 的轻量化数据库操作库。它在 `database/sql` 之上补充了统一的驱动适配、参数处理、轻量化 ORM 映射、事务和装饰器扩展能力，让你在继续直接写 SQL 的同时，也能方便地把结果装载到 Map 或 Struct。它已在实际生产环境中长期使用，并经过了持续验证，目前支持 MySQL / SQLite / SQL Server 。
 
 ### 适合什么场景
 
@@ -372,18 +372,18 @@ func decoratedDemo() {
 | tiny int / small int / int / unsigned int / bigint | int64       |
 | float / double                                     | float64     |
 | decimal                                            | string      |
-| date / datetime / timestamp                        | time.Time   |
+| date / time / datetime / timestamp                 | time.Time   |
 | bit                                                | []byte      |
 
 ### SQLite
 
-| DB datatype                    | Go datatype |
-|--------------------------------|-------------|
-| text / varchar / char / clob   | string      |
-| integer / int / tiny int / ... | int64       |
-| real / double / float          | float64     |
-| time / date / datetime         | time.Time   |
-| blob                           | []byte      |
+| DB datatype                               | Go datatype |
+|-------------------------------------------|-------------|
+| text / varchar / char / clob              | string      |
+| integer / int / tiny int / ...            | int64       |
+| real / double / float / decimal / numeric | float64     |
+| time / date / datetime                    | time.Time   |
+| blob                                      | []byte      |
 
 ### SQL Server
 
