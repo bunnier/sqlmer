@@ -93,6 +93,57 @@ func TestSqlContextErrorUnwrapAndIs(t *testing.T) {
 	})
 }
 
+func TestSqlContextError_preserves_text_after_parameter_reuse(t *testing.T) {
+	for _, executing := range []bool{true, false} {
+		t.Run(fmt.Sprintf("executing=%t", executing), func(t *testing.T) {
+			payload := []byte("original")
+			raw := sql.RawBytes("original")
+			label := &testStringer{"original"}
+			values := map[string]any{"value": "original"}
+			params := []any{payload, sql.Named("raw", raw), label, values, "original"}
+			paramText := printSqlParams(params)
+			underlying := errors.New("driver rejected")
+			const rawSQL = "SELECT @p1"
+			const fixedSQL = "SELECT ?"
+			var err error
+			var want string
+			if executing {
+				err = getExecutingSqlError(underlying, rawSQL, fixedSQL, params)
+				want = fmt.Sprintf("%s\nraw error: %s\nsql:\ninput sql=%s\nexecuting sql=%s\n%s",
+					ErrExecutingSql, underlying, rawSQL, fixedSQL, paramText)
+			} else {
+				err = getSqlError(underlying, rawSQL, params)
+				want = fmt.Sprintf("%s\nsql:\ninput sql=%s\n%s", underlying, rawSQL, paramText)
+			}
+
+			// 在第一次读取错误文本前复用参数，覆盖缓冲区、引用值和参数列表。
+			copy(payload, "modified")
+			copy(raw, "modified")
+			label.value = "modified"
+			values["value"] = "modified"
+			params[4] = "modified"
+			if got := err.Error(); got != want {
+				t.Fatalf("error text changed after parameter reuse:\ngot: %s\nwant: %s", got, want)
+			}
+			if !errors.Is(err, underlying) || errors.Is(err, ErrExecutingSql) != executing {
+				t.Fatalf("error chain changed: %v", err)
+			}
+		})
+	}
+}
+
+func TestSqlContextError_formats_public_struct_literal(t *testing.T) {
+	err := &SqlContextError{
+		Err:    errors.New("rejected"),
+		RawSQL: "SELECT @p1",
+		Params: []any{123},
+	}
+	const want = "rejected\nsql:\ninput sql=SELECT @p1\nparams:\n@p1=123"
+	if got := err.Error(); got != want {
+		t.Fatalf("Error() = %q, want %q", got, want)
+	}
+}
+
 func TestCutLongStringParams(t *testing.T) {
 	originalMaxLength := MaxLengthErrorValue
 	defer func() { MaxLengthErrorValue = originalMaxLength }()

@@ -33,15 +33,20 @@ type SqlContextError struct {
 	Err      error
 	RawSQL   string
 	FixedSQL string
-	Params   []any // 参数引用仅用于错误输出格式化。
+	Params   []any // 原始参数引用；库创建的错误文本在构造时固定。
 	// IsExecutingSQL 为 true 时，表示执行 SQL 阶段失败，errors.Is(err, ErrExecutingSql) 为 true。
 	IsExecutingSQL bool
+
+	message string // 固定错误文本，避免调用方复用参数后改变日志内容。
 }
 
 // Error 返回与历史版本一致的文本格式，便于日志与既有测试。
 func (e *SqlContextError) Error() string {
 	if e == nil {
 		return ""
+	}
+	if e.message != "" {
+		return e.message
 	}
 	if e.IsExecutingSQL {
 		sb := printSqlParams(e.Params)
@@ -71,22 +76,26 @@ func (e *SqlContextError) Is(target error) bool {
 // getExecutingSqlError 用于生成一个带着 SQL 和参数列表的 ErrExecutingSql。
 // 错误内容中包含了：原始传入的 SQL，解析后的 SQL，参数列表。
 func getExecutingSqlError(err error, rawSql string, fixedSql string, params []any) error {
-	return &SqlContextError{
+	contextErr := &SqlContextError{
 		Err:            err,
 		RawSQL:         rawSql,
 		FixedSQL:       fixedSql,
 		Params:         params,
 		IsExecutingSQL: true,
 	}
+	contextErr.message = contextErr.Error()
+	return contextErr
 }
 
 // getSqlError 用于生成一个带着 SQL 和参数列表的指定错误。
 func getSqlError(err error, rawSql string, params []any) error {
-	return &SqlContextError{
+	contextErr := &SqlContextError{
 		Err:    err,
 		RawSQL: rawSql,
 		Params: params,
 	}
+	contextErr.message = contextErr.Error()
+	return contextErr
 }
 
 // printSqlParams 用于打印 SQL 参数列表。
