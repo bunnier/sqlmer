@@ -268,8 +268,8 @@ func Test_AbstractDbClient_Rows_error_wrapped(t *testing.T) {
 	if !strings.Contains(err.Error(), "@p1=1") {
 		t.Fatalf("Rows().Scan() error = %v, want params", err)
 	}
-	if !errors.Is(rows.Err(), sqlmer.ErrExecutingSql) {
-		t.Fatalf("Rows().Err() = %v, want ErrExecutingSql", rows.Err())
+	if err = rows.Err(); err != nil {
+		t.Fatalf("Rows().Err() after conversion failure = %v, want nil", err)
 	}
 }
 
@@ -295,8 +295,8 @@ func Test_AbstractDbClient_Row_error_wrapped(t *testing.T) {
 	if !strings.Contains(err.Error(), "@p1=1") {
 		t.Fatalf("Row().Scan() error = %v, want params", err)
 	}
-	if !errors.Is(row.Err(), sqlmer.ErrExecutingSql) {
-		t.Fatalf("Row().Err() = %v, want ErrExecutingSql", row.Err())
+	if err = row.Err(); err != nil {
+		t.Fatalf("Row().Err() after conversion failure = %v, want nil", err)
 	}
 }
 

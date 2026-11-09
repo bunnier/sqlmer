@@ -154,7 +154,7 @@ func Test_SqliteDbClient_internalDbClient_rows_error_wrapped_smoke(t *testing.T)
 	if !errors.Is(err, sqlmer.ErrExecutingSql) {
 		t.Fatalf("Rows().Scan() error = %v, want ErrExecutingSql", err)
 	}
-	if !errors.Is(rows.Err(), sqlmer.ErrExecutingSql) {
-		t.Fatalf("Rows().Err() = %v, want ErrExecutingSql", rows.Err())
+	if err = rows.Err(); err != nil {
+		t.Fatalf("Rows().Err() after conversion failure = %v, want nil", err)
 	}
 }

@@ -177,6 +177,8 @@ func selectionDemo() {
 
 如果你偏好标准库风格，sqlmer 也提供了增强版本的 `sql.Rows` / `sql.Row`。它们支持 `SliceScan`、`MapScan`，并会自动根据列数量和列类型装载结果。
 
+错误处理遵循 `database/sql` 的行为：每次 `Scan`、`SliceScan`、`MapScan` 的返回错误都需要单独处理；`Rows.Err()` 报告迭代错误，不包含单行转换错误。一次转换失败不会阻止调用方继续读取后续行。`Row.Err()` 只报告创建查询时的错误，无匹配行时的 `sql.ErrNoRows` 由扫描方法返回。
+
 ```go
 func rowsDemo() {
 	// 这里用到了 slice/array 的参数展开特性。

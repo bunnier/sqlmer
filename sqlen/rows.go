@@ -20,7 +20,7 @@ type EnhanceRows struct {
 
 	columnMetaSlice []*columnMeta // 用于对列的元数据做缓存。
 
-	err error
+	err error // 仅缓存 Rows.Err() 返回的迭代错误包装。
 }
 
 type columnMeta struct {
@@ -63,15 +63,9 @@ func (rs *EnhanceRows) initColumns() error {
 	return nil
 }
 
-// MapScan 用于把一行数据填充到 map 中。
+// Scan 将当前行填充到目标变量中；转换错误仅通过返回值报告，不影响 Err 或后续扫描。
 func (rs *EnhanceRows) Scan(dest ...any) error {
-	if rs.err != nil {
-		return rs.err
-	}
-
-	// 直接用原生 row 的 Scan 方法获取数据。
-	rs.err = rs.wrap(rs.Rows.Scan(dest...))
-	return rs.err
+	return rs.wrap(rs.Rows.Scan(dest...))
 }
 
 // MapScan 用于把一行数据填充到 map 中。
@@ -89,12 +83,8 @@ func (rs *EnhanceRows) MapScan() (map[string]any, error) {
 
 // SliceScan 用 Slice 的方式返回一行数据。
 func (rs *EnhanceRows) SliceScan() ([]any, error) {
-	if rs.err != nil {
-		return nil, rs.err
-	}
-
-	if rs.err = rs.initColumns(); rs.err != nil {
-		return nil, rs.err
+	if err := rs.initColumns(); err != nil {
+		return nil, rs.wrap(err)
 	}
 
 	// 用来存放 Scan 后返回的数据，db 库要求和查询的列完全一致，所以需要判断 columns 长度。
@@ -112,8 +102,8 @@ func (rs *EnhanceRows) SliceScan() ([]any, error) {
 		destRefVal[i] = refVal                  // 保存这个 Reflect.value 在后面用于解引用。
 	}
 
-	if rs.err = rs.Scan(dest...); rs.err != nil {
-		return nil, rs.err
+	if err := rs.Scan(dest...); err != nil {
+		return nil, err
 	}
 
 	for i := 0; i < len(rs.columnMetaSlice); i++ {
@@ -139,9 +129,10 @@ func (rs *EnhanceRows) SliceScan() ([]any, error) {
 		}
 	}
 
-	return dest, rs.err
+	return dest, nil
 }
 
+// Err 返回迭代过程中发生的错误；Scan 的转换错误由 Scan 自身返回。
 func (r *EnhanceRows) Err() error {
 	if r.err != nil {
 		return r.err
@@ -155,10 +146,5 @@ func (r *EnhanceRows) Close() error {
 	if r.Rows == nil {
 		return nil
 	}
-	closeErr := r.wrap(r.Rows.Close())
-	if r.err != nil {
-		return r.err
-	}
-	r.err = closeErr
-	return r.err
+	return r.wrap(r.Rows.Close())
 }
