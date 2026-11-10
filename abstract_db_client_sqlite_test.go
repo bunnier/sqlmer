@@ -76,6 +76,32 @@ func Test_AbstractDbClient_Execute(t *testing.T) {
 	}
 }
 
+func Test_AbstractDbClient_Execute_nil_time_parameter_returns_error(t *testing.T) {
+	dbClient := newSqliteDbClientForAbstractDbTest(t)
+	var timestamp *time.Time
+
+	_, err := dbClient.Execute("INSERT INTO missing_table (created_at) VALUES (@p1)", timestamp)
+	if !errors.Is(err, sqlmer.ErrExecutingSql) {
+		t.Fatalf("Execute() error = %v, want ErrExecutingSql", err)
+	}
+	if !strings.Contains(err.Error(), "@p1=<nil>") {
+		t.Fatalf("Execute() error = %v, want nil parameter text", err)
+	}
+}
+
+func Test_AbstractDbClient_SizedExecute_nil_time_parameter_returns_error(t *testing.T) {
+	dbClient := newSqliteDbClientForAbstractDbTest(t)
+	var timestamp *time.Time
+
+	err := dbClient.SizedExecute(2, "UPDATE go_TypeTest SET nullDateTimeTest=@p1 WHERE id=1", timestamp)
+	if !errors.Is(err, sqlmer.ErrExpectedSizeWrong) {
+		t.Fatalf("SizedExecute() error = %v, want ErrExpectedSizeWrong", err)
+	}
+	if !strings.Contains(err.Error(), "@p1=<nil>") {
+		t.Fatalf("SizedExecute() error = %v, want nil parameter text", err)
+	}
+}
+
 func Test_AbstractDbClient_Exists(t *testing.T) {
 	dbClient := newSqliteDbClientForAbstractDbTest(t)
 

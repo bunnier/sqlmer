@@ -132,7 +132,8 @@ func cutLongStringParams(paramVal any) any {
 	case string:
 		paramValString = v
 	case fmt.Stringer:
-		paramValString = v.String()
+		// 交由 fmt 安全格式化，避免 nil 指针或 String 方法 panic 中断错误返回。
+		paramValString = fmt.Sprint(v)
 	default:
 		return paramVal
 	}
