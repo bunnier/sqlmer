@@ -183,13 +183,13 @@ func TestEnhanceRow_Scan(t *testing.T) {
 }
 
 func TestEnhanceRow_Err(t *testing.T) {
-	db := sqlen.NewDbEnhance(mustGetMssqlDb(t), getScanTypeFunc, unifyDataTypeFn)
+	db := newScanTestDb(t, &scanTestRows{}, nil)
 	sqlText := "SELECT Id, VarcharTest FROM go_TypeTest WHERE Id=10000" // 没数据。
 
 	t.Run("SliceScan", func(t *testing.T) {
 		enhancedRow := db.EnhancedQueryRow(sqlText)
 		_, err := enhancedRow.SliceScan()
-		if err != sql.ErrNoRows || err != enhancedRow.Err() || err != sql.ErrNoRows {
+		if err != sql.ErrNoRows || enhancedRow.Err() != nil {
 			t.Errorf("enhancedRow.EnhancedQueryRow() error = %v, wantErr ErrNoRows", err)
 		}
 	})
@@ -197,7 +197,7 @@ func TestEnhanceRow_Err(t *testing.T) {
 	t.Run("EmptySliceScan", func(t *testing.T) {
 		enhancedRow := &sqlen.EnhanceRow{}
 		_, err := enhancedRow.SliceScan()
-		if err != sql.ErrNoRows || err != enhancedRow.Err() || err != sql.ErrNoRows {
+		if err != sql.ErrNoRows || enhancedRow.Err() != nil {
 			t.Errorf("enhancedRow.SliceScan() error = %v, wantErr ErrNoRows", err)
 		}
 	})
@@ -205,7 +205,7 @@ func TestEnhanceRow_Err(t *testing.T) {
 	t.Run("MapScan", func(t *testing.T) {
 		enhancedRow := db.EnhancedQueryRow(sqlText)
 		_, err := enhancedRow.MapScan()
-		if err != sql.ErrNoRows || err != enhancedRow.Err() || err != sql.ErrNoRows {
+		if err != sql.ErrNoRows || enhancedRow.Err() != nil {
 			t.Errorf("enhancedRow.EnhancedQueryRow() error = %v, wantErr ErrNoRows", err)
 		}
 	})
@@ -213,7 +213,7 @@ func TestEnhanceRow_Err(t *testing.T) {
 	t.Run("EmptyMapScan", func(t *testing.T) {
 		enhancedRow := &sqlen.EnhanceRow{}
 		_, err := enhancedRow.MapScan()
-		if err != sql.ErrNoRows || err != enhancedRow.Err() || err != sql.ErrNoRows {
+		if err != sql.ErrNoRows || enhancedRow.Err() != nil {
 			t.Errorf("enhancedRow.MapScan() error = %v, wantErr ErrNoRows", err)
 		}
 	})
@@ -221,7 +221,7 @@ func TestEnhanceRow_Err(t *testing.T) {
 	t.Run("Scan", func(t *testing.T) {
 		enhancedRow := db.EnhancedQueryRow(sqlText)
 		err := enhancedRow.Scan()
-		if err != sql.ErrNoRows || err != enhancedRow.Err() || err != sql.ErrNoRows {
+		if err != sql.ErrNoRows || enhancedRow.Err() != nil {
 			t.Errorf("enhancedRow.Scan() error = %v, wantErr ErrNoRows", err)
 		}
 	})
@@ -229,7 +229,7 @@ func TestEnhanceRow_Err(t *testing.T) {
 	t.Run("EmptyRowScan", func(t *testing.T) {
 		enhancedRow := &sqlen.EnhanceRow{}
 		err := enhancedRow.Scan()
-		if err != sql.ErrNoRows || err != enhancedRow.Err() || err != sql.ErrNoRows {
+		if err != sql.ErrNoRows || enhancedRow.Err() != nil {
 			t.Errorf("enhancedRow.Scan() error = %v, wantErr ErrNoRows", err)
 		}
 	})

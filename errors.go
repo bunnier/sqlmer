@@ -29,12 +29,14 @@ var (
 
 // getExecutingSqlError 用于生成一个带着 SQL 和参数列表的 ErrExecutingSql。
 // 错误内容中包含了：原始传入的 SQL，解析后的 SQL，参数列表。
+// 错误文本在构造时固定，避免调用方复用参数后改变日志内容。
 func getExecutingSqlError(err error, rawSql string, fixedSql string, params []any) error {
 	sb := printSqlParams(params)
 	return fmt.Errorf("%w\nraw error: %s\nsql:\ninput sql=%s\nexecuting sql=%s\n%s", ErrExecutingSql, err.Error(), rawSql, fixedSql, sb)
 }
 
 // getSqlError 用于生成一个带着 SQL 和参数列表的指定错误。
+// 错误文本在构造时固定，避免调用方复用参数后改变日志内容。
 func getSqlError(err error, rawSql string, params []any) error {
 	sb := printSqlParams(params)
 	return fmt.Errorf("%w\nsql:\ninput sql=%s\n%s", err, rawSql, sb)
@@ -74,7 +76,8 @@ func cutLongStringParams(paramVal any) any {
 	case string:
 		paramValString = v
 	case fmt.Stringer:
-		paramValString = v.String()
+		// 交由 fmt 安全格式化，避免 nil 指针或 String 方法 panic 中断错误返回。
+		paramValString = fmt.Sprint(v)
 	default:
 		return paramVal
 	}
